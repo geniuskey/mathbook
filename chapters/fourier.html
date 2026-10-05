@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<title>모든 것은 주파수의 합 · MathBook</title>
+<meta name="description" content="MRI가 몸속을 보는 방법에서 출발해 푸리에 급수·변환, 감기 기계, FFT, 합성곱 정리, 2D 푸리에, 렌즈와 MTF, JPEG, k-공간까지 직접 만지며 배운다.">
+<link rel="canonical" href="https://mathbook.euiyun.com/chapters/fourier.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="MathBook">
+<meta property="og:title" content="모든 것은 주파수의 합 · MathBook">
+<meta property="og:description" content="MRI가 몸속을 보는 방법에서 출발해 푸리에 급수·변환, 감기 기계, FFT, 합성곱 정리, 2D 푸리에, 렌즈와 MTF, JPEG, k-공간까지 직접 만지며 배운다.">
+<meta property="og:url" content="https://mathbook.euiyun.com/chapters/fourier.html">
+<meta property="og:image" content="https://mathbook.euiyun.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"모든 것은 주파수의 합","name":"모든 것은 주파수의 합 · MathBook","url":"https://mathbook.euiyun.com/chapters/fourier.html","mainEntityOfPage":"https://mathbook.euiyun.com/chapters/fourier.html","inLanguage":"ko","isAccessibleForFree":true,"learningResourceType":"interactive textbook chapter","position":5,"image":"https://mathbook.euiyun.com/og.png","dateModified":"2026-10-05","isPartOf":{"@type":"Book","@id":"https://mathbook.euiyun.com/#book","name":"MathBook — 문제에서 출발하는 수학 교과서","url":"https://mathbook.euiyun.com/"},"publisher":{"@type":"Organization","name":"MathBook","url":"https://mathbook.euiyun.com/"},"description":"MRI가 몸속을 보는 방법에서 출발해 푸리에 급수·변환, 감기 기계, FFT, 합성곱 정리, 2D 푸리에, 렌즈와 MTF, JPEG, k-공간까지 직접 만지며 배운다."},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"MathBook","item":"https://mathbook.euiyun.com/"},{"@type":"ListItem","position":2,"name":"05 모든 것은 주파수의 합","item":"https://mathbook.euiyun.com/chapters/fourier.html"}]}]}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<script src="../js/common.js"></script>
+<style>
+  svg .s-acc2 { stroke: var(--accent-2); fill: none; stroke-width: 2; }
+  svg .s-dash { stroke: var(--text-faint); fill: none; stroke-width: 1.2; stroke-dasharray: 4 4; }
+  svg .f-acc2 { fill: var(--accent-2); }
+  svg .f-accs { fill: var(--accent-soft); }
+  svg .f-acc2s { fill: var(--accent-2-soft); }
+  svg .t-acc2 { fill: var(--accent-2); font-family: var(--font); font-size: 13px; font-weight: 700; }
+  .ft-basis { max-width: 440px; margin: 0 auto; }
+  .ft-basis canvas { display: block; width: 100%; }
+  .split canvas { display: block; width: 100%; }
+  .ft-click { cursor: crosshair; }
+  .sim-controls .btn-row { align-self: start; }
+</style>
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3d6151a0abc94ede89285d462527fa80"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</head>
+<body data-chapter="fourier">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">Chapter 05</div>
+    <h1>모든 것은 주파수의 합</h1>
+    <p class="lead">온도 분포, 소리, 사진, 렌즈가 맺은 상, 휴대폰 전파. 겉모습은 전혀 다르지만 푸리에의 눈으로 보면 모두 같은 것, 즉 <b>여러 주파수의 사인파를 더한 것</b>입니다. 복잡한 것을 단순한 진동으로 쪼개면, 쪼갠 조각 하나하나는 거의 공짜로 풀립니다. 이 장에서는 그 쪼개는 기계를 손으로 돌려 보고, 렌즈와 JPEG와 MRI 안에서 같은 기계가 돌아가는 모습을 확인합니다.</p>
+    <ul class="objectives">
+      <li>푸리에가 왜 사인파 분해를 발명했는지(열전도 문제)를 설명하고, 모드마다 감쇠 속도가 다르다는 사실을 계산할 수 있다.</li>
+      <li>회전하는 원들의 합으로 임의의 주기 파형을 만들고, 깁스 현상(약 9% 오버슈트)을 안다.</li>
+      <li>푸리에 계수를 "신호를 원에 감아 질량중심을 보는 것"으로 이해하고, 그것이 내적·직교성임을 안다.</li>
+      <li>DFT/FFT 스펙트럼을 읽고, 시간–주파수 불확정성과 합성곱 정리(필터 = 주파수 곱셈)를 쓴다.</li>
+      <li>이미지의 2D 푸리에 변환, 렌즈의 PSF·OTF·MTF, JPEG의 DCT 양자화, MRI의 k-공간을 같은 틀로 설명한다.</li>
+    </ul>
+    <div class="origin">
+      <div class="o-head"><small>이 수식이 없었다면</small><b>MRI (자기공명영상)</b></div>
+      <div class="o-body">
+        <p>MRI 스캐너는 몸속 사진을 직접 찍지 않습니다. 렌즈도 없고 X선처럼 몸을 투과하는 빛도 쓰지 않습니다. 강한 자기장 속의 수소 원자핵(양성자)은 자기장 세기에 비례하는 주파수(1.5 T에서 약 64 MHz)로 신호를 내는데, 여기에 위치에 따라 세기가 변하는 <b>기울기 자기장</b>을 걸면 <b>위치가 곧 주파수(와 위상)</b>가 됩니다. 수신 코일이 듣는 것은 몸 전체가 동시에 부르는 "화음" 하나뿐입니다.</p>
+        <p>그 화음은 바로 단면 영상의 푸리에 변환의 한 줄입니다. 기울기를 바꿔 가며 줄을 모아 <b>k-공간</b>을 채우고, 역 푸리에 변환을 하면 영상이 나타납니다. 푸리에 변환이 없다면 이 화음은 그냥 잡음 섞인 진동일 뿐입니다.</p>
+        <div class="o-chain"><span>몸속 양성자 분포</span><i>→</i><span>기울기 자기장: 위치 → 주파수</span><i>→</i><span>코일 신호 = 화음</span><i>→</i><span class="tool">2D 역 푸리에 변환</span><i>→</i><span>단면 영상</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =============================================================== 1 -->
+  <section id="heat">
+    <h2>푸리에의 원래 문제: 쇠막대는 어떻게 식는가</h2>
+    <div class="problem"><strong>울퉁불퉁한 온도 분포의 미래 예측</strong>
+      <p>양 끝을 0 °C 얼음물에 담근 쇠막대가 있다. 처음 온도 분포는 가운데 한 구간만 뜨겁거나, 두 군데가 뜨겁거나, 아무렇게나 생겼다. 열방정식 \(\partial u/\partial t = \alpha\, \partial^2 u/\partial x^2\)은 알지만, 이런 임의의 초기 모양에서 시작한 해를 어떻게 쓸까?</p>
+    </div>
+    <p>조제프 푸리에<span class="en">(Joseph Fourier)</span>가 1807년 프랑스 학술원<span class="en">(Institut de France)</span>에 제출한 열전도 논문이 이 문제를 다뤘습니다. 그의 관찰은 단순했습니다. 초기 모양이 마침 사인파 \(\sin(n\pi x/L)\)라면, 열방정식에서 \(\partial^2/\partial x^2\)는 그 사인파에 \(-(n\pi/L)^2\)을 곱할 뿐이므로 <b>모양은 그대로이고 높이만 지수적으로 줄어듭니다</b>(<a href="ode.html">4장</a>의 1차 미분방정식 하나). 그렇다면 임의의 모양을 사인파들의 합으로 쪼갤 수만 있으면, 각 조각을 따로 식힌 뒤 다시 더하면 끝입니다.</p>
+    <div class="formula">$$u(x,0)=\sum_{n=1}^{\infty} b_n \sin\frac{n\pi x}{L}\quad\Longrightarrow\quad u(x,t)=\sum_{n=1}^{\infty} b_n\, e^{-\alpha (n\pi/L)^2 t}\,\sin\frac{n\pi x}{L}$$
+      <div class="where">\(b_n = \frac{2}{L}\int_0^L u(x,0)\sin\frac{n\pi x}{L}\,dx\). 각 모드는 다른 모드와 섞이지 않고 혼자 감쇠한다. 감쇠율은 \(n^2\)에 비례하므로 3번 모드는 1번보다 9배, 10번 모드는 100배 빨리 사라진다.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 240" role="img" aria-label="울퉁불퉁한 온도 분포를 사인 모드 세 개로 분해">
+        <line x1="30" y1="160" x2="280" y2="160" class="s-axis"/>
+        <path d="M30.0,160.0 34.2,148.8 38.3,137.8 42.5,127.1 46.7,116.8 50.8,107.1 55.0,98.0 59.2,89.7 63.3,82.2 67.5,75.7 71.7,70.2 75.8,65.7 80.0,62.3 84.2,59.9 88.3,58.5 92.5,58.2 96.7,58.8 100.8,60.2 105.0,62.5 109.2,65.5 113.3,69.1 117.5,73.1 121.7,77.6 125.8,82.4 130.0,87.3 134.2,92.2 138.3,97.1 142.5,101.9 146.7,106.4 150.8,110.6 155.0,114.5 159.2,118.0 163.3,121.0 167.5,123.5 171.7,125.6 175.8,127.2 180.0,128.4 184.2,129.2 188.3,129.6 192.5,129.8 196.7,129.7 200.8,129.4 205.0,129.1 209.2,128.7 213.3,128.4 217.5,128.2 221.7,128.1 225.8,128.4 230.0,128.8 234.2,129.7 238.3,130.8 242.5,132.3 246.7,134.2 250.8,136.5 255.0,139.1 259.2,142.1 263.3,145.3 267.5,148.7 271.7,152.4 275.8,156.2 280.0,160.0" class="s-acc"/>
+        <text x="30" y="190" class="t-dim">처음 온도 분포 u(x, 0)</text>
+        <text x="30" y="210" class="t-mono">양 끝 0 °C</text>
+        <text x="335" y="140" class="t" style="font-size:28px">=</text>
+        <line x1="420" y1="60" x2="620" y2="60" class="s-axis"/><path d="M420.0,60.0 425.0,56.5 430.0,53.0 435.0,49.5 440.0,46.1 445.0,42.8 450.0,39.6 455.0,36.5 460.0,33.5 465.0,30.8 470.0,28.2 475.0,25.8 480.0,23.6 485.0,21.6 490.0,19.9 495.0,18.4 500.0,17.2 505.0,16.2 510.0,15.6 515.0,15.1 520.0,15.0 525.0,15.1 530.0,15.6 535.0,16.2 540.0,17.2 545.0,18.4 550.0,19.9 555.0,21.6 560.0,23.6 565.0,25.8 570.0,28.2 575.0,30.8 580.0,33.5 585.0,36.5 590.0,39.6 595.0,42.8 600.0,46.1 605.0,49.5 610.0,53.0 615.0,56.5 620.0,60.0" class="s-acc2"/>
+        <line x1="420" y1="132" x2="620" y2="132" class="s-axis"/><path d="M420.0,132.0 425.0,128.5 430.0,125.0 435.0,121.8 440.0,118.8 445.0,116.1 450.0,113.8 455.0,112.0 460.0,110.6 465.0,109.8 470.0,109.5 475.0,109.8 480.0,110.6 485.0,112.0 490.0,113.8 495.0,116.1 500.0,118.8 505.0,121.8 510.0,125.0 515.0,128.5 520.0,132.0 525.0,135.5 530.0,139.0 535.0,142.2 540.0,145.2 545.0,147.9 550.0,150.2 555.0,152.0 560.0,153.4 565.0,154.2 570.0,154.5 575.0,154.2 580.0,153.4 585.0,152.0 590.0,150.2 595.0,147.9 600.0,145.2 605.0,142.2 610.0,139.0 615.0,135.5 620.0,132.0" class="s-acc2"/>
+        <line x1="420" y1="204" x2="620" y2="204" class="s-axis"/><path d="M420.0,204.0 425.0,200.3 430.0,196.8 435.0,193.8 440.0,191.3 445.0,189.4 450.0,188.4 455.0,188.3 460.0,189.0 465.0,190.6 470.0,192.9 475.0,195.8 480.0,199.1 485.0,202.8 490.0,206.5 495.0,210.0 500.0,213.3 505.0,216.0 510.0,218.0 515.0,219.3 520.0,219.8 525.0,219.3 530.0,218.0 535.0,216.0 540.0,213.3 545.0,210.0 550.0,206.5 555.0,202.8 560.0,199.1 565.0,195.8 570.0,192.9 575.0,190.6 580.0,189.0 585.0,188.3 590.0,188.4 595.0,189.4 600.0,191.3 605.0,193.8 610.0,196.8 615.0,200.3 620.0,204.0" class="s-acc2"/>
+        <text x="398" y="100" class="t" style="font-size:20px">+</text>
+        <text x="398" y="172" class="t" style="font-size:20px">+</text>
+        <text x="640" y="50" class="t">× e<tspan dy="-6" font-size="10">−τ</tspan></text>
+        <text x="640" y="125" class="t">× e<tspan dy="-6" font-size="10">−4τ</tspan></text>
+        <text x="640" y="197" class="t">× e<tspan dy="-6" font-size="10">−9τ</tspan></text>
+        <text x="640" y="70" class="t-mono">n = 1 (느림)</text>
+        <text x="640" y="145" class="t-mono">n = 2</text>
+        <text x="640" y="217" class="t-mono">n = 3 (9배 빠름)</text>
+      </svg>
+      <figcaption><b>그림 5-1.</b> 임의의 온도 분포 = 사인 모드의 합. 각 모드는 모양을 유지한 채 \(e^{-n^2\tau}\)로 줄어든다(\(\tau = \alpha\pi^2 t/L^2\)). 그래서 시간이 조금만 지나도 고주파 굴곡은 사라지고 매끈한 1번 모드만 남는다.</figcaption>
+    </figure>
+    <p>심사위원이던 라그랑주는 "불연속인 함수까지 매끈한 사인파의 합으로 쓸 수 있다"는 주장을 받아들이지 않았고, 논문은 한동안 출판되지 못했습니다. 푸리에는 수정본으로 1812년 학술원 상을 받았지만 엄밀성에 대한 비판은 계속됐고, 이론 전체는 1822년 『열의 해석적 이론<span class="en">(Théorie analytique de la chaleur)</span>』으로 출간됩니다. 어떤 함수가 실제로 급수로 수렴하는지에 대한 엄밀한 조건은 1829년 디리클레가 처음 제시했습니다. 공학적으로 중요한 것은 엄밀성 논쟁이 아니라 이 방법이 <b>편미분방정식을 서로 독립인 상미분방정식 여러 개로 바꾼다</b>는 점입니다.</p>
+
+    <div class="sim" id="sim-ft-heat">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>막대의 열: 모드마다 다른 속도로 식는다</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-ft-heat"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>처음 온도 분포</span><div class="seg" id="ft-heat-init"><button data-value="block" class="on">가운데 구간</button><button data-value="tri">삼각</button><button data-value="half">왼쪽 절반</button><button data-value="two">두 군데</button></div></div>
+          <label class="ctrl"><span>사용한 모드 수 N <output id="ft-heat-n-out"></output></span><input type="range" id="ft-heat-n" min="1" max="40" value="15"></label>
+          <label class="ctrl"><span>시간 τ = απ²t/L² <output id="ft-heat-t-out"></output></span><input type="range" id="ft-heat-t" min="0" max="100" value="0"></label>
+          <div class="btn-row"><button class="btn primary" id="ft-heat-play">▶ 식히기</button><button class="btn" id="ft-heat-reset">처음으로</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">1번 모드 남은 비율 e<sup>−τ</sup></span><span class="v" id="ft-heat-r1">—</span></div>
+        <div class="stat"><span class="k">3번 모드 e<sup>−9τ</sup></span><span class="v" id="ft-heat-r3">—</span></div>
+        <div class="stat"><span class="k">구리 10 cm 막대라면</span><span class="v" id="ft-heat-cu">—</span></div>
+      </div>
+      <div class="sim-note">위: 온도 분포(파란 선 = N개 모드의 합, 점선 = 처음 분포). 아래: 모드별 진폭 |b<sub>n</sub>|(테두리 = 처음, 채움 = 지금). 해볼 것: ① '가운데 구간'에서 τ = 0, N을 1→40으로 올리며 계단을 사인으로 쌓아 보기(모서리의 출렁임은 다음 절의 깁스 현상). ② ▶ 식히기를 누르고 아래 막대가 높은 n부터 사라지는 것 보기. ③ '두 군데'로 바꾸면 처음엔 봉우리가 둘이지만 금방 하나의 매끈한 언덕이 된다. 모델: 1차원 막대, 양 끝 온도 0 고정(디리클레 경계), 열확산율 α 일정. 구리 환산은 α ≈ 1.11×10⁻⁴ m²/s, L = 10 cm(1번 모드 시간상수 L²/(απ²) ≈ 9.1 s).</div>
+    </div>
+    <div class="callout tip"><strong>엔지니어의 눈으로</strong> 칩 위 핫스팟이 왜 금방 퍼지는지, 왜 열 시뮬레이션에서 짧은 시간 간격이 필요한지가 모두 \(n^2\) 감쇠에서 나온다. 미세한 온도 굴곡(높은 n)은 아주 빨리 사라지고, 큰 규모의 온도 차(n = 1)만 오래 버틴다. 같은 구조가 확산 공정의 도펀트 분포(<a href="https://processbook.euiyun.com/">ProcessBook</a>)에도 그대로 나온다.</div>
+  </section>
+
+  <!-- =============================================================== 2 -->
+  <section id="epicycles">
+    <h2>회전하는 원들의 합은 어떤 파형이든 그린다</h2>
+    <div class="problem"><strong>사각파를 사인파로?</strong>
+      <p>디지털 클록은 0과 1 사이를 순간적으로 뛰는 사각파다. 매끈한 사인파를 아무리 더해도 '순간 점프'가 만들어질 수 있을까? 만들어진다면 몇 개가 필요하고, 무엇이 남는가?</p>
+    </div>
+    <p><a href="complex.html">2장</a>에서 본 것처럼 \(e^{i n\theta}\)는 반지름 1인 원 위를 각속도 \(n\)으로 도는 점입니다. 사인파 \(\sin n\theta\)는 그 점의 세로 그림자일 뿐이죠. 그러니 사인파들의 합은 <b>원 위에 원을 얹고 또 얹은 톱니바퀴 장치</b>의 끝점 높이입니다. 큰 원(기본 주파수)이 전체 윤곽을 잡고, 작은 원들(배음)이 빠르게 돌며 모서리를 깎아 냅니다. 프톨레마이오스의 주전원<span class="en">(Epicycle)</span>과 같은 구조입니다.</p>
+    <div class="formula">$$\text{사각}=\frac{4}{\pi}\sum_{n\ \text{홀수}}\frac{\sin n\theta}{n},\qquad \text{톱니}=\frac{2}{\pi}\sum_{n\ge1}\frac{(-1)^{n+1}\sin n\theta}{n},\qquad \text{삼각}=\frac{8}{\pi^2}\sum_{n\ \text{홀수}}\frac{(-1)^{\frac{n-1}{2}}\sin n\theta}{n^2}$$
+      <div class="where">점프가 있는 파형은 계수가 \(1/n\)로, 꺾임만 있는 파형은 \(1/n^2\)로 줄어든다. 매끈할수록 높은 주파수 성분이 빨리 사라진다 — 1절의 열이 시간이 지나면 매끈해지는 것과 같은 이야기를 거꾸로 한 것.</div>
+    </div>
+
+    <div class="sim" id="sim-ft-epi">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>원 N개로 파형 그리기 — 깁스 현상</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-ft-epi"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>목표 파형</span><div class="seg" id="ft-epi-wave"><button data-value="square" class="on">사각</button><button data-value="saw">톱니</button><button data-value="tri">삼각</button></div></div>
+          <label class="ctrl"><span>원(항)의 수 N <output id="ft-epi-n-out"></output></span><input type="range" id="ft-epi-n" min="1" max="50" value="4"></label>
+          <label class="ctrl"><span>회전 속도 <output id="ft-epi-sp-out"></output></span><input type="range" id="ft-epi-sp" min="0" max="100" value="35"></label>
+          <div class="btn-row"><button class="btn primary" id="ft-epi-play">❚❚ 멈춤</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">가장 높은 배음 n</span><span class="v" id="ft-epi-top">—</span></div>
+        <div class="stat"><span class="k">최대 오버슈트(점프 대비)</span><span class="v" id="ft-epi-ov">—</span></div>
+        <div class="stat"><span class="k">RMS 오차</span><span class="v" id="ft-epi-rms">—</span></div>
+      </div>
+      <div class="sim-note">왼쪽: 원들이 각자 n배 속도로 돌고, 마지막 끝점의 높이가 오른쪽 그래프의 맨 왼쪽 점이 됩니다(점선 = 목표 파형). 해볼 것: ① 사각에서 N = 1→50. RMS 오차는 계속 줄지만 점프 옆 봉우리 높이는 약 9%(점프 크기 2의 0.179)에서 멈추고 폭만 좁아진다. ② 삼각으로 바꾸면 N = 3만 돼도 거의 완벽하다(1/n² 감쇠, 점프 없음). ③ 톱니는 원의 크기가 1/n로 줄어 사각보다 꼬리가 길다. 모델: 진폭 ±1, 위상 0인 이상적 파형의 푸리에 부분합.</div>
+    </div>
+    <p>N을 아무리 키워도 남는 약 9%의 봉우리가 <span class="term">깁스 현상</span><span class="en">(Gibbs Phenomenon)</span>입니다. 정확히는 점프 크기의 \(\frac{1}{\pi}\int_0^\pi \frac{\sin t}{t}dt - \frac12 \approx 0.0895\)배. 1848년 윌브러엄<span class="en">(Wilbraham)</span>이 먼저 발견했지만 1899년 기브스가 다시 설명하면서 이름이 붙었습니다. 부분합은 오차의 <b>제곱 평균</b>을 0으로 보내지만 <b>최댓값</b>은 0으로 보내지 않습니다. 이 차이가 실무에서는 이미지 윤곽 옆의 링잉<span class="en">(Ringing)</span>, 대역 제한 필터를 통과한 디지털 펄스의 오버슈트로 나타납니다.</p>
+  </section>
+
+  <!-- =============================================================== 3 -->
+  <section id="winding">
+    <h2>계수는 어떻게 찾나: 신호를 원에 감는 기계</h2>
+    <div class="problem"><strong>섞인 소리에서 주파수 하나 골라내기</strong>
+      <p>두 개의 진동이 더해진 신호 \(g(t)\)를 받았다. 이 안에 2 Hz 성분이 있는지, 있다면 얼마나 센지 알고 싶다. 파형만 보면 꾸불꾸불한 선 하나다. 사인파들을 분리하는 '체'가 필요하다.</p>
+    </div>
+    <p>3Blue1Brown이 대중화한 그림을 따라가 봅시다. 신호 \(g(t)\)를 <b>시간에 따라 원 주위로 감습니다</b>. 매 순간 \(g(t)\)를 반지름으로 삼고, 각도는 초당 \(f\)바퀴의 속도로 돕니다. 복소수로 쓰면 \(g(t)e^{-2\pi i f t}\)입니다. 그다음 감긴 그림의 <b>질량중심</b>을 봅니다.</p>
+    <ul>
+      <li>감는 속도 \(f\)가 신호의 어떤 성분과도 맞지 않으면, 감긴 곡선은 원점 주위에 고르게 흩어져 질량중심이 원점 근처에 머뭅니다.</li>
+      <li>\(f\)가 신호 안의 한 성분 주파수와 정확히 맞으면, 그 성분의 봉우리가 매번 같은 방향에 쌓여 곡선이 한쪽으로 쏠리고 <b>질량중심이 원점에서 튀어 나옵니다</b>.</li>
+    </ul>
+    <div class="formula">$$\hat g(f) = \frac{1}{T}\int_0^T g(t)\,e^{-2\pi i f t}\,dt \qquad (\text{감긴 곡선의 질량중심})$$
+      <div class="where">\(T\)로 나누지 않고 \(T\to\infty\)까지 적분하면 이것이 <b>푸리에 변환</b> \(\hat g(f)=\int g(t)e^{-2\pi i f t}dt\)다. 크기 \(|\hat g|\)은 그 주파수 성분의 세기, 각도 \(\arg\hat g\)는 위상이다.</div>
+    </div>
+
+    <div class="sim" id="sim-ft-wind">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>감기 기계: 질량중심이 튀어나오는 주파수 찾기</h3></div>
+      <div class="sim-body">
+        <div class="sim-view"><div class="split">
+          <div><canvas id="cv-ft-wind"></canvas><span class="cap">g(t)·e<sup>−2πift</sup></span></div>
+          <div><canvas id="cv-ft-wind-c" class="ft-click"></canvas><span class="cap">질량중심 vs 감는 주파수 f</span></div>
+        </div></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>감는 주파수 f <output id="ft-wind-f-out"></output></span><input type="range" id="ft-wind-f" min="0" max="6" step="0.01" value="1.3"></label>
+          <label class="ctrl"><span>성분 ① 주파수 f₁ (진폭 1) <output id="ft-wind-f1-out"></output></span><input type="range" id="ft-wind-f1" min="0.5" max="5" step="0.5" value="2"></label>
+          <label class="ctrl"><span>성분 ② 주파수 f₂ (진폭 0.6) <output id="ft-wind-f2-out"></output></span><input type="range" id="ft-wind-f2" min="0.5" max="5" step="0.5" value="3.5"></label>
+          <label class="check"><input type="checkbox" id="ft-wind-dc" checked> 직류 더하기(g ≥ 0, 3B1B 그림)</label>
+          <div class="btn-row"><button class="btn primary" id="ft-wind-sweep">▶ f 훑기</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">질량중심 크기 |ĝ(f)|</span><span class="v" id="ft-wind-c">—</span></div>
+        <div class="stat"><span class="k">감는 한 바퀴 시간 1/f</span><span class="v" id="ft-wind-per">—</span></div>
+        <div class="stat"><span class="k">판정</span><span class="v" id="ft-wind-hit">—</span></div>
+      </div>
+      <div class="sim-note">왼쪽 위 띠: 신호 g(t)(4초)와 한 바퀴마다의 눈금. 아래: 감긴 곡선과 질량중심(주황 점·화살표). 오른쪽: 모든 f에 대한 |ĝ(f)|(파랑)과 실수부(점선). 오른쪽 그래프를 클릭하면 그 f로 감습니다. 해볼 것: ① f를 천천히 움직이다 f = f₁, f₂에서 곡선이 한쪽으로 쏠리는 순간 보기(높이 = 진폭의 절반 0.5, 0.3). ② 직류를 켜면 f = 0에 큰 봉우리(평균값)가 생기고, 끄면 사라진다. ③ f₁ = f₂로 겹치면 봉우리 하나가 0.8로 합쳐진다. 모델: g(t) = cos 2πf₁t + 0.6 cos 2πf₂t (+1.6), 관측 시간 T = 4 s(그래서 봉우리 폭 ≈ 1/T = 0.25 Hz).</div>
+    </div>
+    <h3>왜 이게 되는가: 직교성은 "평균하면 0"</h3>
+    <p>감기 기계의 비밀은 한 줄입니다. 서로 다른 정수 주파수의 사인파를 곱해서 한 주기 동안 평균하면 0이고, 같은 주파수끼리만 0이 아닌 값이 남습니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 250" role="img" aria-label="sin x 와 sin 2x 곱의 넓이는 0, sin 2x 제곱의 넓이는 π">
+        <line x1="40" y1="50" x2="340" y2="50" class="s-axis"/><path d="M40.0,50.0 45.0,47.1 50.0,44.2 55.0,41.3 60.0,38.6 65.0,36.0 70.0,33.5 75.0,31.3 80.0,29.2 85.0,27.3 90.0,25.8 95.0,24.4 100.0,23.4 105.0,22.6 110.0,22.2 115.0,22.0 120.0,22.2 125.0,22.6 130.0,23.4 135.0,24.4 140.0,25.8 145.0,27.3 150.0,29.2 155.0,31.3 160.0,33.5 165.0,36.0 170.0,38.6 175.0,41.3 180.0,44.2 185.0,47.1 190.0,50.0 195.0,52.9 200.0,55.8 205.0,58.7 210.0,61.4 215.0,64.0 220.0,66.5 225.0,68.7 230.0,70.8 235.0,72.7 240.0,74.2 245.0,75.6 250.0,76.6 255.0,77.4 260.0,77.8 265.0,78.0 270.0,77.8 275.0,77.4 280.0,76.6 285.0,75.6 290.0,74.2 295.0,72.7 300.0,70.8 305.0,68.7 310.0,66.5 315.0,64.0 320.0,61.4 325.0,58.7 330.0,55.8 335.0,52.9 340.0,50.0" class="s-acc"/><text x="350" y="54" class="t">sin x</text>
+        <line x1="40" y1="130" x2="340" y2="130" class="s-axis"/><path d="M40.0,130.0 45.0,124.2 50.0,118.6 55.0,113.5 60.0,109.2 65.0,105.8 70.0,103.4 75.0,102.2 80.0,102.2 85.0,103.4 90.0,105.8 95.0,109.2 100.0,113.5 105.0,118.6 110.0,124.2 115.0,130.0 120.0,135.8 125.0,141.4 130.0,146.5 135.0,150.8 140.0,154.2 145.0,156.6 150.0,157.8 155.0,157.8 160.0,156.6 165.0,154.2 170.0,150.8 175.0,146.5 180.0,141.4 185.0,135.8 190.0,130.0 195.0,124.2 200.0,118.6 205.0,113.5 210.0,109.2 215.0,105.8 220.0,103.4 225.0,102.2 230.0,102.2 235.0,103.4 240.0,105.8 245.0,109.2 250.0,113.5 255.0,118.6 260.0,124.2 265.0,130.0 270.0,135.8 275.0,141.4 280.0,146.5 285.0,150.8 290.0,154.2 295.0,156.6 300.0,157.8 305.0,157.8 310.0,156.6 315.0,154.2 320.0,150.8 325.0,146.5 330.0,141.4 335.0,135.8 340.0,130.0" class="s-acc2"/><text x="350" y="134" class="t">sin 2x</text>
+        <path d="M40.0,210.0 43.8,209.7 47.5,208.6 51.3,207.0 55.0,204.9 58.8,202.4 62.5,199.7 66.3,197.0 70.0,194.3 73.8,192.0 77.5,190.2 81.3,189.0 85.0,188.5 88.8,188.7 92.5,189.8 96.3,191.7 100.0,194.3 103.8,197.6 107.5,201.5 111.3,205.6 115.0,210.0 118.8,214.4 122.5,218.5 126.3,222.4 130.0,225.7 133.8,228.3 137.5,230.2 141.3,231.3 145.0,231.5 148.8,231.0 152.5,229.8 156.3,228.0 160.0,225.7 163.8,223.0 167.5,220.3 171.3,217.6 175.0,215.1 178.8,213.0 182.5,211.4 186.3,210.3 190.0,210.0 193.8,210.3 197.5,211.4 201.3,213.0 205.0,215.1 208.8,217.6 212.5,220.3 216.3,223.0 220.0,225.7 223.7,228.0 227.5,229.8 231.3,231.0 235.0,231.5 238.8,231.3 242.5,230.2 246.3,228.3 250.0,225.7 253.7,222.4 257.5,218.5 261.3,214.4 265.0,210.0 268.8,205.6 272.5,201.5 276.3,197.6 280.0,194.3 283.8,191.7 287.5,189.8 291.3,188.7 295.0,188.5 298.8,189.0 302.5,190.2 306.3,192.0 310.0,194.3 313.8,197.0 317.5,199.7 321.2,202.4 325.0,204.9 328.8,207.0 332.5,208.6 336.3,209.7 340.0,210.0 L340,210 L40,210 Z" class="f-accs"/>
+        <line x1="40" y1="210" x2="340" y2="210" class="s-axis"/><path d="M40.0,210.0 43.8,209.7 47.5,208.6 51.3,207.0 55.0,204.9 58.8,202.4 62.5,199.7 66.3,197.0 70.0,194.3 73.8,192.0 77.5,190.2 81.3,189.0 85.0,188.5 88.8,188.7 92.5,189.8 96.3,191.7 100.0,194.3 103.8,197.6 107.5,201.5 111.3,205.6 115.0,210.0 118.8,214.4 122.5,218.5 126.3,222.4 130.0,225.7 133.8,228.3 137.5,230.2 141.3,231.3 145.0,231.5 148.8,231.0 152.5,229.8 156.3,228.0 160.0,225.7 163.8,223.0 167.5,220.3 171.3,217.6 175.0,215.1 178.8,213.0 182.5,211.4 186.3,210.3 190.0,210.0 193.8,210.3 197.5,211.4 201.3,213.0 205.0,215.1 208.8,217.6 212.5,220.3 216.3,223.0 220.0,225.7 223.7,228.0 227.5,229.8 231.3,231.0 235.0,231.5 238.8,231.3 242.5,230.2 246.3,228.3 250.0,225.7 253.7,222.4 257.5,218.5 261.3,214.4 265.0,210.0 268.8,205.6 272.5,201.5 276.3,197.6 280.0,194.3 283.8,191.7 287.5,189.8 291.3,188.7 295.0,188.5 298.8,189.0 302.5,190.2 306.3,192.0 310.0,194.3 313.8,197.0 317.5,199.7 321.2,202.4 325.0,204.9 328.8,207.0 332.5,208.6 336.3,209.7 340.0,210.0" class="s-line"/>
+        <text x="40" y="244" class="t-dim">곱: 위아래 넓이가 상쇄 → 평균 0</text>
+        <line x1="460" y1="130" x2="760" y2="130" class="s-axis"/><path d="M460.0,130.0 465.0,124.2 470.0,118.6 475.0,113.5 480.0,109.2 485.0,105.8 490.0,103.4 495.0,102.2 500.0,102.2 505.0,103.4 510.0,105.8 515.0,109.2 520.0,113.5 525.0,118.6 530.0,124.2 535.0,130.0 540.0,135.8 545.0,141.4 550.0,146.5 555.0,150.8 560.0,154.2 565.0,156.6 570.0,157.8 575.0,157.8 580.0,156.6 585.0,154.2 590.0,150.8 595.0,146.5 600.0,141.4 605.0,135.8 610.0,130.0 615.0,124.2 620.0,118.6 625.0,113.5 630.0,109.2 635.0,105.8 640.0,103.4 645.0,102.2 650.0,102.2 655.0,103.4 660.0,105.8 665.0,109.2 670.0,113.5 675.0,118.6 680.0,124.2 685.0,130.0 690.0,135.8 695.0,141.4 700.0,146.5 705.0,150.8 710.0,154.2 715.0,156.6 720.0,157.8 725.0,157.8 730.0,156.6 735.0,154.2 740.0,150.8 745.0,146.5 750.0,141.4 755.0,135.8 760.0,130.0" class="s-acc2"/><text x="460" y="100" class="t-dim">같은 주파수끼리</text>
+        <path d="M460.0,210.0 463.8,209.3 467.5,207.3 471.3,204.2 475.0,200.3 478.8,196.0 482.5,191.7 486.3,187.8 490.0,184.7 493.8,182.7 497.5,182.0 501.3,182.7 505.0,184.7 508.8,187.8 512.5,191.7 516.3,196.0 520.0,200.3 523.8,204.2 527.5,207.3 531.3,209.3 535.0,210.0 538.8,209.3 542.5,207.3 546.3,204.2 550.0,200.3 553.8,196.0 557.5,191.7 561.3,187.8 565.0,184.7 568.8,182.7 572.5,182.0 576.3,182.7 580.0,184.7 583.8,187.8 587.5,191.7 591.3,196.0 595.0,200.3 598.8,204.2 602.5,207.3 606.3,209.3 610.0,210.0 613.8,209.3 617.5,207.3 621.3,204.2 625.0,200.3 628.8,196.0 632.5,191.7 636.3,187.8 640.0,184.7 643.8,182.7 647.5,182.0 651.3,182.7 655.0,184.7 658.8,187.8 662.5,191.7 666.3,196.0 670.0,200.3 673.8,204.2 677.5,207.3 681.3,209.3 685.0,210.0 688.8,209.3 692.5,207.3 696.3,204.2 700.0,200.3 703.8,196.0 707.5,191.7 711.3,187.8 715.0,184.7 718.8,182.7 722.5,182.0 726.3,182.7 730.0,184.7 733.8,187.8 737.5,191.7 741.3,196.0 745.0,200.3 748.8,204.2 752.5,207.3 756.3,209.3 760.0,210.0 L760,210 L460,210 Z" class="f-acc2s"/>
+        <line x1="460" y1="210" x2="760" y2="210" class="s-axis"/><path d="M460.0,210.0 463.8,209.3 467.5,207.3 471.3,204.2 475.0,200.3 478.8,196.0 482.5,191.7 486.3,187.8 490.0,184.7 493.8,182.7 497.5,182.0 501.3,182.7 505.0,184.7 508.8,187.8 512.5,191.7 516.3,196.0 520.0,200.3 523.8,204.2 527.5,207.3 531.3,209.3 535.0,210.0 538.8,209.3 542.5,207.3 546.3,204.2 550.0,200.3 553.8,196.0 557.5,191.7 561.3,187.8 565.0,184.7 568.8,182.7 572.5,182.0 576.3,182.7 580.0,184.7 583.8,187.8 587.5,191.7 591.3,196.0 595.0,200.3 598.8,204.2 602.5,207.3 606.3,209.3 610.0,210.0 613.8,209.3 617.5,207.3 621.3,204.2 625.0,200.3 628.8,196.0 632.5,191.7 636.3,187.8 640.0,184.7 643.8,182.7 647.5,182.0 651.3,182.7 655.0,184.7 658.8,187.8 662.5,191.7 666.3,196.0 670.0,200.3 673.8,204.2 677.5,207.3 681.3,209.3 685.0,210.0 688.8,209.3 692.5,207.3 696.3,204.2 700.0,200.3 703.8,196.0 707.5,191.7 711.3,187.8 715.0,184.7 718.8,182.7 722.5,182.0 726.3,182.7 730.0,184.7 733.8,187.8 737.5,191.7 741.3,196.0 745.0,200.3 748.8,204.2 752.5,207.3 756.3,209.3 760.0,210.0" class="s-acc2"/>
+        <text x="460" y="244" class="t-dim">sin 2x · sin 2x ≥ 0 → 평균 1/2 (넓이 π)</text>
+        <text x="460" y="40" class="t-acc">⟨sin mx, sin nx⟩ = 0 (m ≠ n)</text>
+        <text x="460" y="62" class="t-mono">= ∫₀²π sin mx · sin nx dx</text>
+      </svg>
+      <figcaption><b>그림 5-2.</b> 직교성. 서로 다른 주파수의 곱은 양수 부분과 음수 부분이 정확히 상쇄되고, 같은 주파수의 곱(제곱)은 항상 0 이상이라 평균이 남는다. 감기 기계에서 '맞는 f'만 질량중심을 끌어내는 이유다.</figcaption>
+    </figure>
+    <p>이것은 <a href="linalg.html">3장</a>의 기저 벡터와 똑같은 구조입니다. 함수를 무한 차원 벡터로 보고 내적을 \(\langle f, g\rangle = \int f\,\bar g\,dt\)로 정의하면, \(\{e^{2\pi i n t/T}\}\)는 서로 수직인 단위 벡터들(정규직교 기저)이 됩니다. 그러면 계수 찾기는 <b>그 축 방향으로의 사영</b>일 뿐입니다.</p>
+    <div class="formula">$$g(t) = \sum_n c_n\, e^{2\pi i n t/T},\qquad c_n = \big\langle g,\ e^{2\pi i n t/T}\big\rangle = \frac1T\int_0^T g(t)\,e^{-2\pi i n t/T}\,dt$$
+      <div class="where">3차원 벡터의 x 성분을 \(\vec v\cdot\hat x\)로 구하듯, n번째 주파수 성분은 신호와 그 주파수의 회전자의 내적이다. 기저가 직교하므로 다른 성분이 섞여 들어오지 않는다. 에너지도 성분별로 그대로 나뉜다: \(\frac1T\int|g|^2dt=\sum|c_n|^2\) (파스발 정리).</div>
+    </div>
+  </section>
+
+  <!-- =============================================================== 4 -->
+  <section id="dft">
+    <h2>DFT와 FFT: 숫자 열의 스펙트럼</h2>
+    <div class="problem"><strong>1초에 수만 번 계산해야 하는 내적</strong>
+      <p>디지털 오디오는 1초에 44 100개의 숫자다. N개 표본의 스펙트럼을 내적으로 구하면 주파수 N개 × 표본 N개 = N² 번 곱셈. N = 1024면 약 100만 번, 이것을 한 프레임마다 해야 한다.</p>
+    </div>
+    <p>표본화된 신호 \(x[0],\dots,x[N-1]\)에 감기 기계를 적용한 것이 <span class="term">이산 푸리에 변환</span><span class="en">(DFT)</span>입니다. 감는 주파수는 N개의 '정수 바퀴 수' \(k=0,\dots,N-1\)만 쓰면 충분합니다.</p>
+    <div class="formula">$$X[k]=\sum_{n=0}^{N-1} x[n]\,e^{-2\pi i kn/N},\qquad x[n]=\frac1N\sum_{k=0}^{N-1}X[k]\,e^{2\pi i kn/N}$$
+      <div class="where">표본화 주파수 \(f_s\)에서 \(k\)번 칸은 \(k f_s/N\) Hz에 해당한다. 칸 간격(주파수 분해능) \(\Delta f = f_s/N\) = 1/(관측 시간). \(k > N/2\)는 음의 주파수다(<a href="sampling.html">6장</a>의 에일리어싱).</div>
+    </div>
+    <p>1965년 쿨리와 튜키<span class="en">(Cooley–Tukey)</span>는 N개짜리 DFT가 짝수 번째 표본의 DFT와 홀수 번째 표본의 DFT 두 개(N/2개짜리)로 쪼개진다는 점을 이용해 계산량을 \(N\log_2 N\)으로 줄였습니다. 이것이 <span class="term">FFT</span><span class="en">(Fast Fourier Transform)</span>입니다. N = 1024에서 100만 번이 약 1만 번으로, 100배 빨라집니다(가우스가 1805년경 같은 아이디어를 썼다는 사실이 나중에 알려졌습니다). 이 장의 모든 시뮬레이터는 브라우저 안에서 FFT를 직접 돌립니다.</p>
+
+    <div class="sim" id="sim-ft-spec">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>시간과 주파수를 동시에 보기</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-ft-spec"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>신호</span><select id="ft-spec-sig">
+            <option value="two">사인 둘 (500 + 1250 Hz)</option>
+            <option value="square">사각파 250 Hz</option>
+            <option value="pulse">짧은 펄스 (1 ms)</option>
+            <option value="chirp">처프 (200→3000 Hz)</option>
+            <option value="noise">백색 잡음</option>
+            <option value="hidden">잡음 속의 1000 Hz</option>
+          </select></label>
+          <div class="ctrl"><span>창 함수</span><div class="seg" id="ft-spec-win"><button data-value="hann" class="on">핸(Hann)</button><button data-value="rect">사각(창 없음)</button></div></div>
+          <div class="btn-row"><button class="btn primary" id="ft-spec-play">▶ 소리 듣기</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">가장 센 주파수</span><span class="v" id="ft-spec-peak">—</span></div>
+        <div class="stat"><span class="k">분해능 f<sub>s</sub>/N</span><span class="v" id="ft-spec-res">—</span></div>
+        <div class="stat"><span class="k">파스발: Σx² vs ΣX²/N</span><span class="v" id="ft-spec-pars">—</span></div>
+      </div>
+      <div class="sim-note">위: 시간 파형(앞 32 ms), 아래: 크기 스펙트럼(dB). 해볼 것: ① '사각파'는 250, 750, 1250 … Hz의 홀수 배음만, 높이가 1/n로 줄어드는 사다리. ② '짧은 펄스'는 시간에선 점 하나인데 스펙트럼은 넓게 퍼지고 1000 Hz마다 0이 된다(폭 1 ms의 sinc). ③ '잡음 속의 1000 Hz'는 파형에선 전혀 안 보이지만 스펙트럼에선 바닥 위로 뚜렷한 봉우리 — 잡음 에너지는 1024칸에 흩어지고 사인 에너지는 한 칸에 모이기 때문. 창을 '사각'으로 바꾸면 처프·사인의 봉우리 옆 누설(leakage)이 커진다. 모델: f<sub>s</sub> = 8 kHz, N = 1024(128 ms), 사각파는 4 kHz 이하 배음만 더한 대역 제한 파형. 소리는 이 128 ms 프레임을 반복 재생.</div>
+    </div>
+    <div class="callout deep"><strong>창 함수는 왜 필요한가</strong> DFT는 관측한 N개가 무한히 반복된다고 가정한다. 프레임 끝과 처음이 어긋나면 그 '이음매 점프'가 넓은 스펙트럼을 만들어 봉우리 옆으로 에너지가 샌다(누설). 핸 창은 양 끝을 0으로 부드럽게 줄여 이음매를 없애는 대신 봉우리를 조금 넓힌다. 자세한 트레이드오프는 <a href="https://musicbook.euiyun.com/">MusicBook</a>의 스펙트럼 분석에서 소리로 확인할 수 있다.</div>
+
+    <h3 id="uncertainty">짧으면 넓다: 시간–주파수 불확정성</h3>
+    <p>위 펄스에서 보았듯이, 시간에서 좁은 것은 주파수에서 넓습니다. 이것은 측정 장비의 한계가 아니라 푸리에 변환 자체의 성질입니다. 신호를 시간 축으로 \(a\)배 압축하면 스펙트럼은 \(a\)배 늘어납니다: \(g(at)\leftrightarrow \frac{1}{|a|}\hat g(f/a)\). 에너지 분포의 표준편차로 폭을 재면 그 곱에는 하한이 있습니다.</p>
+    <div class="formula">$$\Delta t\cdot\Delta f \;\ge\; \frac{1}{4\pi}\approx 0.0796$$
+      <div class="where">\(\Delta t\), \(\Delta f\): \(|g(t)|^2\)과 \(|\hat g(f)|^2\)을 확률분포로 볼 때의 표준편차. 등호는 가우스 포락선일 때만 성립한다. 양자역학의 하이젠베르크 불확정성 \(\Delta x\,\Delta p\ge\hbar/2\)와 수학적으로 같은 부등식이다.</div>
+    </div>
+    <div class="sim" id="sim-ft-unc">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>짧은 소리 ↔ 넓은 스펙트럼</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-ft-unc"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>포락선 모양</span><div class="seg" id="ft-unc-shape"><button data-value="gauss" class="on">가우스</button><button data-value="rect">사각</button></div></div>
+          <label class="ctrl"><span>지속 시간(폭 σ) <output id="ft-unc-w-out"></output></span><input type="range" id="ft-unc-w" min="0" max="100" value="45"></label>
+          <div class="btn-row"><button class="btn primary" id="ft-unc-play">▶ 한 번 듣기</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Δt</span><span class="v" id="ft-unc-dt">—</span></div>
+        <div class="stat"><span class="k">Δf</span><span class="v" id="ft-unc-df">—</span></div>
+        <div class="stat"><span class="k">Δt·Δf (하한 0.0796)</span><span class="v" id="ft-unc-pr">—</span></div>
+      </div>
+      <div class="sim-note">1000 Hz 사인파에 포락선을 씌운 '톤 버스트'. 위: 시간 파형(±100 ms), 아래: 스펙트럼 크기(선형, 0–4 kHz), 색 띠는 ±Δ. 해볼 것: ① 폭을 줄이면 소리가 '삐–'에서 '틱'으로 바뀌고 스펙트럼이 넓어진다. ② 가우스에서는 폭을 바꿔도 곱이 0.0796 근처로 일정하다(하한에 딱 붙음). ③ 사각 포락선은 곱이 훨씬 크다 — 모서리(점프)가 만든 1/f 꼬리 때문. 모델: f<sub>s</sub> = 8 kHz, N = 2048. Δt, Δf는 복소 포락선(기저대역) 기준으로 계산하며 스펙트럼 꼬리는 4 kHz에서 잘린다.</div>
+    </div>
+    <p>그래서 레이더는 거리 분해능(짧은 펄스)을 얻으려면 넓은 대역폭이 필요하고, 음악 분석기는 저음의 음높이를 정밀하게 읽으려면 긴 창(느린 반응)을 감수해야 합니다. 5G가 짧은 지연을 얻기 위해 심볼을 짧게 만들면 부반송파 간격이 넓어지는 것도 같은 부등식입니다.</p>
+  </section>
+
+  <!-- =============================================================== 5 -->
+  <section id="convolution">
+    <h2>합성곱 정리: 필터는 주파수 곱셈이다</h2>
+    <div class="problem"><strong>잡음 낀 센서 신호 다듬기</strong>
+      <p>센서 출력의 잡음을 줄이려고 이웃 표본 w개를 평균한다(이동 평균). 이 연산은 어떤 주파수를 얼마나 깎는가? 평균 폭을 두 배로 하면 무엇이 변하는가? 시간 영역에서 미끄러지며 곱하고 더하는 계산만 들여다봐서는 답이 잘 안 보인다.</p>
+    </div>
+    <p>이동 평균, 가우스 블러, 렌즈 번짐, RC 회로의 응답… 선형이고 시간(위치)에 따라 성질이 변하지 않는 시스템의 출력은 모두 입력과 <b>임펄스 응답 \(h\)</b>의 <span class="term">합성곱</span><span class="en">(Convolution)</span>입니다. 그리고 합성곱은 푸리에 변환을 거치면 <b>곱셈</b>이 됩니다.</p>
+    <div class="formula">$$y(t)=(x*h)(t)=\int x(\tau)\,h(t-\tau)\,d\tau \quad\Longleftrightarrow\quad Y(f)=X(f)\cdot H(f)$$
+      <div class="where">이유: \(e^{2\pi i f t}\)는 선형 시불변 시스템의 <b>고유함수</b>다. 사인파를 넣으면 같은 주파수의 사인파가 나오고 크기·위상만 \(H(f)\)만큼 바뀐다(<a href="linalg.html">3장</a>의 고유벡터). 신호를 고유함수로 쪼개면 시스템은 대각 행렬, 즉 주파수별 곱셈이 된다.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 200" role="img" aria-label="합성곱 정리 도식">
+        <rect x="30" y="20" width="230" height="58" rx="10" class="f-elev"/>
+        <text x="145" y="45" class="t" text-anchor="middle">x(t), h(t)</text><text x="145" y="65" class="t-mono" text-anchor="middle">시간(위치) 영역</text>
+        <rect x="520" y="20" width="250" height="58" rx="10" class="f-elev"/>
+        <text x="645" y="45" class="t" text-anchor="middle">y = x * h</text><text x="645" y="65" class="t-mono" text-anchor="middle">미끄러지며 곱해 더하기 · N×M</text>
+        <rect x="30" y="122" width="230" height="58" rx="10" class="f-elev"/>
+        <text x="145" y="147" class="t" text-anchor="middle">X(f), H(f)</text><text x="145" y="167" class="t-mono" text-anchor="middle">주파수 영역</text>
+        <rect x="520" y="122" width="250" height="58" rx="10" class="f-elev"/>
+        <text x="645" y="147" class="t-acc" text-anchor="middle">Y = X · H</text><text x="645" y="167" class="t-mono" text-anchor="middle">주파수마다 곱셈 한 번</text>
+        <line x1="268" y1="49" x2="510" y2="49" class="s-line"/><path d="M510,44 L520,49 L510,54 Z" class="f-acc"/>
+        <text x="390" y="40" class="t-dim" text-anchor="middle">직접 계산(느림)</text>
+        <line x1="268" y1="151" x2="510" y2="151" class="s-acc"/><path d="M510,146 L520,151 L510,156 Z" class="f-acc"/>
+        <text x="390" y="142" class="t-acc" text-anchor="middle">곱하기(빠름)</text>
+        <line x1="145" y1="82" x2="145" y2="114" class="s-acc2"/><path d="M140,112 L145,121 L150,112 Z" class="f-acc2"/>
+        <text x="155" y="104" class="t-acc2">FFT</text>
+        <line x1="645" y1="118" x2="645" y2="86" class="s-acc2"/><path d="M640,88 L645,79 L650,88 Z" class="f-acc2"/>
+        <text x="655" y="104" class="t-acc2">역 FFT</text>
+      </svg>
+      <figcaption><b>그림 5-3.</b> 합성곱 정리. 긴 필터는 FFT로 주파수 영역에 가서 곱한 뒤 돌아오는 편이 빠르다(비용 \(\sim N\log N\)). 더 중요한 것은 이해의 지름길이다: 필터의 효과는 \(|H(f)|\) 그래프 하나로 다 보인다.</figcaption>
+    </figure>
+
+    <div class="sim" id="sim-ft-conv">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>필터 = 스펙트럼에 H를 곱하기</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-ft-conv"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>필터 h</span><div class="seg" id="ft-conv-k"><button data-value="box" class="on">이동 평균</button><button data-value="gauss">가우스</button><button data-value="diff">차분(고역)</button></div></div>
+          <label class="ctrl"><span>폭 w (표본) <output id="ft-conv-w-out"></output></span><input type="range" id="ft-conv-w" min="1" max="32" value="8"></label>
+          <label class="ctrl"><span>잡음 세기 <output id="ft-conv-nz-out"></output></span><input type="range" id="ft-conv-nz" min="0" max="60" value="25"></label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">|H| 첫 0 위치</span><span class="v" id="ft-conv-zero">—</span></div>
+        <div class="stat"><span class="k">직접 합성곱 vs FFT 곱 차이</span><span class="v" id="ft-conv-diff">—</span></div>
+      </div>
+      <div class="sim-note">위: 입력(회색)과 출력(파랑). 아래: 입력 스펙트럼 |X|(회색), 필터 응답 |H|(주황, 최댓값 1로 정규화), 출력 스펙트럼 |Y| = |X||H|(파랑). 해볼 것: ① 이동 평균의 폭 w를 키우면 |H|가 sinc 모양으로 좁아지고 첫 0이 N/w 칸으로 내려온다 — 잡음(고주파)은 사라지지만 모서리도 무뎌진다. ② 이동 평균은 |H|에 옆 봉우리(부엽)가 있어 일부 고주파가 새고, 가우스는 부엽이 없다. ③ '차분'은 저주파를 죽이고 모서리만 남긴다(윤곽 검출). 모델: N = 256, 순환 합성곱. '차이'는 시간 영역 직접 계산과 FFT 곱셈 결과의 최대 오차(부동소수점 반올림 수준).</div>
+    </div>
+  </section>
+
+  <!-- =============================================================== 6 -->
+  <section id="fourier-2d">
+    <h2>이미지도 주파수의 합이다: 2D 푸리에 변환</h2>
+    <div class="problem"><strong>사진의 '선명함'은 어디에 들어 있나</strong>
+      <p>사진을 흐리게 하면 무엇이 사라지는가? 샤프닝은 무엇을 키우는가? 반대로 사진 대부분의 정보는 어디에 모여 있어서, 무엇을 버려도 사람이 눈치채지 못하는가?</p>
+    </div>
+    <p>2차원 신호(이미지)의 기저는 <b>물결무늬 판</b> \(e^{2\pi i (ux+vy)}\)입니다. \((u,v)\)는 가로·세로 공간주파수(주기/픽셀 또는 lp/mm)이고, 물결의 방향은 \((u,v)\) 벡터 방향, 촘촘함은 \(\sqrt{u^2+v^2}\)입니다. 2D DFT는 가로줄마다 1D FFT, 그 결과의 세로줄마다 1D FFT를 하면 끝납니다. 스펙트럼 그림에서 <b>가운데는 낮은 주파수</b>(밝기의 큰 흐름), <b>바깥은 높은 주파수</b>(윤곽과 질감)입니다. 영상 속 가로 윤곽은 스펙트럼에 세로 줄무늬로, 세로 윤곽은 가로 줄무늬로 나타납니다.</p>
+    <div class="formula">$$F[u,v]=\sum_{y=0}^{N-1}\sum_{x=0}^{N-1} f[x,y]\,e^{-2\pi i(ux+vy)/N}$$</div>
+
+    <div class="sim" id="sim-ft-2d">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>스펙트럼에 구멍 뚫기: 저역·고역 필터</h3></div>
+      <div class="sim-body">
+        <div class="sim-view"><div class="split">
+          <div><canvas id="cv-ft-2d-a"></canvas><span class="cap">원본 128×128</span></div>
+          <div><canvas id="cv-ft-2d-b"></canvas><span class="cap">log |F| (가운데 = 저주파)</span></div>
+          <div><canvas id="cv-ft-2d-c"></canvas><span class="cap">역변환 결과</span></div>
+        </div></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>시험 이미지</span><select id="ft-2d-img"><option value="scene">풍경</option><option value="face">얼굴</option><option value="text">글자</option><option value="bars">막대</option><option value="rings">존 플레이트</option></select></label>
+          <div class="ctrl"><span>마스크</span><div class="seg" id="ft-2d-mode"><button data-value="low" class="on">저역 통과</button><button data-value="high">고역 통과</button></div></div>
+          <label class="ctrl"><span>반경 r (주기/이미지) <output id="ft-2d-r-out"></output></span><input type="range" id="ft-2d-r" min="1" max="64" value="12"></label>
+          <label class="check"><input type="checkbox" id="ft-2d-soft"> 부드러운 가장자리(가우스 마스크)</label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">남긴 계수</span><span class="v" id="ft-2d-kept">—</span></div>
+        <div class="stat"><span class="k">남긴 에너지(직류 제외)</span><span class="v" id="ft-2d-en">—</span></div>
+      </div>
+      <div class="sim-note">가운데 그림의 어두운 부분이 버린 주파수, 주황 원이 마스크 경계입니다. 해볼 것: ① 저역 통과 r = 6 정도면 계수의 1%도 안 남겼는데 장면이 알아볼 만하다 — 에너지가 저주파에 몰려 있다. ② 날카로운 원형 마스크는 윤곽 옆에 물결(링잉)을 남긴다. 2절의 깁스 현상이 2D에서 나타난 것. '부드러운 가장자리'를 켜면 사라진다. ③ 고역 통과로 바꾸면 윤곽만 남는다(고역 결과는 회색 0.5를 0으로 놓고 표시). 모델: 128×128 순환 2D FFT, 이상적 원형/가우스 마스크.</div>
+    </div>
+    <div class="callout tip"><strong>카메라의 샤프닝</strong> 언샤프 마스크는 "원본 + k × (원본 − 블러)", 즉 주파수 영역에서 \(1 + k(1-H_{\text{blur}})\)를 곱해 고주파를 들어 올리는 필터다. 너무 세게 하면 윤곽 옆에 하얀 테두리(헤일로)가 생기는데, 이것도 링잉이다. 실제 ISP의 샤프닝·노이즈 제거는 <a href="https://camerabook.euiyun.com/">CameraBook</a>에서 다룬다.</div>
+  </section>
+
+  <!-- =============================================================== 7 -->
+  <section id="lens">
+    <h2>렌즈는 푸리에 변환기다: PSF·OTF·MTF</h2>
+    <div class="problem"><strong>렌즈가 무한히 선명할 수 없는 이유</strong>
+      <p>수차를 완벽히 잡은 렌즈라도 점 하나를 점으로 맺지 못하고 작은 원반(에어리 원반)으로 번진다. 번짐의 크기는 무엇이 정하는가? 픽셀을 1 µm보다 작게 만들면 해상도가 계속 좋아지는가?</p>
+    </div>
+    <p>렌즈 앞 초점면에 물체(예: 회절격자)를 두고 평행한 빛을 비추면, 렌즈 <b>뒤초점면</b>에는 물체의 공간주파수가 점들로 펼쳐집니다. 격자 주기가 촘촘할수록 점들이 중심에서 멀리 떨어집니다. 정확히는 뒤초점면의 빛 진폭이 물체 투과율의 2D 푸리에 변환이고, 위치 \(x'\)는 공간주파수 \(u = x'/(\lambda f)\)에 대응합니다. 아베<span class="en">(Ernst Abbe)</span>가 1873년 현미경 결상 이론에서 정리한 이 관점이 <span class="term">푸리에 광학</span><span class="en">(Fourier Optics)</span>의 출발점입니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 260" role="img" aria-label="4f 광학계: 물체, 렌즈, 푸리에 면, 렌즈, 상">
+        <line x1="20" y1="130" x2="780" y2="130" class="s-dash"/>
+        <g class="s-line"><line x1="40" y1="70" x2="40" y2="82"/><line x1="40" y1="94" x2="40" y2="106"/><line x1="40" y1="118" x2="40" y2="142"/><line x1="40" y1="154" x2="40" y2="166"/><line x1="40" y1="178" x2="40" y2="190"/></g>
+        <ellipse cx="220" cy="130" rx="10" ry="92" class="f-accs" stroke="var(--accent)" stroke-width="1.5"/>
+        <ellipse cx="580" cy="130" rx="10" ry="92" class="f-accs" stroke="var(--accent)" stroke-width="1.5"/>
+        <line x1="400" y1="40" x2="400" y2="220" class="s-axis"/>
+        <g class="s-line" stroke-width="1"><line x1="40" y1="95" x2="220" y2="95"/><line x1="40" y1="165" x2="220" y2="165"/><line x1="220" y1="95" x2="400" y2="130"/><line x1="220" y1="165" x2="400" y2="130"/></g>
+        <g class="s-acc" stroke-width="1.2"><line x1="40" y1="130" x2="220" y2="85"/><line x1="40" y1="175" x2="220" y2="130"/><line x1="220" y1="85" x2="400" y2="85"/><line x1="220" y1="130" x2="400" y2="85"/></g>
+        <g class="s-acc2" stroke-width="1.2"><line x1="40" y1="130" x2="220" y2="175"/><line x1="40" y1="85" x2="220" y2="130"/><line x1="220" y1="175" x2="400" y2="175"/><line x1="220" y1="130" x2="400" y2="175"/></g>
+        <g class="s-dash"><line x1="400" y1="85" x2="580" y2="175"/><line x1="400" y1="175" x2="580" y2="85"/><line x1="400" y1="130" x2="580" y2="130"/><line x1="580" y1="175" x2="760" y2="130"/><line x1="580" y1="85" x2="760" y2="130"/></g>
+        <circle cx="400" cy="130" r="5" class="f-acc"/><circle cx="400" cy="85" r="4" class="f-acc"/><circle cx="400" cy="175" r="4" class="f-acc2"/>
+        <text x="408" y="89" class="t-mono">+1차</text><text x="408" y="134" class="t-mono">0차 (직류)</text><text x="408" y="179" class="t-mono">−1차</text>
+        <g class="s-line"><line x1="760" y1="70" x2="760" y2="82"/><line x1="760" y1="94" x2="760" y2="106"/><line x1="760" y1="118" x2="760" y2="142"/><line x1="760" y1="154" x2="760" y2="166"/><line x1="760" y1="178" x2="760" y2="190"/></g>
+        <text x="40" y="236" class="t" text-anchor="middle">물체(격자)</text>
+        <text x="220" y="246" class="t" text-anchor="middle">렌즈 1</text>
+        <text x="400" y="246" class="t-acc" text-anchor="middle">푸리에 면(뒤초점면)</text>
+        <text x="580" y="246" class="t" text-anchor="middle">렌즈 2</text>
+        <text x="760" y="236" class="t" text-anchor="middle">상</text>
+        <text x="130" y="30" class="t-mono" text-anchor="middle">← f →</text><text x="310" y="30" class="t-mono" text-anchor="middle">← f →</text>
+        <text x="490" y="30" class="t-mono" text-anchor="middle">← f →</text><text x="670" y="30" class="t-mono" text-anchor="middle">← f →</text>
+      </svg>
+      <figcaption><b>그림 5-4.</b> 4f 광학계. 렌즈 1이 물체의 푸리에 변환을 뒤초점면에 만들고, 렌즈 2가 다시 변환해 상을 만든다. 같은 각도로 나간 빛(같은 공간주파수)은 한 점에 모인다. 이 면에 구멍(조리개)이나 마스크를 두면 6절의 '스펙트럼에 구멍 뚫기'를 빛으로 하는 셈이다. 조리개 밖으로 나간 고차 회절광은 상에 기여하지 못한다.</figcaption>
+    </figure>
+    <p>카메라 렌즈의 조리개(동공<span class="en">, Pupil</span>)는 바로 이 '통과시킬 주파수의 구멍'입니다. 그 결과 점 하나의 상, 즉 <span class="term">점 확산 함수</span><span class="en">(PSF)</span>는 동공의 푸리에 변환으로 정해집니다. 자연광처럼 서로 간섭하지 않는(비간섭성) 빛에서는 다음 관계가 성립합니다.</p>
+    <div class="formula">$$\text{PSF}=\big|\mathcal F\{P\}\big|^2,\qquad \text{OTF}=\mathcal F\{\text{PSF}\}=\frac{P\star P}{\textstyle\int|P|^2}\ (\text{동공의 자기상관}),\qquad \text{MTF}=|\text{OTF}|$$
+      <div class="where">\(P\): 동공 함수(투과 영역 × 수차의 위상 \(e^{i2\pi W}\)). 원형 동공이면 PSF는 에어리 패턴이고 첫 번째 어두운 고리의 반경은 \(1.22\,\lambda N\) (\(N\): F수). 자기상관은 동공을 자기 자신과 겹쳐 밀어 볼 때 겹친 넓이이므로, 동공 지름만큼 밀면 0이 된다 → <b>차단 주파수 \(f_c = 1/(\lambda N)\)</b>. 그 이상의 공간주파수는 어떤 센서로도 복원할 수 없다.</div>
+    </div>
+
+    <div class="sim" id="sim-ft-psf">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>조리개 모양 → PSF → MTF (2D FFT로 계산)</h3></div>
+      <div class="sim-body">
+        <div class="sim-view"><div class="split">
+          <div><canvas id="cv-ft-psf-p"></canvas><span class="cap">동공 P (색 = 위상)</span></div>
+          <div><canvas id="cv-ft-psf-i"></canvas><span class="cap">PSF = |FFT(P)|²</span></div>
+          <div><canvas id="cv-ft-psf-m"></canvas><span class="cap">MTF (가로 방향)</span></div>
+        </div></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>동공 모양</span><div class="seg" id="ft-psf-shape"><button data-value="circle" class="on">원</button><button data-value="square">정사각</button><button data-value="annulus">중앙 차폐</button></div></div>
+          <label class="ctrl"><span>중앙 차폐 비율 ε <output id="ft-psf-eps-out"></output></span><input type="range" id="ft-psf-eps" min="0" max="0.8" step="0.05" value="0.4"></label>
+          <label class="ctrl"><span>초점 어긋남 W₂₀ (파장) <output id="ft-psf-def-out"></output></span><input type="range" id="ft-psf-def" min="0" max="2" step="0.05" value="0"></label>
+          <label class="ctrl"><span>F수 (λ = 550 nm) <output id="ft-psf-fn-out"></output></span><input type="range" id="ft-psf-fn"></label>
+          <label class="check"><input type="checkbox" id="ft-psf-log"> PSF 로그 표시(고리 강조)</label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">차단 주파수 1/(λN)</span><span class="v" id="ft-psf-fc">—</span></div>
+        <div class="stat"><span class="k">에어리 원반 지름 2.44λN</span><span class="v" id="ft-psf-airy">—</span></div>
+        <div class="stat"><span class="k">MTF @ f<sub>c</sub>/2</span><span class="v" id="ft-psf-m50">—</span></div>
+        <div class="stat"><span class="k">스트렐 비</span><span class="v" id="ft-psf-strehl">—</span></div>
+      </div>
+      <div class="sim-note">MTF 그래프의 점선은 무수차 원형 동공의 이론 곡선 \(\frac{2}{\pi}(\arccos\nu-\nu\sqrt{1-\nu^2})\), \(\nu=f/f_c\). 해볼 것: ① 원 → 정사각: PSF가 십자 모양 sinc²가 되고 가로 MTF는 직선(1−ν). ② 중앙 차폐(반사 망원경·반사 렌즈)를 키우면 중심 봉우리는 좁아지지만 고리에 에너지가 몰리고 중간 주파수 MTF가 움푹 꺼진다. ③ 초점 어긋남 W₂₀을 0.25λ 이상으로 올리면 스트렐 비가 급락하고 MTF가 중간에서 0 아래로(위상 반전) 꺾여 '가짜 해상'이 생긴다. 모델: 128×128 격자, 동공 반경 12픽셀, 단색광, 비간섭성 결상, 스칼라 회절. F수는 물리 단위 환산에만 쓰인다.</div>
+    </div>
+    <p>숫자로 보면 F/2.8, λ = 550 nm에서 \(f_c \approx 649\) lp/mm, 에어리 원반 지름은 약 3.8 µm입니다. 1.0 µm 픽셀 센서의 나이퀴스트 주파수는 500 lp/mm이므로, F/2.8 근처에서 이미 렌즈의 회절 한계와 픽셀 크기가 맞붙습니다. 픽셀을 더 줄여도 F수를 함께 낮추지 않으면 해상도가 거의 늘지 않는 이유입니다. 이 계산의 센서 쪽 절반은 <a href="https://sensorbook.euiyun.com/">SensorBook</a>, 렌즈 쪽 절반은 <a href="https://opticsbook.euiyun.com/">OpticsBook</a>에서 이어집니다.</p>
+    <div class="callout deep"><strong>노광 장비도 같은 수식</strong> 반도체 노광기는 마스크 패턴을 축소 투영하는 거대한 결상계다. 마스크의 공간주파수 중 동공(NA/λ)을 통과한 것만 웨이퍼에 도달하므로, 해상 한계는 \(k_1\lambda/\mathrm{NA}\) 꼴이 된다. 사입사 조명, 위상 반전 마스크, 광근접 보정(OPC)은 모두 "어떤 회절 차수를 동공 안에 넣을 것인가"를 설계하는 푸리에 광학 기술이다. 자세한 것은 <a href="https://lithobook.euiyun.com/">LithoBook</a>.</div>
+  </section>
+
+  <!-- =============================================================== 8 -->
+  <section id="jpeg">
+    <h2>JPEG: 사람이 못 보는 주파수부터 버리기</h2>
+    <div class="problem"><strong>사진 한 장을 10분의 1로</strong>
+      <p>1200만 화소 RGB 사진은 원래 36 MB다. 화질 차이를 거의 못 느끼게 하면서 몇 MB로 줄여야 한다. 무엇을 버려야 하는가?</p>
+    </div>
+    <p>6절에서 보았듯이 자연 영상의 에너지는 저주파에 몰려 있고, 사람 눈은 아주 촘촘한 밝기 변화에 덜 민감합니다. 1992년 표준이 된 JPEG<span class="en">(ISO/IEC 10918-1, ITU-T T.81)</span>은 이 두 사실을 이용합니다. 영상을 8×8 블록으로 자르고, 각 블록을 <span class="term">이산 코사인 변환</span><span class="en">(DCT)</span>으로 64개 주파수 계수로 바꾼 다음, 고주파일수록 거칠게 <b>양자화</b>(큰 눈금으로 반올림)합니다. 대부분의 고주파 계수가 0이 되고, 연속된 0은 거의 공짜로 저장됩니다. 정보를 실제로 버리는 곳은 양자화 단계 하나뿐입니다.</p>
+    <figure class="diagram">
+      <div class="ft-basis"><canvas id="cv-ft-dct"></canvas></div>
+      <figcaption><b>그림 5-5.</b> 8×8 DCT의 기저 64장. 왼쪽 위가 직류(블록 평균 밝기), 오른쪽으로 갈수록 가로 주파수, 아래로 갈수록 세로 주파수가 높다. 모든 8×8 블록은 이 64장의 가중합으로 정확히 표현된다. DCT는 1974년 아메드·나타라잔·라오가 제안했으며, 사인과 코사인을 모두 쓰는 DFT와 달리 블록 경계에서 신호를 거울처럼 접어 이음매 점프(누설)를 줄인다.</figcaption>
+    </figure>
+    <div class="formula">$$F[u,v]=\sum_{x,y=0}^{7} c_u c_v\, f[x,y]\cos\frac{(2x+1)u\pi}{16}\cos\frac{(2y+1)v\pi}{16},\qquad q[u,v]=\mathrm{round}\!\left(\frac{F[u,v]}{Q[u,v]}\right)$$
+      <div class="where">\(c_0=\sqrt{1/8}\), \(c_{k>0}=\sqrt{2/8}\) (정규직교). \(Q\): 양자화 표. 표준 부록 K의 휘도 표는 직류가 16, 가장 높은 주파수 근처가 100 안팎이다. '품질' 값은 이 표 전체에 곱하는 배율이다(IJG 방식: 품질 50 = 표 그대로, 품질이 낮을수록 표가 커짐).</div>
+    </div>
+
+    <div class="sim" id="sim-ft-jpeg">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>JPEG 품질 슬라이더: 8×8 DCT 양자화</h3></div>
+      <div class="sim-body">
+        <div class="sim-view"><div class="split">
+          <div><canvas id="cv-ft-jpeg-a"></canvas><span class="cap">원본</span></div>
+          <div><canvas id="cv-ft-jpeg-b"></canvas><span class="cap">복원(양자화 후)</span></div>
+          <div><canvas id="cv-ft-jpeg-c"></canvas><span class="cap">차이 × 4</span></div>
+        </div></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>시험 이미지</span><select id="ft-jpeg-img"><option value="scene">풍경</option><option value="face">얼굴</option><option value="text">글자</option><option value="rings">존 플레이트</option></select></label>
+          <label class="ctrl"><span>품질 Q <output id="ft-jpeg-q-out"></output></span><input type="range" id="ft-jpeg-q" min="1" max="100" value="50"></label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">0이 아닌 계수</span><span class="v" id="ft-jpeg-nz">—</span></div>
+        <div class="stat"><span class="k">추정 비트/픽셀</span><span class="v" id="ft-jpeg-bpp">—</span></div>
+        <div class="stat"><span class="k">추정 압축비</span><span class="v" id="ft-jpeg-cr">—</span></div>
+        <div class="stat"><span class="k">PSNR</span><span class="v" id="ft-jpeg-psnr">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① 품질 50에서 이미 64개 중 평균 몇 개만 살아남는지 보기. ② 품질 5 이하로 내리면 블록마다 직류(평균)만 남아 8×8 타일이 보인다(블록 노이즈). ③ '글자'와 '존 플레이트'는 고주파가 많아 같은 품질에서 계수가 훨씬 많이 남고 윤곽 근처에 모기 잡음(mosquito noise)이 생긴다. 모델: 흑백 128×128, 표준 휘도 양자화 표(ITU-T T.81 부록 K)와 IJG 품질 배율. 비트 수는 허프만 부호를 "0 아닌 계수 하나당 (4 + 크기 비트), 블록당 EOB 4비트, 직류 차분 (2 + 크기 비트)"로 근사한 추정이다(실제 파일과 ±수십 % 차이 가능). 색 성분의 크로마 서브샘플링은 생략.</div>
+    </div>
+  </section>
+
+  <!-- =============================================================== 9 -->
+  <section id="mri">
+    <h2>다시 MRI로: k-공간을 채우면 영상이 떠오른다</h2>
+    <div class="problem"><strong>안테나 하나로 단면 영상 만들기</strong>
+      <p>수신 코일은 위치를 구별하지 못한다. 몸 전체의 양성자가 내는 신호의 합 하나가 들어올 뿐이다. 이 '합 하나'로부터 어떻게 256×256 픽셀의 영상을 얻는가?</p>
+    </div>
+    <p>양성자의 세차 주파수는 \(f = \bar\gamma B\)이고 \(\bar\gamma \approx 42.58\) MHz/T입니다. x 방향으로 기울기 \(G_x\)를 걸면 위치 \(x\)의 양성자는 \(\bar\gamma(B_0+G_x x)\)로 돕니다. 예를 들어 \(G_x = 10\) mT/m이면 1 mm 떨어진 두 지점의 주파수 차는 약 426 Hz. 그러면 코일 신호는</p>
+    <div class="formula">$$s(t)=\iint \rho(x,y)\,e^{-2\pi i\,(k_x x+k_y y)}\,dx\,dy,\qquad k_x(t)=\bar\gamma\!\int_0^t G_x\,dt',\quad k_y=\bar\gamma\!\int G_y\,dt'$$
+      <div class="where">\(\rho(x,y)\): 양성자 밀도(와 이완 시간 가중). 기저 주파수 \(\bar\gamma B_0\)는 복조로 제거했다. 신호의 각 순간이 바로 영상의 2D 푸리에 변환 \(F(k_x,k_y)\)의 한 점이다! 읽기 기울기 \(G_x\)를 켠 채 표본을 받으면 k-공간의 가로 한 줄이, 그 전에 \(G_y\)를 잠깐 걸어 위상을 감아 두면 줄의 높이 \(k_y\)가 정해진다(위상 인코딩).</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 210" role="img" aria-label="기울기 자기장이 위치를 주파수로 바꾸고, 신호의 합을 FFT로 위치별 세기로 되돌린다">
+        <rect x="30" y="45" width="180" height="140" rx="16" class="f-surface"/>
+        <circle cx="70" cy="115" r="9" class="f-acc"/><circle cx="120" cy="115" r="9" class="f-acc"/><circle cx="170" cy="115" r="9" class="f-acc"/>
+        <text x="120" y="35" class="t" text-anchor="middle">몸속 세 지점</text>
+        <line x1="40" y1="170" x2="200" y2="170" class="s-acc2"/><path d="M200,165 L210,170 L200,175 Z" class="f-acc2"/>
+        <text x="120" y="160" class="t-mono" text-anchor="middle">B = B₀ + Gₓ·x</text>
+        <path d="M250.0,70.0 250.9,68.4 251.8,66.9 252.8,65.5 253.7,64.1 254.6,62.9 255.5,61.9 256.4,61.1 257.3,60.5 258.3,60.1 259.2,60.0 260.1,60.1 261.0,60.5 261.9,61.1 262.8,61.9 263.8,62.9 264.7,64.1 265.6,65.5 266.5,66.9 267.4,68.4 268.3,70.0 269.3,71.6 270.2,73.1 271.1,74.5 272.0,75.9 272.9,77.1 273.8,78.1 274.8,78.9 275.7,79.5 276.6,79.9 277.5,80.0 278.4,79.9 279.3,79.5 280.3,78.9 281.2,78.1 282.1,77.1 283.0,75.9 283.9,74.5 284.8,73.1 285.8,71.6 286.7,70.0 287.6,68.4 288.5,66.9 289.4,65.5 290.3,64.1 291.3,62.9 292.2,61.9 293.1,61.1 294.0,60.5 294.9,60.1 295.8,60.0 296.8,60.1 297.7,60.5 298.6,61.1 299.5,61.9 300.4,62.9 301.3,64.1 302.3,65.5 303.2,66.9 304.1,68.4 305.0,70.0 305.9,71.6 306.8,73.1 307.8,74.5 308.7,75.9 309.6,77.1 310.5,78.1 311.4,78.9 312.3,79.5 313.3,79.9 314.2,80.0 315.1,79.9 316.0,79.5 316.9,78.9 317.8,78.1 318.8,77.1 319.7,75.9 320.6,74.5 321.5,73.1 322.4,71.6 323.3,70.0 324.3,68.4 325.2,66.9 326.1,65.5 327.0,64.1 327.9,62.9 328.8,61.9 329.8,61.1 330.7,60.5 331.6,60.1 332.5,60.0 333.4,60.1 334.3,60.5 335.3,61.1 336.2,61.9 337.1,62.9 338.0,64.1 338.9,65.5 339.8,66.9 340.8,68.4 341.7,70.0 342.6,71.6 343.5,73.1 344.4,74.5 345.3,75.9 346.3,77.1 347.2,78.1 348.1,78.9 349.0,79.5 349.9,79.9 350.8,80.0 351.8,79.9 352.7,79.5 353.6,78.9 354.5,78.1 355.4,77.1 356.3,75.9 357.3,74.5 358.2,73.1 359.1,71.6 360.0,70.0" class="s-acc"/><path d="M250.0,115.0 250.9,112.4 251.8,110.0 252.8,107.9 253.7,106.3 254.6,105.3 255.5,105.0 256.4,105.3 257.3,106.3 258.3,107.9 259.2,110.0 260.1,112.4 261.0,115.0 261.9,117.6 262.8,120.0 263.8,122.1 264.7,123.7 265.6,124.7 266.5,125.0 267.4,124.7 268.3,123.7 269.3,122.1 270.2,120.0 271.1,117.6 272.0,115.0 272.9,112.4 273.8,110.0 274.8,107.9 275.7,106.3 276.6,105.3 277.5,105.0 278.4,105.3 279.3,106.3 280.3,107.9 281.2,110.0 282.1,112.4 283.0,115.0 283.9,117.6 284.8,120.0 285.8,122.1 286.7,123.7 287.6,124.7 288.5,125.0 289.4,124.7 290.3,123.7 291.3,122.1 292.2,120.0 293.1,117.6 294.0,115.0 294.9,112.4 295.8,110.0 296.8,107.9 297.7,106.3 298.6,105.3 299.5,105.0 300.4,105.3 301.3,106.3 302.3,107.9 303.2,110.0 304.1,112.4 305.0,115.0 305.9,117.6 306.8,120.0 307.8,122.1 308.7,123.7 309.6,124.7 310.5,125.0 311.4,124.7 312.3,123.7 313.3,122.1 314.2,120.0 315.1,117.6 316.0,115.0 316.9,112.4 317.8,110.0 318.8,107.9 319.7,106.3 320.6,105.3 321.5,105.0 322.4,105.3 323.3,106.3 324.3,107.9 325.2,110.0 326.1,112.4 327.0,115.0 327.9,117.6 328.8,120.0 329.8,122.1 330.7,123.7 331.6,124.7 332.5,125.0 333.4,124.7 334.3,123.7 335.3,122.1 336.2,120.0 337.1,117.6 338.0,115.0 338.9,112.4 339.8,110.0 340.8,107.9 341.7,106.3 342.6,105.3 343.5,105.0 344.4,105.3 345.3,106.3 346.3,107.9 347.2,110.0 348.1,112.4 349.0,115.0 349.9,117.6 350.8,120.0 351.8,122.1 352.7,123.7 353.6,124.7 354.5,125.0 355.4,124.7 356.3,123.7 357.3,122.1 358.2,120.0 359.1,117.6 360.0,115.0" class="s-acc"/><path d="M250.0,160.0 250.9,156.4 251.8,153.3 252.8,151.1 253.7,150.1 254.6,150.3 255.5,151.9 256.4,154.6 257.3,157.9 258.3,161.6 259.2,165.0 260.1,167.8 261.0,169.5 261.9,170.0 262.8,169.1 263.8,167.1 264.7,164.1 265.6,160.5 266.5,156.9 267.4,153.7 268.3,151.3 269.3,150.1 270.2,150.2 271.1,151.6 272.0,154.1 272.9,157.4 273.8,161.0 274.8,164.5 275.7,167.4 276.6,169.3 277.5,170.0 278.4,169.3 279.3,167.4 280.3,164.5 281.2,161.0 282.1,157.4 283.0,154.1 283.9,151.6 284.8,150.2 285.8,150.1 286.7,151.3 287.6,153.7 288.5,156.9 289.4,160.5 290.3,164.1 291.3,167.1 292.2,169.1 293.1,170.0 294.0,169.5 294.9,167.8 295.8,165.0 296.8,161.6 297.7,157.9 298.6,154.6 299.5,151.9 300.4,150.3 301.3,150.1 302.3,151.1 303.2,153.3 304.1,156.4 305.0,160.0 305.9,163.6 306.8,166.7 307.8,168.9 308.7,169.9 309.6,169.7 310.5,168.1 311.4,165.4 312.3,162.1 313.3,158.4 314.2,155.0 315.1,152.2 316.0,150.5 316.9,150.0 317.8,150.9 318.8,152.9 319.7,155.9 320.6,159.5 321.5,163.1 322.4,166.3 323.3,168.7 324.3,169.9 325.2,169.8 326.1,168.4 327.0,165.9 327.9,162.6 328.8,159.0 329.8,155.5 330.7,152.6 331.6,150.7 332.5,150.0 333.4,150.7 334.3,152.6 335.3,155.5 336.2,159.0 337.1,162.6 338.0,165.9 338.9,168.4 339.8,169.8 340.8,169.9 341.7,168.7 342.6,166.3 343.5,163.1 344.4,159.5 345.3,155.9 346.3,152.9 347.2,150.9 348.1,150.0 349.0,150.5 349.9,152.2 350.8,155.0 351.8,158.4 352.7,162.1 353.6,165.4 354.5,168.1 355.4,169.7 356.3,169.9 357.3,168.9 358.2,166.7 359.1,163.6 360.0,160.0" class="s-acc"/>
+        <text x="370" y="74" class="t-mono">f₁ 낮음</text><text x="370" y="119" class="t-mono">f₂</text><text x="370" y="164" class="t-mono">f₃ 높음</text>
+        <line x1="180" y1="115" x2="245" y2="160" class="s-dash"/><line x1="130" y1="115" x2="245" y2="115" class="s-dash"/><line x1="80" y1="115" x2="245" y2="70" class="s-dash"/>
+        <path d="M420.0,115.0 420.8,109.2 421.6,103.6 422.4,98.6 423.3,94.5 424.1,91.3 424.9,89.3 425.7,88.5 426.5,88.8 427.3,90.3 428.1,92.7 428.9,95.9 429.8,99.6 430.6,103.6 431.4,107.7 432.2,111.6 433.0,115.0 433.8,117.9 434.6,120.0 435.4,121.4 436.3,122.1 437.1,122.0 437.9,121.3 438.7,120.2 439.5,118.8 440.3,117.3 441.1,115.9 441.9,114.6 442.8,113.8 443.6,113.3 444.4,113.4 445.2,114.0 446.0,115.0 446.8,116.4 447.6,118.0 448.4,119.7 449.3,121.4 450.1,122.9 450.9,124.0 451.7,124.7 452.5,125.0 453.3,124.7 454.1,124.0 454.9,122.9 455.8,121.4 456.6,119.7 457.4,118.0 458.2,116.4 459.0,115.0 459.8,114.0 460.6,113.4 461.4,113.3 462.3,113.8 463.1,114.6 463.9,115.9 464.7,117.3 465.5,118.8 466.3,120.2 467.1,121.3 467.9,122.0 468.8,122.1 469.6,121.4 470.4,120.0 471.2,117.9 472.0,115.0 472.8,111.6 473.6,107.7 474.4,103.6 475.3,99.6 476.1,95.9 476.9,92.7 477.7,90.3 478.5,88.8 479.3,88.5 480.1,89.3 480.9,91.3 481.8,94.5 482.6,98.6 483.4,103.6 484.2,109.2 485.0,115.0 485.8,120.8 486.6,126.4 487.4,131.4 488.3,135.5 489.1,138.7 489.9,140.7 490.7,141.5 491.5,141.2 492.3,139.7 493.1,137.3 493.9,134.1 494.8,130.4 495.6,126.4 496.4,122.3 497.2,118.4 498.0,115.0 498.8,112.1 499.6,110.0 500.4,108.6 501.3,107.9 502.1,108.0 502.9,108.7 503.7,109.8 504.5,111.2 505.3,112.7 506.1,114.1 506.9,115.4 507.8,116.2 508.6,116.7 509.4,116.6 510.2,116.0 511.0,115.0 511.8,113.6 512.6,112.0 513.4,110.3 514.3,108.6 515.1,107.1 515.9,106.0 516.7,105.3 517.5,105.0 518.3,105.3 519.1,106.0 519.9,107.1 520.8,108.6 521.6,110.3 522.4,112.0 523.2,113.6 524.0,115.0 524.8,116.0 525.6,116.6 526.4,116.7 527.3,116.2 528.1,115.4 528.9,114.1 529.7,112.7 530.5,111.2 531.3,109.8 532.1,108.7 532.9,108.0 533.8,107.9 534.6,108.6 535.4,110.0 536.2,112.1 537.0,115.0 537.8,118.4 538.6,122.3 539.4,126.4 540.3,130.4 541.1,134.1 541.9,137.3 542.7,139.7 543.5,141.2 544.3,141.5 545.1,140.7 545.9,138.7 546.8,135.5 547.6,131.4 548.4,126.4 549.2,120.8 550.0,115.0" class="s-acc2"/>
+        <text x="485" y="45" class="t" text-anchor="middle">코일 신호 = 합</text>
+        <rect x="575" y="95" width="56" height="40" rx="8" class="f-elev"/><text x="603" y="120" class="t-acc" text-anchor="middle">FFT</text>
+        <line x1="555" y1="115" x2="572" y2="115" class="s-line"/><line x1="633" y1="115" x2="655" y2="115" class="s-line"/>
+        <line x1="665" y1="170" x2="785" y2="170" class="s-axis"/>
+        <rect x="680" y="110" width="16" height="60" class="f-acc"/><rect x="717" y="110" width="16" height="60" class="f-acc"/><rect x="754" y="110" width="16" height="60" class="f-acc"/>
+        <text x="725" y="192" class="t-mono" text-anchor="middle">주파수 = 위치</text>
+        <text x="725" y="98" class="t" text-anchor="middle">위치별 세기</text>
+      </svg>
+      <figcaption><b>그림 5-6.</b> 주파수 인코딩. 기울기 자기장 때문에 위치마다 다른 '음높이'로 노래하고, 코일은 그 화음을 듣는다. FFT로 화음을 음별로 나누면 위치별 양성자 양, 즉 영상의 한 방향 투영이 나온다. 위상 인코딩으로 다른 방향까지 구별하면 2D 영상이 된다.</figcaption>
+    </figure>
+    <p>MRI 영상화의 역사도 이 생각을 따라 발전했습니다. 1973년 라우터버<span class="en">(Paul Lauterbur)</span>가 기울기 자기장으로 위치를 부호화하는 방법을 발표했고, 맨스필드<span class="en">(Peter Mansfield)</span>가 빠른 영상 기법을 발전시켜 두 사람은 2003년 노벨 생리의학상을 받았습니다. 지금의 표준인 '푸리에 영상법'(k-공간을 격자로 채우고 2D FFT)은 1975년 에른스트<span class="en">(Richard Ernst)</span> 연구팀이 제안한 방식에서 출발합니다.</p>
+
+    <div class="sim" id="sim-ft-kspace">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>k-공간 채우기: 스캔하는 동안 영상이 나타난다</h3></div>
+      <div class="sim-body">
+        <div class="sim-view"><div class="split">
+          <div><canvas id="cv-ft-ks-k"></canvas><span class="cap">k-공간 (채운 부분, log)</span></div>
+          <div><canvas id="cv-ft-ks-i"></canvas><span class="cap">|역 2D FFT| = 영상</span></div>
+        </div></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>채우는 순서</span><div class="seg" id="ft-ks-mode"><button data-value="lines" class="on">줄 단위(위→아래)</button><button data-value="center">중심부터</button><button data-value="edge">가장자리만</button></div></div>
+          <label class="ctrl"><span>채운 비율 <output id="ft-ks-frac-out"></output></span><input type="range" id="ft-ks-frac" min="0" max="100" value="30"></label>
+          <div class="btn-row"><button class="btn primary" id="ft-ks-play">▶ 스캔</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">채운 k-공간 점</span><span class="v" id="ft-ks-pts">—</span></div>
+        <div class="stat"><span class="k">담긴 신호 에너지</span><span class="v" id="ft-ks-en">—</span></div>
+        <div class="stat"><span class="k">영상 RMS 오차</span><span class="v" id="ft-ks-err">—</span></div>
+      </div>
+      <div class="sim-note">시험 영상은 CT·MRI 알고리즘 검증용 표준인 셰프–로건 팬텀(수정판)입니다. 해볼 것: ① '줄 단위'로 스캔하면 위쪽 고주파 줄을 아무리 채워도 아무것도 안 보이다가, 가운데(k<sub>y</sub> ≈ 0) 줄을 지나는 순간 영상이 확 나타난다. ② '중심부터' 5%만 채워도 명암과 윤곽 대부분이 보인다(흐릿할 뿐) — 영상 대비는 k-공간 중심에 있다. ③ '가장자리만'은 에너지가 1%도 안 되는데 윤곽선만 그려진다. 모델: 128×128 이산 격자, 잡음·이완·코일 감도 무시, 실수 영상의 완전 직교 표본.</div>
+    </div>
+    <p>실제 스캐너는 이 성질을 적극적으로 이용합니다. 영상 대비를 결정하는 k-공간 중심을 원하는 시점에 얻도록 줄 순서를 바꾸고(중심 우선 순서), 실수 영상의 스펙트럼이 켤레 대칭이라는 점을 이용해 절반 조금 넘게만 채우거나(부분 푸리에), 여러 수신 코일의 감도 차이나 영상의 희소성을 이용해 줄을 건너뛰고 복원합니다(병렬 영상, 압축 센싱). 모두 "어떤 푸리에 계수를 꼭 측정해야 하는가"라는 질문에 대한 답들입니다. 인체 쪽 이야기는 <a href="https://bodybook.euiyun.com/">BodyBook</a>에서 이어집니다.</p>
+  </section>
+
+  <!-- =============================================================== 10 -->
+  <section id="uses">
+    <h2>이 도구가 쓰이는 곳</h2>
+    <p>푸리에 변환은 시리즈 전체에서 가장 자주 불려 나오는 도구입니다. 각 책의 해당 장에서 "더 깊이"를 누르면 이 장으로 돌아옵니다.</p>
+    <div class="uses">
+      <a href="https://musicbook.euiyun.com/"><small>MUSICBOOK</small>배음·스펙트럼·EQ<br><span>음색 = 배음 진폭 분포, 이퀄라이저 = |H(f)| 곱하기, 리버브 = 합성곱.</span></a>
+      <a href="https://opticsbook.euiyun.com/"><small>OPTICSBOOK</small>회절과 MTF<br><span>에어리 원반, 회절 한계 1/(λN), 렌즈 MTF 곡선 읽기.</span></a>
+      <a href="https://sensorbook.euiyun.com/"><small>SENSORBOOK</small>픽셀 MTF·노이즈 스펙트럼<br><span>픽셀 개구의 sinc MTF, 나이퀴스트, 잡음 전력 스펙트럼.</span></a>
+      <a href="https://camerabook.euiyun.com/"><small>CAMERABOOK</small>샤프닝·JPEG<br><span>언샤프 마스크, 노이즈 제거 필터, DCT 기반 압축.</span></a>
+      <a href="https://lithobook.euiyun.com/"><small>LITHOBOOK</small>투영 노광 = 푸리에 광학<br><span>동공 필터링, 해상 한계 k₁λ/NA, 사입사 조명과 OPC.</span></a>
+      <a href="https://phonebook.euiyun.com/"><small>PHONEBOOK</small>OFDM<br><span>LTE·5G·Wi-Fi는 IFFT로 수백 개 부반송파를 한 번에 만들고 FFT로 받는다.</span></a>
+      <a href="https://networkbook.euiyun.com/"><small>NETWORKBOOK</small>변조와 대역폭<br><span>짧은 심볼 ↔ 넓은 대역(불확정성), 다중 반송파 전송.</span></a>
+      <a href="https://analogbook.euiyun.com/"><small>ANALOGBOOK</small>필터의 주파수 응답<br><span>임펄스 응답과 전달 함수, 보드 선도.</span></a>
+      <a href="https://bodybook.euiyun.com/"><small>BODYBOOK</small>MRI<br><span>k-공간, 기울기 자기장, 영상 대비.</span></a>
+    </div>
+    <p>MathBook 안에서는 <a href="sampling.html">6장</a>(표본화하면 스펙트럼이 복제된다), <a href="probability.html">7장</a>(잡음의 전력 스펙트럼), <a href="information.html">8장</a>(변환 부호화와 압축 한계)이 이 장의 도구를 바로 이어 씁니다.</p>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>핵심 정리</h2>
+    <ol>
+      <li>푸리에 분해는 열전도 문제에서 태어났다. 사인 모드는 미분 연산자의 고유함수라서 모드마다 따로 풀리고, n번 모드는 \(e^{-n^2\tau}\)로 감쇠한다.</li>
+      <li>사인파 = 회전하는 원의 그림자. 원을 충분히 쌓으면 어떤 주기 파형도 그리지만, 점프 근처에는 약 9%의 오버슈트(깁스 현상)가 남는다. 매끈한 파형일수록 계수가 빨리 줄어든다.</li>
+      <li>푸리에 계수 = 신호를 주파수 f로 원에 감았을 때의 질량중심 = 그 회전자와의 내적. 서로 다른 주파수는 직교하므로 성분들이 섞이지 않는다.</li>
+      <li>DFT는 N개 표본에 대한 감기 기계이고, FFT는 그것을 \(N\log N\)으로 계산한다. 분해능은 1/(관측 시간), 시간 폭과 주파수 폭의 곱은 \(1/(4\pi)\) 이상.</li>
+      <li>선형 시불변 시스템의 출력 = 입력 * 임펄스 응답, 주파수 영역에서는 \(Y = X\cdot H\). 필터는 스펙트럼에 곱하는 함수다.</li>
+      <li>렌즈 뒤초점면에는 물체의 공간주파수가 펼쳐진다. PSF = |FT(동공)|², OTF = 동공의 자기상관, 회절 한계 차단주파수 = 1/(λN).</li>
+      <li>JPEG는 8×8 DCT 뒤 고주파를 거칠게 양자화하고, MRI는 기울기 자기장으로 k-공간(영상의 FT)을 직접 측정해 역변환한다. 중심은 대비, 가장자리는 윤곽.</li>
+    </ol>
+  </section>
+
+  <section class="quiz-sec" id="quiz">
+    <h2>확인 퀴즈</h2>
+    <div class="quiz">
+      <div class="quiz-q"><p>양 끝이 0 °C로 유지되는 막대에서, 처음 온도 분포의 3번 사인 모드는 1번 모드에 비해 몇 배 빠르게 감쇠하는가(지수의 비)?</p><div class="opts">
+        <button class="opt">3배</button><button class="opt" data-correct>9배</button><button class="opt">27배</button><button class="opt">같은 속도</button>
+      </div><div class="quiz-exp">\(\partial^2/\partial x^2\)가 \(\sin(n\pi x/L)\)에 \(-(n\pi/L)^2\)을 곱하므로 감쇠율은 \(n^2\)에 비례한다. 3² = 9.</div></div>
+      <div class="quiz-q"><p>사각파의 푸리에 부분합에서 항의 수 N을 무한히 늘리면 점프 근처의 최대 오버슈트는?</p><div class="opts">
+        <button class="opt">0으로 줄어든다</button><button class="opt">1/N로 줄어든다</button><button class="opt" data-correct>점프 크기의 약 9%로 남고 폭만 좁아진다</button><button class="opt">점점 커진다</button>
+      </div><div class="quiz-exp">깁스 현상. 부분합은 제곱 평균 오차를 0으로 보내지만 최대 오차는 약 0.0895 × 점프로 남는다. 봉우리 위치가 점프 쪽으로 다가가며 폭이 좁아질 뿐이다.</div></div>
+      <div class="quiz-q"><p>g(t) = cos(2π·3t)를 감는 주파수 f로 원에 감았다. 질량중심이 원점에서 가장 멀리 떨어지는 f는?</p><div class="opts">
+        <button class="opt">f = 0</button><button class="opt">f = 1.5 Hz</button><button class="opt" data-correct>f = 3 Hz</button><button class="opt">모든 f에서 같다</button>
+      </div><div class="quiz-exp">감는 주파수가 성분 주파수와 같을 때만 봉우리가 한 방향에 쌓인다. 직류가 없으므로 f = 0에서는 평균이 0이다. 이것이 \(\langle g, e^{2\pi i f t}\rangle\)이 f = 3에서만 0이 아닌 이유(직교성)다.</div></div>
+      <div class="quiz-q"><p>톤 버스트의 길이를 1/4로 줄이면 스펙트럼의 폭은?</p><div class="opts">
+        <button class="opt">1/4로 좁아진다</button><button class="opt">변하지 않는다</button><button class="opt">2배</button><button class="opt" data-correct>약 4배 넓어진다</button>
+      </div><div class="quiz-exp">시간 압축 \(g(at)\)은 주파수 확장 \(\hat g(f/a)/|a|\)이 된다. 폭의 곱이 일정하므로 시간 폭이 1/4이면 주파수 폭은 4배.</div></div>
+      <div class="quiz-q"><p>λ = 0.5 µm, F/4인 무수차 렌즈의 (비간섭성) 회절 한계 차단 주파수는?</p><div class="opts">
+        <button class="opt">125 lp/mm</button><button class="opt">250 lp/mm</button><button class="opt" data-correct>500 lp/mm</button><button class="opt">2000 lp/mm</button>
+      </div><div class="quiz-exp">\(f_c = 1/(\lambda N) = 1/(0.0005\ \text{mm}\times 4) = 500\) lp/mm. OTF가 동공의 자기상관이고, 동공 지름만큼 밀면 겹침이 0이 되기 때문이다.</div></div>
+      <div class="quiz-q"><p>MRI에서 k-공간의 중심 부분만 측정하고 바깥을 0으로 두고 역변환하면 영상은?</p><div class="opts">
+        <button class="opt" data-correct>명암은 대체로 맞지만 흐릿하다</button><button class="opt">윤곽선만 보인다</button><button class="opt">아무것도 보이지 않는다</button><button class="opt">완벽하게 복원된다</button>
+      </div><div class="quiz-exp">k-공간 중심은 저주파, 즉 넓은 영역의 밝기(대비)를 담는다. 고주파(가장자리)를 버린 것은 저역 통과 필터와 같아 흐릿해지고, 날카롭게 잘랐다면 윤곽 옆에 링잉도 생긴다. 가장자리만 있으면 반대로 윤곽만 남는다.</div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ---------------------------------------------------------------- 공통 도우미 (이 장 전용) */
+const FTU = (function () {
+  const font = (px, mono) => px + "px " + getComputedStyle(document.body).getPropertyValue(mono ? "--mono" : "--font");
+  // 캔버스 안에서 캡션을 피해 정사각 영역 잡기
+  const sq = (w, h) => { const top = 26, s = Math.max(40, Math.min(w - 16, h - top - 8)); return { x: (w - s) / 2, y: top + (h - top - 8 - s) / 2, s }; };
+  const vir = (v) => MB.colormap(v, "viridis");
+  // 수정 셰프–로건 팬텀 (Toft)
+  function phantom(n) {
+    const E = [[1, .69, .92, 0, 0, 0], [-.8, .6624, .874, 0, -.0184, 0], [-.2, .11, .31, .22, 0, -18], [-.2, .16, .41, -.22, 0, 18], [.1, .21, .25, 0, .35, 0], [.1, .046, .046, 0, .1, 0], [.1, .046, .046, 0, -.1, 0], [.1, .046, .023, -.08, -.605, 0], [.1, .023, .023, 0, -.606, 0], [.1, .023, .046, .06, -.605, 0]];
+    const img = new Float64Array(n * n);
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const x = (2 * i + 1) / n - 1, y = 1 - (2 * j + 1) / n; let v = 0;
+      for (const [A, a, b, x0, y0, ph] of E) {
+        const t = (ph * Math.PI) / 180, c = Math.cos(t), s = Math.sin(t), dx = x - x0, dy = y - y0;
+        const u = dx * c + dy * s, w = -dx * s + dy * c;
+        if ((u * u) / (a * a) + (w * w) / (b * b) <= 1) v += A;
+      }
+      img[j * n + i] = v;
+    }
+    return img;
+  }
+  function fft2of(img, n) { const re = Float64Array.from(img), im = new Float64Array(n * n); MB.fft2(re, im, n); return { re, im }; }
+  function logMag(re, im, n) {
+    const m = new Float64Array(n * n); let mx = 1e-12;
+    for (let i = 0; i < n * n; i++) { m[i] = Math.log1p(Math.hypot(re[i], im[i])); if (m[i] > mx) mx = m[i]; }
+    for (let i = 0; i < n * n; i++) m[i] /= mx;
+    return MB.fftshift(m, n);
+  }
+  // 부호 있는 주파수 인덱스
+  const sgn = (k, n) => (k < n / 2 ? k : k - n);
+  return { font, sq, vir, phantom, fft2of, logMag, sgn };
+})();
+
+/* ---------------------------------------------------------------- 1. 열전도 */
+(function () {
+  const PROF = {
+    block: (x) => (x > 0.35 && x < 0.65 ? 1 : 0),
+    tri: (x) => 1 - Math.abs(2 * x - 1),
+    half: (x) => (x < 0.5 ? 1 : 0),
+    two: (x) => (Math.abs(x - 0.25) < 0.08 || Math.abs(x - 0.7) < 0.12 ? 1 : 0),
+  };
+  let init = "block", N = 15, tau = 0, playing = false, b = [];
+  function coefs() {
+    b = [0]; const f = PROF[init], M = 2000;
+    for (let n = 1; n <= 40; n++) { let s = 0; for (let i = 0; i <= M; i++) { const x = i / M; s += (i === 0 || i === M ? 0.5 : 1) * f(x) * Math.sin(n * Math.PI * x); } b[n] = (2 * s) / M; }
+  }
+  coefs();
+  const u = (x) => { let s = 0; for (let n = 1; n <= N; n++) s += b[n] * Math.exp(-n * n * tau) * Math.sin(n * Math.PI * x); return s; };
+  const cv = MB.canvas("#cv-ft-heat", (ctx, w, h) => {
+    const P = MB.palette();
+    const hTop = Math.round(h * 0.6);
+    const box = { x: 44, y: 14, w: w - 58, h: hTop - 40 };
+    const ideal = [], cur = [];
+    for (let i = 0; i <= 400; i++) { const x = i / 400; ideal.push([x, PROF[init](x)]); cur.push([x, u(x)]); }
+    MB.chart(ctx, box, { x: [0, 1], y: [-0.25, 1.3], xTicks: [0, 0.25, 0.5, 0.75, 1], yTicks: [0, 0.5, 1], series: [{ data: ideal, color: P.faint, dash: [4, 4], width: 1.5 }, { data: cur, color: P.accent, width: 2.5 }] });
+    ctx.fillStyle = P.dim; ctx.font = FTU.font(12); ctx.textAlign = "right"; ctx.fillText("위치 x / L", box.x + box.w, box.y + box.h + 30);
+    ctx.textAlign = "left"; ctx.fillText("온도 u", box.x + 6, box.y + 12);
+    // 아래: 모드 진폭 막대
+    const by = hTop + 12, bh = h - by - 26, bx = 44, bw = (w - 58) / 40;
+    let mx = 1e-9; for (let n = 1; n <= 40; n++) mx = Math.max(mx, Math.abs(b[n]));
+    ctx.strokeStyle = P.axis; ctx.beginPath(); ctx.moveTo(bx, by + bh); ctx.lineTo(bx + bw * 40, by + bh); ctx.stroke();
+    for (let n = 1; n <= 40; n++) {
+      const a0 = Math.abs(b[n]) / mx, a = a0 * Math.exp(-n * n * tau), x = bx + (n - 1) * bw + 1, ww = Math.max(1, bw - 2);
+      ctx.strokeStyle = n <= N ? P.faint : P.grid; ctx.lineWidth = 1; ctx.strokeRect(x, by + bh - a0 * bh, ww, a0 * bh);
+      if (n <= N) { ctx.fillStyle = P.accent; ctx.fillRect(x, by + bh - a * bh, ww, a * bh); }
+    }
+    ctx.fillStyle = P.dim; ctx.font = FTU.font(10, true); ctx.textAlign = "center";
+    [1, 5, 10, 20, 30, 40].forEach((n) => ctx.fillText(n, bx + (n - 0.5) * bw, by + bh + 13));
+    ctx.textAlign = "left"; ctx.font = FTU.font(12); ctx.fillText("모드 n의 진폭 |bₙ|e^(−n²τ)", bx + 4, by + 2);
+    MB.stat("ft-heat-r1", (Math.exp(-tau) * 100).toFixed(1) + "%");
+    MB.stat("ft-heat-r3", (Math.exp(-9 * tau) * 100).toPrecision(3) + "%");
+    MB.stat("ft-heat-cu", "t ≈ " + (tau * 9.13).toFixed(1) + " s");
+  }, { aspect: 0.72, maxHeight: 440, minHeight: 320 });
+  const tOf = (v) => 1.5 * (v / 100) ** 2;
+  const T = MB.range("ft-heat-t", (v) => tOf(v).toFixed(3), (v) => { tau = tOf(v); cv.redraw(); });
+  MB.range("ft-heat-n", (v) => v, (v) => { N = v; cv.redraw(); });
+  MB.seg("ft-heat-init", (v) => { init = v; coefs(); cv.redraw(); });
+  const btn = document.getElementById("ft-heat-play");
+  const setPlay = (p) => { playing = p; btn.textContent = p ? "❚❚ 멈춤" : "▶ 식히기"; };
+  btn.addEventListener("click", () => { if (!playing && T() >= 100) T.set(0); setPlay(!playing); });
+  document.getElementById("ft-heat-reset").addEventListener("click", () => { setPlay(false); T.set(0); });
+  MB.loop(cv.canvas, (dt) => { if (!playing) return; const v = Math.min(100, T() + dt * 14); T.set(v); if (v >= 100) setPlay(false); });
+})();
+
+/* ---------------------------------------------------------------- 2. 회전하는 원 */
+(function () {
+  let wave = "square", N = 4, theta = 0, playing = true, speed = 1.2, T = [], stats = {};
+  function terms() {
+    T = []; let n = 1;
+    while (T.length < N) {
+      let c = 0;
+      if (wave === "square") { if (n % 2) c = 4 / (Math.PI * n); }
+      else if (wave === "saw") c = ((2 / Math.PI) * (n % 2 ? 1 : -1)) / n;
+      else if (n % 2) c = ((8 / (Math.PI * Math.PI)) * (((n - 1) / 2) % 2 ? -1 : 1)) / (n * n);
+      if (c) T.push([n, c]);
+      n++;
+    }
+    const M = 4000; let mx = -9, se = 0, me = 0;
+    for (let i = 0; i < M; i++) { const th = (2 * Math.PI * (i + 0.5)) / M, v = ps(th), e = v - ideal(th); mx = Math.max(mx, v); se += e * e; me = Math.max(me, Math.abs(e)); }
+    stats = { top: T[T.length - 1][0], ov: wave === "tri" ? null : ((mx - 1) / 2) * 100, rms: Math.sqrt(se / M), me };
+    MB.stat("ft-epi-top", stats.top);
+    MB.stat("ft-epi-ov", stats.ov == null ? "— <small>점프 없음 · 최대 오차 " + stats.me.toFixed(3) + "</small>" : stats.ov.toFixed(2) + "%");
+    MB.stat("ft-epi-rms", stats.rms.toFixed(4));
+  }
+  const ideal = (th) => {
+    th = MB.mod(th, 2 * Math.PI);
+    if (wave === "square") return th < Math.PI ? 1 : -1;
+    if (wave === "saw") return (th > Math.PI ? th - 2 * Math.PI : th) / Math.PI;
+    return (2 / Math.PI) * Math.asin(Math.sin(th));
+  };
+  const ps = (th) => { let s = 0; for (const [n, c] of T) s += c * Math.sin(n * th); return s; };
+  terms();
+  const cv = MB.canvas("#cv-ft-epi", (ctx, w, h) => {
+    const P = MB.palette();
+    const L = Math.min(w * 0.4, h), cx = L / 2 + 4, cy = h / 2, A = Math.min(h / 2 - 16, L / 2 - 6) / 1.35;
+    const gx = L + 14, gw = w - gx - 10;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, gx - 4, h); ctx.clip();
+    let x = 0, y = 0;
+    T.forEach(([n, c], i) => {
+      const r = Math.abs(c) * A, nx = x + c * Math.cos(n * theta), ny = y + c * Math.sin(n * theta);
+      ctx.strokeStyle = P.grid; ctx.lineWidth = 1; ctx.globalAlpha = 1;
+      ctx.strokeStyle = i === 0 ? P.faint : P.grid; ctx.beginPath(); ctx.arc(cx + x * A, cy - y * A, r, 0, 2 * Math.PI); ctx.stroke();
+      ctx.strokeStyle = P.accent; ctx.lineWidth = i === 0 ? 2 : 1.4; ctx.beginPath(); ctx.moveTo(cx + x * A, cy - y * A); ctx.lineTo(cx + nx * A, cy - ny * A); ctx.stroke();
+      x = nx; y = ny;
+    });
+    ctx.restore();
+    const tipX = cx + x * A, tipY = cy - y * A;
+    // 그래프
+    ctx.strokeStyle = P.axis; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(gx, cy); ctx.lineTo(gx + gw, cy); ctx.stroke();
+    ctx.strokeStyle = P.grid; [1, -1].forEach((v) => { ctx.beginPath(); ctx.moveTo(gx, cy - v * A); ctx.lineTo(gx + gw, cy - v * A); ctx.stroke(); });
+    const span = 4 * Math.PI, M = Math.max(200, Math.round(gw * 1.5));
+    ctx.strokeStyle = P.faint; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.3; ctx.beginPath();
+    for (let i = 0; i <= M; i++) { const s = (span * i) / M, px = gx + (s / span) * gw, py = cy - ideal(theta - s) * A; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = P.accent2; ctx.lineWidth = 2.2; ctx.beginPath();
+    for (let i = 0; i <= M; i++) { const s = (span * i) / M, px = gx + (s / span) * gw, py = cy - ps(theta - s) * A; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.stroke();
+    ctx.strokeStyle = P.dim; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(tipX, tipY); ctx.lineTo(gx, cy - ps(theta) * A); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = P.accent2; ctx.beginPath(); ctx.arc(tipX, tipY, 4, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(gx, cy - ps(theta) * A, 4, 0, 7); ctx.fill();
+    ctx.fillStyle = P.dim; ctx.font = FTU.font(11, true); ctx.textAlign = "left";
+    ctx.fillText("+1", gx + 3, cy - A - 4); ctx.fillText("−1", gx + 3, cy + A + 12);
+    ctx.textAlign = "right"; ctx.fillText("← 시간", gx + gw, cy + A + 12);
+  }, { aspect: 0.48, maxHeight: 360, minHeight: 230 });
+  MB.range("ft-epi-n", (v) => v, (v) => { N = v; terms(); cv.redraw(); });
+  MB.range("ft-epi-sp", (v) => v + "%", (v) => { speed = (v / 100) * 3.4; });
+  speed = 0.35 * 3.4;
+  MB.seg("ft-epi-wave", (v) => { wave = v; terms(); cv.redraw(); });
+  const btn = document.getElementById("ft-epi-play");
+  btn.addEventListener("click", () => { playing = !playing; btn.textContent = playing ? "❚❚ 멈춤" : "▶ 돌리기"; });
+  MB.loop(cv.canvas, (dt) => { if (!playing) return; theta += dt * speed; cv.redraw(); });
+})();
+
+/* ---------------------------------------------------------------- 3. 감기 기계 */
+(function () {
+  const TT = 4, M = 1600;
+  let f = 1.3, f1 = 2, f2 = 3.5, dc = true, sweeping = false, curve = [];
+  const g = (t) => (dc ? 1.6 : 0) + Math.cos(2 * Math.PI * f1 * t) + 0.6 * Math.cos(2 * Math.PI * f2 * t);
+  let gs = new Float64Array(M + 1);
+  const fill = () => { for (let i = 0; i <= M; i++) gs[i] = g((TT * i) / M); };
+  function cent(ff) {
+    let re = 0, im = 0;
+    for (let i = 0; i < M; i++) { const t = (TT * (i + 0.5)) / M, v = g(t), a = -2 * Math.PI * ff * t; re += v * Math.cos(a); im += v * Math.sin(a); }
+    return [re / M, im / M];
+  }
+  function build() { fill(); curve = []; for (let k = 0; k <= 600; k++) { const ff = k / 100, c = cent(ff); curve.push([ff, c[0], Math.hypot(c[0], c[1])]); } }
+  build();
+  const wind = MB.canvas("#cv-ft-wind", (ctx, w, h) => {
+    const P = MB.palette();
+    // 위 띠: g(t)
+    const sx = 10, sw = w - 20, sy = 30, sh = Math.min(56, h * 0.17), gmax = dc ? 3.2 : 1.6;
+    ctx.strokeStyle = P.grid; ctx.strokeRect(sx, sy, sw, sh);
+    if (f > 0.05) { ctx.strokeStyle = P.accent2; ctx.globalAlpha = 0.5; for (let t = 1 / f; t < TT; t += 1 / f) { const px = sx + (t / TT) * sw; ctx.beginPath(); ctx.moveTo(px, sy); ctx.lineTo(px, sy + sh); ctx.stroke(); } ctx.globalAlpha = 1; }
+    ctx.strokeStyle = P.accent; ctx.lineWidth = 1.4; ctx.beginPath();
+    for (let i = 0; i <= M; i += 2) { const px = sx + (i / M) * sw, py = sy + sh - ((gs[i] + (dc ? 0 : gmax)) / (dc ? gmax : 2 * gmax)) * sh; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.stroke();
+    // 감긴 그림
+    const top = sy + sh + 8, R = Math.max(30, Math.min(w - 20, h - top - 8) / 2), cx = w / 2, cy = top + (h - top) / 2, sc = R / gmax;
+    ctx.strokeStyle = P.axis; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+    ctx.strokeStyle = P.grid; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+    ctx.strokeStyle = P.accent; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.85; ctx.beginPath();
+    for (let i = 0; i <= M; i++) { const t = (TT * i) / M, a = -2 * Math.PI * f * t, px = cx + gs[i] * Math.cos(a) * sc, py = cy - gs[i] * Math.sin(a) * sc; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.stroke(); ctx.globalAlpha = 1;
+    const c = cent(f), qx = cx + c[0] * sc, qy = cy - c[1] * sc;
+    ctx.strokeStyle = P.accent2; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(qx, qy); ctx.stroke();
+    ctx.fillStyle = P.accent2; ctx.beginPath(); ctx.arc(qx, qy, 6, 0, 7); ctx.fill();
+    const mag = Math.hypot(c[0], c[1]);
+    MB.stat("ft-wind-c", mag.toFixed(3));
+    MB.stat("ft-wind-per", f > 0.005 ? (1 / f).toFixed(2) + " s" : "∞");
+    const hit = [[0, dc ? "직류(평균)" : null], [f1, "성분 ①"], [f2, "성분 ②"]].filter(([q, n]) => n && Math.abs(f - q) < 0.08).map((x) => x[1]);
+    MB.stat("ft-wind-hit", hit.length ? hit.join("+") + " 일치" : "<small>원점 근처</small>");
+  }, { aspect: 1, maxHeight: 380, minHeight: 260 });
+  let box = null;
+  const chart = MB.canvas("#cv-ft-wind-c", (ctx, w, h) => {
+    const P = MB.palette();
+    const r = MB.chart(ctx, { x: 46, y: 30, w: w - 60, h: h - 76 }, {
+      x: [0, 6], y: [-0.35, 0.65], xLabel: "감는 주파수 f (Hz)", yTicks: [-0.2, 0, 0.2, 0.4, 0.6],
+      series: [{ data: curve.map((p) => [p[0], p[1]]), color: P.dim, width: 1.2, dash: [4, 3] }, { data: curve.map((p) => [p[0], p[2]]), color: P.accent, width: 2.2 }],
+      vlines: [{ x: f, color: P.accent2, dash: [], width: 1.5 }],
+    });
+    box = r.box;
+    if (dc) { ctx.fillStyle = P.dim; ctx.font = FTU.font(11); ctx.textAlign = "left"; ctx.fillText("↑ f=0: 평균 1.6", r.X(0) + 4, r.box.y + 12); }
+  }, { aspect: 1, maxHeight: 380, minHeight: 260 });
+  const F = MB.range("ft-wind-f", (v) => v.toFixed(2) + " Hz", (v) => { f = v; wind.redraw(); chart.redraw(); });
+  const rebuild = () => { build(); wind.redraw(); chart.redraw(); };
+  MB.range("ft-wind-f1", (v) => v + " Hz", (v) => { f1 = v; rebuild(); });
+  MB.range("ft-wind-f2", (v) => v + " Hz", (v) => { f2 = v; rebuild(); });
+  MB.check("ft-wind-dc", (v) => { dc = v; rebuild(); });
+  chart.canvas.addEventListener("pointerdown", (e) => { if (!box) return; const rc = chart.canvas.getBoundingClientRect(); const v = MB.clamp(((e.clientX - rc.left - box.x) / box.w) * 6, 0, 6); F.set(Math.round(v * 100) / 100); });
+  const btn = document.getElementById("ft-wind-sweep");
+  btn.addEventListener("click", () => { sweeping = !sweeping; btn.textContent = sweeping ? "❚❚ 멈춤" : "▶ f 훑기"; if (sweeping && F() >= 5.99) F.set(0); });
+  MB.loop(wind.canvas, (dt) => { if (!sweeping) return; let v = F() + dt * 0.45; if (v >= 6) { v = 6; sweeping = false; btn.textContent = "▶ f 훑기"; } F.set(Math.round(v * 100) / 100); });
+})();
+
+/* ---------------------------------------------------------------- 4. DFT 스펙트럼 + 소리 */
+(function () {
+  const FS = 8000, N = 1024;
+  let sig = "two", win = "hann", x = new Float64Array(N), spec = null, voice = null;
+  function noise(seed) { const R = MB.rng(seed); return () => Math.sqrt(-2 * Math.log(R() + 1e-12)) * Math.cos(2 * Math.PI * R()); }
+  function make() {
+    const nz = noise(11);
+    for (let i = 0; i < N; i++) {
+      const t = i / FS; let v = 0;
+      if (sig === "two") v = 0.6 * Math.sin(2 * Math.PI * 500 * t) + 0.3 * Math.sin(2 * Math.PI * 1250 * t);
+      else if (sig === "square") { for (let n = 1; n * 250 < 4000; n += 2) v += (4 / (Math.PI * n)) * Math.sin(2 * Math.PI * 250 * n * t); v *= 0.6; }
+      else if (sig === "pulse") v = Math.abs(i - N / 2) < 4 ? 0.9 : 0;
+      else if (sig === "chirp") { const T = N / FS; v = 0.7 * Math.sin(2 * Math.PI * (200 * t + ((3000 - 200) * t * t) / (2 * T))); }
+      else if (sig === "noise") v = 0.3 * nz();
+      else v = 0.15 * Math.sin(2 * Math.PI * 1000 * t) + 0.4 * nz();
+      x[i] = v;
+    }
+    spec = MB.spectrum(x, win, N);
+    let k = 1; for (let i = 2; i < N / 2; i++) if (spec[i] > spec[k]) k = i;
+    MB.stat("ft-spec-peak", ((k * FS) / N).toFixed(1) + " Hz");
+    // 파스발
+    const re = Float64Array.from(x), im = new Float64Array(N); MB.fft(re, im);
+    let et = 0, ef = 0; for (let i = 0; i < N; i++) { et += x[i] * x[i]; ef += re[i] * re[i] + im[i] * im[i]; }
+    MB.stat("ft-spec-pars", et.toFixed(2) + " = " + (ef / N).toFixed(2));
+  }
+  MB.stat("ft-spec-res", (FS / N).toFixed(2) + " Hz");
+  make();
+  const cv = MB.canvas("#cv-ft-spec", (ctx, w, h) => {
+    const P = MB.palette();
+    const h1 = Math.round(h * 0.36);
+    const b1 = { x: 50, y: 22, w: w - 64, h: h1 - 22 }, b2 = { x: 50, y: h1 + 46, w: w - 64, h: h - h1 - 46 - 44 };
+    const td = []; for (let i = 0; i < 256; i++) td.push([(i / FS) * 1000, x[i]]);
+    MB.chart(ctx, b1, { x: [0, 32], y: [-1.3, 1.3], yTicks: [-1, 0, 1], series: [{ data: td, color: P.accent, width: 1.6 }] });
+    const fd = []; for (let k = 0; k < N / 2; k++) fd.push([(k * FS) / N, spec[k]]);
+    MB.chart(ctx, b2, { x: [0, 4000], y: [-80, 0], yTicks: [-80, -60, -40, -20, 0], xLabel: "주파수 (Hz)", xFmt: (v) => (v >= 1000 ? v / 1000 + "k" : v), series: [{ data: fd, color: P.accent2, width: 1.5 }] });
+    ctx.fillStyle = P.dim; ctx.font = FTU.font(12); ctx.textAlign = "left";
+    ctx.fillText("시간 파형 x[n] (ms)", b1.x + 4, 14); ctx.fillText("크기 스펙트럼 |X[k]| (dB)", b2.x + 4, b2.y - 8);
+  }, { aspect: 0.72, maxHeight: 470, minHeight: 330 });
+  function startSound() {
+    let mx = 1e-9; for (let i = 0; i < N; i++) mx = Math.max(mx, Math.abs(x[i]));
+    const reps = 12, buf = new Float32Array(N * reps);
+    for (let r = 0; r < reps; r++) for (let i = 0; i < N; i++) buf[r * N + i] = (0.9 * x[i]) / mx;
+    voice = MB.playBuffer(buf, FS, { loop: true, gain: 0.15 });
+  }
+  const stopSound = () => { if (voice) { voice.release(); voice = null; } };
+  const pb = MB.playButton("ft-spec-play", startSound, stopSound, ["▶ 소리 듣기", "■ 정지"]);
+  const refresh = () => { make(); cv.redraw(); if (pb.on) { stopSound(); startSound(); } };
+  document.getElementById("ft-spec-sig").addEventListener("change", (e) => { sig = e.target.value; refresh(); });
+  MB.seg("ft-spec-win", (v) => { win = v; refresh(); });
+})();
+
+/* ---------------------------------------------------------------- 4b. 불확정성 */
+(function () {
+  const FS = 8000, N = 2048, F0 = 1000;
+  let shape = "gauss", s = 0.004, x = new Float64Array(N), mag = new Float64Array(N / 2), st = {};
+  const env = (t) => (shape === "gauss" ? Math.exp((-t * t) / (2 * s * s)) : Math.abs(t) <= (s * Math.sqrt(6)) / 2 ? 1 : 0);
+  function compute() {
+    const er = new Float64Array(N), ei = new Float64Array(N);
+    let w = 0, m = 0, v = 0;
+    for (let i = 0; i < N; i++) { const t = (i - N / 2) / FS, e = env(t); x[i] = e * Math.cos(2 * Math.PI * F0 * t); er[i] = e; const p = e * e; w += p; m += p * t; v += p * t * t; }
+    m /= w; st.dt = Math.sqrt(Math.max(0, v / w - m * m));
+    // 기저대역 포락선 스펙트럼으로 Δf
+    MB.fft(er, ei);
+    let W = 0, M1 = 0, V = 0;
+    for (let k = 0; k < N; k++) { const fk = (FTU.sgn(k, N) * FS) / N, p = er[k] * er[k] + ei[k] * ei[k]; W += p; M1 += p * fk; V += p * fk * fk; }
+    M1 /= W; st.df = Math.sqrt(Math.max(0, V / W - M1 * M1));
+    const re = Float64Array.from(x), im = new Float64Array(N); MB.fft(re, im);
+    let mx = 1e-12; for (let k = 0; k < N / 2; k++) { mag[k] = Math.hypot(re[k], im[k]); mx = Math.max(mx, mag[k]); }
+    for (let k = 0; k < N / 2; k++) mag[k] /= mx;
+    MB.stat("ft-unc-dt", (st.dt * 1000).toFixed(2) + " ms");
+    MB.stat("ft-unc-df", st.df.toFixed(1) + " Hz");
+    const pr = st.dt * st.df;
+    MB.stat("ft-unc-pr", pr.toFixed(4) + (shape === "gauss" ? "" : " <small>≫ 하한</small>"));
+  }
+  compute();
+  const cv = MB.canvas("#cv-ft-unc", (ctx, w, h) => {
+    const P = MB.palette();
+    const h1 = Math.round(h * 0.42);
+    const b1 = { x: 44, y: 22, w: w - 58, h: h1 - 22 }, b2 = { x: 44, y: h1 + 44, w: w - 58, h: h - h1 - 44 - 44 };
+    const band = "color-mix(in srgb, " + P.accent2 + " 16%, transparent)";
+    const td = []; for (let i = 0; i < N; i++) { const t = ((i - N / 2) / FS) * 1000; if (Math.abs(t) <= 100) td.push([t, x[i]]); }
+    MB.chart(ctx, b1, { x: [-100, 100], y: [-1.15, 1.15], yTicks: [-1, 0, 1], bands: [{ x0: -st.dt * 1000, x1: st.dt * 1000, color: band }], series: [{ data: td, color: P.accent, width: 1.2 }] });
+    const fd = []; for (let k = 0; k < N / 2; k++) fd.push([(k * FS) / N, mag[k]]);
+    MB.chart(ctx, b2, { x: [0, 4000], y: [0, 1.05], yTicks: [0, 0.5, 1], xLabel: "주파수 (Hz)", xFmt: (v) => (v >= 1000 ? v / 1000 + "k" : v), bands: [{ x0: F0 - st.df, x1: F0 + st.df, color: band }], series: [{ data: fd, color: P.accent2, width: 1.8 }] });
+    ctx.fillStyle = P.dim; ctx.font = FTU.font(12); ctx.textAlign = "left";
+    ctx.fillText("시간 (ms)", b1.x + 4, 14); ctx.fillText("|X(f)| (선형, 최댓값 1)", b2.x + 4, b2.y - 8);
+  }, { aspect: 0.7, maxHeight: 440, minHeight: 320 });
+  const sOf = (v) => 0.00025 * Math.pow(120, v / 100);
+  MB.range("ft-unc-w", (v) => (sOf(v) * 1000).toFixed(2) + " ms", (v) => { s = sOf(v); compute(); cv.redraw(); });
+  s = sOf(45); compute(); cv.redraw();
+  MB.seg("ft-unc-shape", (v) => { shape = v; compute(); cv.redraw(); });
+  document.getElementById("ft-unc-play").addEventListener("click", () => {
+    const L = Math.round(0.25 * FS), buf = new Float32Array(L * 3);
+    for (let r = 0; r < 3; r++) for (let i = 0; i < L; i++) { const t = (i - L / 2) / FS; buf[r * L + i] = 0.9 * env(t) * Math.cos(2 * Math.PI * F0 * t); }
+    MB.playBuffer(buf, FS, { gain: 0.18 });
+  });
+})();
+
+/* ---------------------------------------------------------------- 5. 합성곱 정리 */
+(function () {
+  const N = 256;
+  let kind = "box", W = 8, nzAmp = 0.25, x, h, y, X, H, Y, dmax = 0;
+  function compute() {
+    const R = MB.rng(5), g = () => Math.sqrt(-2 * Math.log(R() + 1e-12)) * Math.cos(2 * Math.PI * R());
+    x = new Float64Array(N);
+    for (let i = 0; i < N; i++) x[i] = (Math.sin((2 * Math.PI * 3 * i) / N) >= 0 ? 0.7 : -0.7) + nzAmp * g();
+    h = new Float64Array(N);
+    if (kind === "box") { const a = -Math.floor((W - 1) / 2); for (let j = 0; j < W; j++) h[MB.mod(a + j, N)] = 1 / W; }
+    else if (kind === "gauss") { const sg = Math.max(0.5, W / 2.5); let s = 0; for (let j = -60; j <= 60; j++) { const v = Math.exp((-j * j) / (2 * sg * sg)); h[MB.mod(j, N)] += v; s += v; } for (let i = 0; i < N; i++) h[i] /= s; }
+    else { h[0] = 1; h[MB.mod(W, N)] -= 1; }
+    const xr = Float64Array.from(x), xi = new Float64Array(N), hr = Float64Array.from(h), hi = new Float64Array(N);
+    MB.fft(xr, xi); MB.fft(hr, hi);
+    X = new Float64Array(N); H = new Float64Array(N); Y = new Float64Array(N);
+    const yr = new Float64Array(N), yi = new Float64Array(N);
+    for (let k = 0; k < N; k++) { yr[k] = xr[k] * hr[k] - xi[k] * hi[k]; yi[k] = xr[k] * hi[k] + xi[k] * hr[k]; X[k] = Math.hypot(xr[k], xi[k]); H[k] = Math.hypot(hr[k], hi[k]); Y[k] = Math.hypot(yr[k], yi[k]); }
+    MB.fft(yr, yi, true); y = yr;
+    dmax = 0;
+    for (let n = 0; n < N; n++) { let s = 0; for (let m = 0; m < N; m++) if (h[m]) s += h[m] * x[MB.mod(n - m, N)]; dmax = Math.max(dmax, Math.abs(s - y[n])); }
+    MB.stat("ft-conv-diff", dmax.toExponential(1));
+    let z = "—";
+    if (kind === "box" && W > 1) z = "k = " + (N / W).toFixed(1);
+    else if (kind === "diff") z = "k = 0 (직류 제거)";
+    else if (kind === "gauss") z = "<small>없음(부엽 없음)</small>";
+    MB.stat("ft-conv-zero", z);
+  }
+  compute();
+  const cv = MB.canvas("#cv-ft-conv", (ctx, w, hh) => {
+    const P = MB.palette();
+    const h1 = Math.round(hh * 0.42);
+    const b1 = { x: 44, y: 22, w: w - 58, h: h1 - 22 }, b2 = { x: 44, y: h1 + 44, w: w - 58, h: hh - h1 - 44 - 44 };
+    const xs = [], ys = []; for (let i = 0; i < N; i++) { xs.push([i, x[i]]); ys.push([i, y[i]]); }
+    MB.chart(ctx, b1, { x: [0, N - 1], y: [-1.6, 1.6], yTicks: [-1, 0, 1], series: [{ data: xs, color: P.faint, width: 1 }, { data: ys, color: P.accent, width: 2 }] });
+    let mx = 1e-9, mh = 1e-9; for (let k = 0; k <= N / 2; k++) { mx = Math.max(mx, X[k]); mh = Math.max(mh, H[k]); }
+    const sx = [], sh = [], sy = []; for (let k = 0; k <= N / 2; k++) { sx.push([k, X[k] / mx]); sh.push([k, H[k] / mh]); sy.push([k, Y[k] / mx]); }
+    MB.chart(ctx, b2, { x: [0, N / 2], y: [0, 1.05], yTicks: [0, 0.5, 1], xLabel: "주파수 칸 k", series: [{ data: sx, color: P.faint, width: 1 }, { data: sh, color: P.accent2, width: 2 }, { data: sy, color: P.accent, width: 1.6 }] });
+    ctx.font = FTU.font(12); ctx.textAlign = "left";
+    ctx.fillStyle = P.dim; ctx.fillText("시간: 입력 x(회색) → 출력 y = x * h(파랑)", b1.x + 4, 14);
+    ctx.fillText("주파수: |X| 회색 · |H| 주황 · |Y| = |X||H| 파랑", b2.x + 4, b2.y - 8);
+  }, { aspect: 0.72, maxHeight: 460, minHeight: 330 });
+  MB.range("ft-conv-w", (v) => v, (v) => { W = v; compute(); cv.redraw(); });
+  MB.range("ft-conv-nz", (v) => (v / 100).toFixed(2), (v) => { nzAmp = v / 100; compute(); cv.redraw(); });
+  MB.seg("ft-conv-k", (v) => { kind = v; compute(); cv.redraw(); });
+})();
+
+/* ---------------------------------------------------------------- 6. 2D 푸리에 */
+(function () {
+  const N = 128;
+  let kind = "scene", mode = "low", r = 12, soft = false, img, F, lm, out = new Float64Array(N * N), mask = new Float64Array(N * N);
+  function load() { img = MB.testImage(N, kind); F = FTU.fft2of(img, N); lm = FTU.logMag(F.re, F.im, N); }
+  function apply() {
+    const re = new Float64Array(N * N), im = new Float64Array(N * N);
+    let kept = 0, eAll = 0, eKept = 0;
+    for (let v = 0; v < N; v++) for (let u = 0; u < N; u++) {
+      const i = v * N + u, rho = Math.hypot(FTU.sgn(u, N), FTU.sgn(v, N));
+      let m = soft ? Math.exp((-rho * rho) / (2 * r * r)) : rho <= r ? 1 : 0;
+      if (mode === "high") m = 1 - m;
+      mask[i] = m; re[i] = F.re[i] * m; im[i] = F.im[i] * m;
+      if (m > 0.5) kept++;
+      if (i) { const p = F.re[i] ** 2 + F.im[i] ** 2; eAll += p; eKept += p * m * m; }
+    }
+    MB.fft2(re, im, N, true);
+    for (let i = 0; i < N * N; i++) out[i] = mode === "high" ? 0.5 + 1.5 * re[i] : re[i];
+    MB.stat("ft-2d-kept", ((kept / (N * N)) * 100).toFixed(2) + "%");
+    MB.stat("ft-2d-en", ((eKept / eAll) * 100).toFixed(1) + "%");
+  }
+  load(); apply();
+  const opt = { aspect: 1, maxHeight: 320, minHeight: 220 };
+  const ca = MB.canvas("#cv-ft-2d-a", (ctx, w, h) => { const q = FTU.sq(w, h); MB.drawGray(ctx, img, N, N, q.x, q.y, q.s, q.s); }, opt);
+  const cb = MB.canvas("#cv-ft-2d-b", (ctx, w, h) => {
+    const q = FTU.sq(w, h), ms = MB.fftshift(mask, N), d = new Float64Array(N * N);
+    for (let i = 0; i < N * N; i++) d[i] = lm[i] * (0.18 + 0.82 * ms[i]);
+    MB.drawGray(ctx, d, N, N, q.x, q.y, q.s, q.s, { map: FTU.vir });
+    const P = MB.palette(); ctx.strokeStyle = P.accent2; ctx.lineWidth = 2; ctx.setLineDash(soft ? [5, 4] : []);
+    ctx.beginPath(); ctx.arc(q.x + q.s / 2, q.y + q.s / 2, (r / N) * q.s, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+  }, opt);
+  const cc = MB.canvas("#cv-ft-2d-c", (ctx, w, h) => { const q = FTU.sq(w, h); MB.drawGray(ctx, out, N, N, q.x, q.y, q.s, q.s); }, opt);
+  const all = () => { apply(); cb.redraw(); cc.redraw(); };
+  const thr = MB.throttle(all);
+  MB.range("ft-2d-r", (v) => v, (v) => { r = v; thr(); });
+  MB.seg("ft-2d-mode", (v) => { mode = v; all(); });
+  MB.check("ft-2d-soft", (v) => { soft = v; all(); });
+  document.getElementById("ft-2d-img").addEventListener("change", (e) => { kind = e.target.value; load(); ca.redraw(); all(); });
+})();
+
+/* ---------------------------------------------------------------- 7. 동공 → PSF → MTF */
+(function () {
+  const N = 128, R = 12, LAM = 0.55e-3; // mm
+  const FN = [1.4, 2, 2.8, 4, 5.6, 8, 11, 16];
+  let shape = "circle", eps = 0.4, W20 = 0, fnum = 2.8, logv = false;
+  let pupA = new Float64Array(N * N), pupPh = new Float64Array(N * N), psf, mtf = [], strehl = 1;
+  function compute() {
+    const re = new Float64Array(N * N), im = new Float64Array(N * N); let sumA = 0;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const dx = x - N / 2, dy = y - N / 2, rho = Math.hypot(dx, dy) / R, i = y * N + x;
+      let inside = shape === "square" ? Math.abs(dx) < R && Math.abs(dy) < R : rho < 1;
+      if (shape === "annulus" && rho < eps) inside = false;
+      pupA[i] = inside ? 1 : 0;
+      const ph = 2 * Math.PI * W20 * rho * rho; pupPh[i] = ph;
+      if (inside) { re[i] = Math.cos(ph); im[i] = Math.sin(ph); sumA++; }
+    }
+    MB.fft2(re, im, N);
+    const p = new Float64Array(N * N);
+    for (let i = 0; i < N * N; i++) p[i] = (re[i] * re[i] + im[i] * im[i]) / (sumA * sumA);
+    strehl = p[0];
+    psf = MB.fftshift(p, N);
+    const or = Float64Array.from(p), oi = new Float64Array(N * N); MB.fft2(or, oi, N);
+    mtf = [];
+    for (let k = 0; k <= 2 * R + 4; k++) mtf.push([k / (2 * R), or[k] / or[0]]);
+    const fc = 1 / (LAM * fnum);
+    MB.stat("ft-psf-fc", Math.round(fc) + " <small>lp/mm</small>");
+    MB.stat("ft-psf-airy", (2.44 * LAM * 1000 * fnum).toFixed(2) + " <small>µm</small>");
+    const half = mtf[R];
+    MB.stat("ft-psf-m50", half ? half[1].toFixed(3) : "—");
+    MB.stat("ft-psf-strehl", strehl.toFixed(3));
+  }
+  compute();
+  const opt = { aspect: 1, maxHeight: 320, minHeight: 220 };
+  const cp = MB.canvas("#cv-ft-psf-p", (ctx, w, h) => {
+    const q = FTU.sq(w, h), C = R + 4, n = 2 * C, d = new Float64Array(n * n);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const i = (y + N / 2 - C) * N + (x + N / 2 - C); d[y * n + x] = pupA[i] ? 1 + MB.mod(pupPh[i] / (2 * Math.PI), 1) : 0; }
+    MB.drawGray(ctx, d, n, n, q.x, q.y, q.s, q.s, { map: (v) => (v ? MB.colormap(v - 1, "phase") : MB.colormap(0)) });
+  }, opt);
+  const ci = MB.canvas("#cv-ft-psf-i", (ctx, w, h) => {
+    const q = FTU.sq(w, h), C = 24, n = 2 * C, d = new Float64Array(n * n);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const v = psf[(y + N / 2 - C) * N + (x + N / 2 - C)]; d[y * n + x] = logv ? MB.clamp((Math.log10(v + 1e-9) + 4) / 4, 0, 1) : Math.sqrt(MB.clamp(v, 0, 1)); }
+    MB.drawGray(ctx, d, n, n, q.x, q.y, q.s, q.s, { map: FTU.vir, smooth: true });
+    if (shape !== "square") { const P = MB.palette(); ctx.strokeStyle = P.accent2; ctx.setLineDash([3, 4]); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(q.x + q.s / 2, q.y + q.s / 2, ((1.22 * N) / (2 * R) / n) * q.s, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
+  }, opt);
+  const cm = MB.canvas("#cv-ft-psf-m", (ctx, w, h) => {
+    const P = MB.palette(), fc = 1 / (LAM * fnum);
+    const th = []; for (let i = 0; i <= 100; i++) { const v = i / 100; th.push([v, (2 / Math.PI) * (Math.acos(v) - v * Math.sqrt(1 - v * v))]); }
+    MB.chart(ctx, { x: 46, y: 30, w: w - 58, h: h - 76 }, { x: [0, 1.08], y: [-0.2, 1.02], xTicks: [0, 0.25, 0.5, 0.75, 1], yTicks: [0, 0.5, 1], xFmt: (v) => Math.round(v * fc), xLabel: "공간주파수 (lp/mm)",
+      hlines: [{ y: 0, color: P.axis, dash: [] }], series: [{ data: th, color: P.faint, dash: [5, 4], width: 1.5 }, { data: mtf, color: P.accent, width: 2.4 }] });
+  }, opt);
+  const all = () => { compute(); cp.redraw(); ci.redraw(); cm.redraw(); };
+  const thr = MB.throttle(all);
+  MB.seg("ft-psf-shape", (v) => { shape = v; all(); });
+  MB.range("ft-psf-eps", (v) => v.toFixed(2), (v) => { eps = v; thr(); });
+  MB.range("ft-psf-def", (v) => v.toFixed(2) + " λ", (v) => { W20 = v; thr(); });
+  MB.steps("ft-psf-fn", FN, (v) => "F/" + v, 2.8, (v) => { fnum = v; all(); });
+  MB.check("ft-psf-log", (v) => { logv = v; ci.redraw(); });
+})();
+
+/* ---------------------------------------------------------------- 8a. DCT 기저 그림 */
+(function () {
+  const C8 = (u, x) => (u ? 0.5 : Math.sqrt(1 / 8)) * Math.cos(((2 * x + 1) * u * Math.PI) / 16);
+  MB.canvas("#cv-ft-dct", (ctx, w, h) => {
+    const P = MB.palette(), pad = 22, gap = 3, cs = (Math.min(w, h) - pad - gap * 9) / 8, ox = (w - (cs * 8 + gap * 9) - pad) / 2 + pad;
+    for (let u = 0; u < 8; u++) for (let v = 0; v < 8; v++) {
+      const d = new Float64Array(64);
+      for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) d[y * 8 + x] = 0.5 + (u + v === 0 ? 0.35 : 0.5 * Math.sign(C8(v, y) * C8(u, x)) * Math.min(1, Math.abs(C8(v, y) * C8(u, x)) * 4));
+      MB.drawGray(ctx, d, 8, 8, ox + gap + u * (cs + gap), pad + gap + v * (cs + gap), cs, cs);
+    }
+    ctx.fillStyle = P.dim; ctx.font = FTU.font(12); ctx.textAlign = "left";
+    ctx.fillText("가로 주파수 u →", ox + gap, 14);
+    ctx.save(); ctx.translate(ox - 8, pad + gap); ctx.rotate(Math.PI / 2); ctx.textBaseline = "top"; ctx.fillText("세로 주파수 v →", 0, 0); ctx.restore();
+  }, { aspect: 1, maxHeight: 440 });
+})();
+
+/* ---------------------------------------------------------------- 8b. JPEG */
+(function () {
+  const N = 128;
+  const QT = [16, 11, 10, 16, 24, 40, 51, 61, 12, 12, 14, 19, 26, 58, 60, 55, 14, 13, 16, 24, 40, 57, 69, 56, 14, 17, 22, 29, 51, 87, 80, 62, 18, 22, 37, 56, 68, 109, 103, 77, 24, 35, 55, 64, 81, 104, 113, 92, 49, 64, 78, 87, 103, 121, 120, 101, 72, 92, 95, 98, 112, 100, 103, 99];
+  const C = new Float64Array(64);
+  for (let u = 0; u < 8; u++) for (let x = 0; x < 8; x++) C[u * 8 + x] = (u ? 0.5 : Math.sqrt(1 / 8)) * Math.cos(((2 * x + 1) * u * Math.PI) / 16);
+  let kind = "scene", Q = 50, img, rec = new Float64Array(N * N), diff = new Float64Array(N * N);
+  const size = (v) => (v === 0 ? 0 : Math.floor(Math.log2(Math.abs(v))) + 1);
+  function run() {
+    const S = Q < 50 ? 5000 / Q : 200 - 2 * Q;
+    const qs = QT.map((q) => MB.clamp(Math.floor((q * S + 50) / 100), 1, 255));
+    const B = new Float64Array(64), T = new Float64Array(64), F = new Float64Array(64);
+    let nz = 0, bits = 0, prevDC = 0, se = 0;
+    for (let by = 0; by < N; by += 8) for (let bx = 0; bx < N; bx += 8) {
+      for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) B[y * 8 + x] = img[(by + y) * N + bx + x] * 255 - 128;
+      // F = C B C^T  (u: 세로, v: 가로)
+      for (let u = 0; u < 8; u++) for (let x = 0; x < 8; x++) { let s = 0; for (let y = 0; y < 8; y++) s += C[u * 8 + y] * B[y * 8 + x]; T[u * 8 + x] = s; }
+      for (let u = 0; u < 8; u++) for (let v = 0; v < 8; v++) { let s = 0; for (let x = 0; x < 8; x++) s += T[u * 8 + x] * C[v * 8 + x]; F[u * 8 + v] = s; }
+      for (let i = 0; i < 64; i++) {
+        const q = Math.round(F[i] / qs[i]);
+        if (i === 0) { bits += 2 + size(q - prevDC); prevDC = q; } else if (q) bits += 4 + size(q);
+        if (q) nz++;
+        F[i] = q * qs[i];
+      }
+      bits += 4;
+      for (let u = 0; u < 8; u++) for (let x = 0; x < 8; x++) { let s = 0; for (let v = 0; v < 8; v++) s += F[u * 8 + v] * C[v * 8 + x]; T[u * 8 + x] = s; }
+      for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+        let s = 0; for (let u = 0; u < 8; u++) s += C[u * 8 + y] * T[u * 8 + x];
+        const i = (by + y) * N + bx + x, val = MB.clamp(Math.round(s + 128), 0, 255) / 255;
+        rec[i] = val; diff[i] = MB.clamp(0.5 + 4 * (val - img[i]), 0, 1); se += (val - img[i]) ** 2;
+      }
+    }
+    const blocks = (N / 8) ** 2, bpp = bits / (N * N);
+    MB.stat("ft-jpeg-nz", (nz / blocks).toFixed(1) + " <small>/ 64 (블록당)</small>");
+    MB.stat("ft-jpeg-bpp", bpp.toFixed(2));
+    MB.stat("ft-jpeg-cr", "≈ " + (8 / bpp).toFixed(1) + " : 1");
+    const mse = se / (N * N);
+    MB.stat("ft-jpeg-psnr", mse > 0 ? (10 * Math.log10(1 / mse)).toFixed(1) + " dB" : "∞");
+  }
+  img = MB.testImage(N, kind); run();
+  const opt = { aspect: 1, maxHeight: 320, minHeight: 220 };
+  const ca = MB.canvas("#cv-ft-jpeg-a", (ctx, w, h) => { const q = FTU.sq(w, h); MB.drawGray(ctx, img, N, N, q.x, q.y, q.s, q.s); }, opt);
+  const cb = MB.canvas("#cv-ft-jpeg-b", (ctx, w, h) => { const q = FTU.sq(w, h); MB.drawGray(ctx, rec, N, N, q.x, q.y, q.s, q.s); }, opt);
+  const cc = MB.canvas("#cv-ft-jpeg-c", (ctx, w, h) => { const q = FTU.sq(w, h); MB.drawGray(ctx, diff, N, N, q.x, q.y, q.s, q.s, { map: (v) => MB.colormap(v, "diverge") }); }, opt);
+  const thr = MB.throttle(() => { run(); cb.redraw(); cc.redraw(); });
+  MB.range("ft-jpeg-q", (v) => v, (v) => { Q = v; thr(); });
+  document.getElementById("ft-jpeg-img").addEventListener("change", (e) => { kind = e.target.value; img = MB.testImage(N, kind); run(); ca.redraw(); cb.redraw(); cc.redraw(); });
+})();
+
+/* ---------------------------------------------------------------- 9. k-공간 */
+(function () {
+  const N = 128, NN = N * N;
+  const img = FTU.phantom(N), F = FTU.fft2of(img, N), lm = FTU.logMag(F.re, F.im, N);
+  let mode = "lines", frac = 0.3, playing = false, order = {}, filled = new Uint8Array(NN), out = new Float64Array(NN);
+  let eTot = 0; for (let i = 0; i < NN; i++) eTot += F.re[i] ** 2 + F.im[i] ** 2;
+  function getOrder(m) {
+    if (order[m]) return order[m];
+    const idx = Array.from({ length: NN }, (_, i) => i), key = new Float64Array(NN);
+    for (let i = 0; i < NN; i++) { const y = Math.floor(i / N), x = i % N, rho = Math.hypot(x - N / 2, y - N / 2); key[i] = m === "lines" ? y * N + x : m === "center" ? rho : -rho; }
+    idx.sort((a, b) => key[a] - key[b]);
+    return (order[m] = Int32Array.from(idx));
+  }
+  function compute() {
+    const o = getOrder(mode), cnt = Math.round(frac * NN);
+    filled.fill(0); for (let j = 0; j < cnt; j++) filled[o[j]] = 1; // 중심 이동 좌표
+    const re = new Float64Array(NN), im = new Float64Array(NN); let e = 0;
+    for (let i = 0; i < NN; i++) {
+      if (!filled[i]) continue;
+      const y = Math.floor(i / N), x = i % N, j = ((y + N / 2) % N) * N + ((x + N / 2) % N);
+      re[j] = F.re[j]; im[j] = F.im[j]; e += re[j] ** 2 + im[j] ** 2;
+    }
+    MB.fft2(re, im, N, true);
+    let se = 0; for (let i = 0; i < NN; i++) { out[i] = Math.hypot(re[i], im[i]); se += (out[i] - img[i]) ** 2; }
+    MB.stat("ft-ks-pts", cnt + " <small>/ " + NN + (mode === "lines" ? " · " + Math.floor(cnt / N) + "줄" : "") + "</small>");
+    MB.stat("ft-ks-en", ((e / eTot) * 100).toFixed(2) + "%");
+    MB.stat("ft-ks-err", Math.sqrt(se / NN).toFixed(3));
+  }
+  compute();
+  const opt = { aspect: 1, maxHeight: 360, minHeight: 240 };
+  const ck = MB.canvas("#cv-ft-ks-k", (ctx, w, h) => {
+    const q = FTU.sq(w, h), d = new Float64Array(NN);
+    for (let i = 0; i < NN; i++) d[i] = filled[i] ? 0.12 + 0.88 * lm[i] : 0;
+    MB.drawGray(ctx, d, N, N, q.x, q.y, q.s, q.s, { map: (v) => (v ? FTU.vir(v) : MB.colormap(0, "viridis").map((c) => Math.round(c * 0.35))) });
+    const P = MB.palette(); ctx.strokeStyle = P.axis; ctx.lineWidth = 1; ctx.strokeRect(q.x, q.y, q.s, q.s);
+    ctx.fillStyle = P.dim; ctx.font = FTU.font(10, true); ctx.textAlign = "right"; ctx.fillText("kₓ →", q.x + q.s - 4, q.y + q.s - 6);
+  }, opt);
+  const ci = MB.canvas("#cv-ft-ks-i", (ctx, w, h) => { const q = FTU.sq(w, h); MB.drawGray(ctx, out, N, N, q.x, q.y, q.s, q.s); }, opt);
+  const all = () => { compute(); ck.redraw(); ci.redraw(); };
+  const thr = MB.throttle(all);
+  const FR = MB.range("ft-ks-frac", (v) => v + "%", (v) => { frac = v / 100; thr(); });
+  MB.seg("ft-ks-mode", (v) => { mode = v; all(); });
+  const btn = document.getElementById("ft-ks-play");
+  const setP = (p) => { playing = p; btn.textContent = p ? "❚❚ 멈춤" : "▶ 스캔"; };
+  btn.addEventListener("click", () => { if (!playing && FR() >= 100) FR.set(0); setP(!playing); });
+  let acc = 0;
+  MB.loop(ck.canvas, (dt) => { if (!playing) return; acc += dt * 12; if (acc < 1) return; const v = Math.min(100, FR() + Math.floor(acc)); acc -= Math.floor(acc); FR.set(v); if (v >= 100) setP(false); });
+})();
+</script>
+</body>
+</html>

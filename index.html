@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>MathBook · 문제에서 출발하는 수학</title>
+<meta name="description" content="수학 개념이 어떤 공학 문제 때문에 필요했는가로 배우는 인터랙티브 교과서. 전력망에서 복소수를, MRI에서 푸리에를, QR 코드에서 오류 정정 부호를 만나고, 그림을 직접 끌어 보며 직관을 만든다.">
+<link rel="canonical" href="https://mathbook.euiyun.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MathBook">
+<meta property="og:title" content="MathBook · 문제에서 출발하는 수학">
+<meta property="og:description" content="수학 개념이 어떤 공학 문제 때문에 필요했는가로 배우는 인터랙티브 교과서. 전력망에서 복소수를, MRI에서 푸리에를, QR 코드에서 오류 정정 부호를 만나고, 그림을 직접 끌어 보며 직관을 만든다.">
+<meta property="og:url" content="https://mathbook.euiyun.com/">
+<meta property="og:image" content="https://mathbook.euiyun.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://mathbook.euiyun.com/#site","name":"MathBook","alternateName":"수학 교과서","url":"https://mathbook.euiyun.com/","inLanguage":"ko"},{"@type":"Book","@id":"https://mathbook.euiyun.com/#book","name":"MathBook — 문제에서 출발하는 수학 교과서","url":"https://mathbook.euiyun.com/","inLanguage":"ko","isAccessibleForFree":true,"educationalLevel":"공학 교양(입문~심화)","about":["공학 수학","복소수","선형대수","미분방정식","푸리에 변환","확률과 통계","정보 이론","최적화","수치 해석","기하학","군론"],"image":"https://mathbook.euiyun.com/og.png","hasPart":[{"@type":"Chapter","position":1,"name":"무한을 길들이기","url":"https://mathbook.euiyun.com/chapters/limits.html"},{"@type":"Chapter","position":2,"name":"복소수는 회전이다","url":"https://mathbook.euiyun.com/chapters/complex.html"},{"@type":"Chapter","position":3,"name":"행렬은 변환이다","url":"https://mathbook.euiyun.com/chapters/linalg.html"},{"@type":"Chapter","position":4,"name":"변화율로 세상을 쓰다","url":"https://mathbook.euiyun.com/chapters/ode.html"},{"@type":"Chapter","position":5,"name":"모든 것은 주파수의 합","url":"https://mathbook.euiyun.com/chapters/fourier.html"},{"@type":"Chapter","position":6,"name":"연속을 격자로 자르기","url":"https://mathbook.euiyun.com/chapters/sampling.html"},{"@type":"Chapter","position":7,"name":"잡음과 산포의 수학","url":"https://mathbook.euiyun.com/chapters/probability.html"},{"@type":"Chapter","position":8,"name":"놀라움을 재는 법","url":"https://mathbook.euiyun.com/chapters/information.html"},{"@type":"Chapter","position":9,"name":"가장 낮은 곳 찾기","url":"https://mathbook.euiyun.com/chapters/optimization.html"},{"@type":"Chapter","position":10,"name":"컴퓨터는 어떻게 틀리는가","url":"https://mathbook.euiyun.com/chapters/numerics.html"},{"@type":"Chapter","position":11,"name":"모양과 공간의 수학","url":"https://mathbook.euiyun.com/chapters/geometry.html"},{"@type":"Chapter","position":12,"name":"대칭의 대수","url":"https://mathbook.euiyun.com/chapters/symmetry.html"},{"@type":"Chapter","position":13,"name":"도구 지도 · 용어집 · 종합 퀴즈","url":"https://mathbook.euiyun.com/chapters/glossary.html"}],"description":"수학 개념이 어떤 공학 문제 때문에 필요했는가로 배우는 인터랙티브 교과서. 전력망에서 복소수를, MRI에서 푸리에를, QR 코드에서 오류 정정 부호를 만나고, 그림을 직접 끌어 보며 직관을 만든다."}]}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/common.js"></script>
+<style>
+  .paths { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .path { padding: 18px 20px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-elev); }
+  .path h3 { margin: 0 0 6px; font-size: 17px; }
+  .path p { margin: 0 0 10px; color: var(--text-dim); font-size: 14.5px; }
+  .path .steps { display: flex; flex-wrap: wrap; gap: 6px; }
+  .path .steps a { font-family: var(--mono); font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+  .path .steps a:hover { text-decoration: none; filter: brightness(1.1); }
+  .hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+  .hero-badges span { font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-dim); background: var(--bg-elev); }
+  .hero-demo { border-radius: 20px; border: 1px solid var(--border); background: var(--bg-elev); box-shadow: var(--shadow); overflow: hidden; }
+  .hero-demo .view { position: relative; background: var(--canvas-bg); }
+  .hero-demo canvas { display: block; width: 100%; }
+  .hero-demo .foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px 12px; font-size: 13px; color: var(--text-dim); border-top: 1px solid var(--border); }
+  .hero-demo .foot b { color: var(--text); }
+  .hero-demo .seg button { font-size: 12.5px; }
+  .hero-demo .mtx { font-family: var(--mono); font-size: 13px; color: var(--text); }
+  .myth { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .myth div { padding: 16px 18px; border-radius: var(--radius); background: var(--bg-elev); border: 1px solid var(--border); font-size: 14.5px; color: var(--text-dim); }
+  .myth div b { display: block; color: var(--text); font-size: 15.5px; margin-bottom: 6px; }
+  .myth div b::before { content: "오해 · "; color: var(--bad); }
+  .myth div a { font-size: 13px; }
+  .feat { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .feat a { display: block; padding: 16px 18px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); }
+  .feat a:hover { border-color: var(--accent); text-decoration: none; }
+  .feat a b { display: block; font-size: 16px; margin-bottom: 4px; }
+  .feat a span { color: var(--text-dim); font-size: 14px; }
+  .feat a small { display: block; font-family: var(--mono); color: var(--accent); font-size: 11.5px; margin-bottom: 6px; letter-spacing: .06em; }
+  .objs { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+  .objs a { display: grid; grid-template-columns: 44px 1fr; gap: 4px 12px; align-items: center; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); }
+  .objs a:hover { border-color: var(--accent); text-decoration: none; }
+  .objs a .ic { grid-row: span 2; width: 44px; height: 44px; border-radius: 10px; background: var(--accent-2-soft); display: grid; place-items: center; font-size: 22px; }
+  .objs a b { font-size: 15.5px; line-height: 1.3; }
+  .objs a span { font-size: 13px; color: var(--text-dim); line-height: 1.4; }
+  .objs a span em { font-style: normal; color: var(--accent); font-weight: 700; }
+  .flipcmp { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-bottom: 8px; }
+  .flipcmp > div { padding: 16px 18px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-elev); }
+  .flipcmp > div h3 { margin: 0 0 10px; font-size: 16px; }
+  .flipcmp ol { margin: 0; padding-left: 1.2em; color: var(--text-dim); font-size: 14.5px; }
+  .flipcmp .new { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .flipcmp .old h3 { color: var(--text-dim); }
+</style>
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3d6151a0abc94ede89285d462527fa80"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</head>
+<body data-root="">
+
+<section class="home-hero">
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Problem-first Math for Engineers</div>
+      <h1>수학은 정의가 아니라<br><span class="grad">문제에서 시작됐다</span></h1>
+      <p>복소수는 "허수"가 아니라 교류 전력망을 계산하려고 꺼낸 <b>회전 연산자</b>였고, 푸리에 변환은 MRI가 몸속을 보는 <b>안경</b>이며, 오류 정정 부호는 찢어진 QR 코드를 읽게 하는 <b>보험</b>입니다. MathBook은 교과서 순서(정의 → 정리)를 뒤집어 <b>문제 → 도구</b> 순서로 씁니다. 그리고 수식을 외우는 대신 그림을 <b>직접 끌어서</b> 직관을 만듭니다.</p>
+      <div class="cta">
+        <a class="primary" href="chapters/limits.html">1장부터 시작하기 →</a>
+        <a class="ghost" href="chapters/linalg.html#sim-la-grid">행렬을 손으로 휘어 보기</a>
+        <a class="ghost" href="chapters/glossary.html#tool-map">다른 책에서 왔어요</a>
+      </div>
+      <div class="hero-badges">
+        <span>12개 장 + 도구 지도</span><span>끌어서 배우는 시뮬레이터 91개</span><span>설치 없이 브라우저에서</span><span>시리즈 공통 기반</span>
+      </div>
+    </div>
+    <div class="hero-demo" id="hero">
+      <div class="view"><canvas id="cv-hero"></canvas></div>
+      <div class="foot">
+        <div class="seg" id="hero-preset"><button data-value="shear" class="on">전단</button><button data-value="rot">회전</button><button data-value="flip">반사</button><button data-value="squash">찌그러짐</button></div>
+        <span id="hero-msg" class="mtx"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-section">
+  <h2>왜 순서를 뒤집나</h2>
+  <p class="sub">수학은 공학과 너무 가까워서 "의외성"이 약합니다. 정의부터 읽으면 "그래서 이걸 어디에 쓰는데?"라는 질문이 끝까지 남습니다. 역사 속에서 수학 도구는 거의 언제나 <b>풀리지 않는 문제</b>에 대한 답으로 나타났습니다. 그 순서를 그대로 따라갑니다.</p>
+  <div class="flipcmp">
+    <div class="old"><h3>보통의 교과서</h3><ol><li>정의: 복소수 \(z = a + bi\), \(i^2=-1\)</li><li>정리: 오일러 공식 \(e^{i\theta} = \cos\theta + i\sin\theta\)</li><li>예제: 계산 연습</li><li>(한참 뒤) 응용: 교류 회로</li></ol></div>
+    <div class="new"><h3>MathBook</h3><ol><li>문제: 교류 송전망의 전압·전류를 계산해야 한다</li><li>막힘: 매번 미분방정식을 풀어야 한다 — 회로가 커지면 불가능</li><li>도구: 사인파 = 회전하는 화살표, 미분 = 90° 회전 → 복소수</li><li>다시 문제: 미분방정식이 옴의 법칙 같은 대수 문제로</li></ol></div>
+  </div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>이 수식이 없었다면 못 만들었을 물건</h2>
+  <p class="sub">각 장은 이런 물건 하나로 시작합니다. 물건을 누르면 그 장으로 갑니다.</p>
+  <div class="objs">
+    <a href="chapters/limits.html"><span class="ic">🧮</span><b>계산기의 sin 버튼</b><span>덧셈·곱셈만 하는 기계가 sin을 계산한다 → <em>급수와 극한</em></span></a>
+    <a href="chapters/complex.html"><span class="ic">⚡</span><b>교류 전력망</b><span>미분방정식을 대수로 바꾼 페이저 → <em>복소수</em></span></a>
+    <a href="chapters/linalg.html"><span class="ic">📷</span><b>스마트폰 카메라의 색</b><span>3×3 색 보정 행렬 하나가 매 픽셀을 바로잡는다 → <em>선형대수</em></span></a>
+    <a href="chapters/ode.html"><span class="ic">🌡️</span><b>칩 방열 설계</b><span>RC 회로·냉각·감염병이 같은 식 → <em>미분방정식</em></span></a>
+    <a href="chapters/fourier.html"><span class="ic">🧲</span><b>MRI</b><span>위치를 주파수로 바꿔 찍고 역변환한다 → <em>푸리에 변환</em></span></a>
+    <a href="chapters/sampling.html"><span class="ic">💿</span><b>디지털 오디오</b><span>유한한 숫자로 연속 신호를 완벽히 담는다 → <em>표본화 정리</em></span></a>
+    <a href="chapters/probability.html"><span class="ic">🌃</span><b>야간 사진의 잡음</b><span>빛이 알갱이라서 생기는 잡음 → <em>포아송·정규·베이즈</em></span></a>
+    <a href="chapters/information.html"><span class="ic">🔳</span><b>QR 코드</b><span>30%가 찢겨도 읽힌다 → <em>정보 이론·오류 정정</em></span></a>
+    <a href="chapters/optimization.html"><span class="ic">🤖</span><b>신경망 학습</b><span>수십억 개 손잡이를 내리막으로 → <em>경사 하강법</em></span></a>
+    <a href="chapters/numerics.html"><span class="ic">🎯</span><b>패트리어트 미사일 사건</b><span>0.1초의 2진 표현이 쌓인 오차 → <em>수치 해석</em></span></a>
+    <a href="chapters/geometry.html"><span class="ic">📄</span><b>문서 스캔 앱</b><span>비스듬한 종이를 반듯하게 → <em>사영기하·곡률</em></span></a>
+    <a href="chapters/symmetry.html"><span class="ic">💎</span><b>실리콘 웨이퍼</b><span>결정 방향이 식각 각도를 정한다 → <em>군론과 대칭</em></span></a>
+  </div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>대표 실험</h2>
+  <p class="sub">수식을 조작하기보다 그림을 끌어 보세요. 수학이 손끝에서 반응합니다.</p>
+  <div class="feat" id="feat">
+    <a href="chapters/linalg.html#sim-la-grid"><small>CH.03 · 행렬은 변환이다</small><b>격자를 휘는 행렬</b><span>기저 벡터를 끌면 공간 전체가 따라 휩니다. 행렬식 = 넓이 배율.</span></a>
+    <a href="chapters/complex.html#sim-cx-multiply"><small>CH.02 · 복소수는 회전이다</small><b>곱셈 = 회전 + 확대</b><span>두 복소수를 끌어 곱이 어디로 가는지 보고, RLC 회로의 페이저를 돌려 봅니다.</span></a>
+    <a href="chapters/fourier.html#sim-ft-psf"><small>CH.05 · 모든 것은 주파수의 합</small><b>렌즈는 푸리에 변환기</b><span>조리개 모양을 바꾸면 PSF와 MTF가 바뀝니다. MRI k-공간 채우기도.</span></a>
+    <a href="chapters/optimization.html#sim-opt-descent"><small>CH.09 · 가장 낮은 곳 찾기</small><b>지형 위 공 굴리기</b><span>학습률을 바꿔 경사 하강이 수렴·진동·발산하는 것을 봅니다.</span></a>
+    <a href="chapters/information.html#sim-inf-hamming"><small>CH.08 · 놀라움을 재는 법</small><b>해밍 부호로 비트 고치기</b><span>아무 비트나 뒤집어 보세요. 신드롬이 오류 위치를 가리킵니다.</span></a>
+    <a href="chapters/symmetry.html#sim-sym-wallpaper"><small>CH.12 · 대칭의 대수</small><b>벽지 무늬 생성기</b><span>모티프를 그리면 17가지 벽지군 대칭으로 평면을 채웁니다.</span></a>
+  </div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>이런 오해, 한 번쯤 해 보셨죠?</h2>
+  <p class="sub">이 책을 다 읽고 나면 아래 문장들이 왜 틀렸는지 설명할 수 있게 됩니다.</p>
+  <div class="myth">
+    <div><b>허수는 실제로 존재하지 않는 상상의 수다</b>i는 "90° 회전"이라는 아주 구체적인 연산입니다. 그래서 회전과 진동이 있는 곳(교류, 전파, 양자)마다 나타납니다. <a href="chapters/complex.html">2장 →</a></div>
+    <div><b>컴퓨터 계산은 정확하다</b>0.1 + 0.2는 컴퓨터에서 0.30000000000000004입니다. 0.1은 2진수로 끝나지 않기 때문입니다. <a href="chapters/numerics.html">10장 →</a></div>
+    <div><b>무한히 더하면 무한대가 된다</b>1/2 + 1/4 + 1/8 + … = 1입니다. 반대로 1 + 1/2 + 1/3 + …은 아주 느리게 무한대로 갑니다. <a href="chapters/limits.html">1장 →</a></div>
+    <div><b>검사에서 불량이 나왔으면 거의 확실히 불량이다</b>불량률이 낮으면 99% 정확한 검사의 "불량" 판정도 대부분 오판일 수 있습니다. <a href="chapters/probability.html">7장 →</a></div>
+    <div><b>샘플링하면 정보가 사라진다</b>대역이 제한된 신호는 2배 이상으로 샘플링하면 완벽히 복원됩니다. 문제는 에일리어싱입니다. <a href="chapters/sampling.html">6장 →</a></div>
+    <div><b>정확한 지도를 만들 수 있다</b>구면은 찢거나 늘이지 않고는 평면에 펼 수 없습니다(가우스). 모든 지도는 무언가를 왜곡합니다. <a href="chapters/geometry.html">11장 →</a></div>
+  </div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>챕터</h2>
+  <p class="sub">앞에서부터 차례로 읽어도 좋고, 궁금한 장만 골라 읽어도 됩니다. 모든 장에 직접 조작하는 시뮬레이터와 확인 퀴즈가 있습니다.</p>
+  <div class="ch-grid" id="ch-grid"></div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>시리즈의 공통 기반 층</h2>
+  <p class="sub">MathBook은 독립된 주제라기보다 <a href="https://books.euiyun.com/">시리즈</a>의 다른 책들이 딛고 선 바닥입니다. 각 책에서 "더 깊이"가 필요한 수학은 모두 여기로 모입니다.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 330" role="img" aria-label="다른 책과 MathBook 장의 연결">
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)"/></marker></defs>
+      <g font-size="13">
+        <g transform="translate(20,20)"><rect width="170" height="40" rx="10" class="f-elev"/><text x="85" y="25" text-anchor="middle" class="t">MusicBook · 배음·DSP</text></g>
+        <g transform="translate(20,80)"><rect width="170" height="40" rx="10" class="f-elev"/><text x="85" y="25" text-anchor="middle" class="t">SensorBook · 노이즈</text></g>
+        <g transform="translate(20,140)"><rect width="170" height="40" rx="10" class="f-elev"/><text x="85" y="25" text-anchor="middle" class="t">OpticsBook · 파동 광학</text></g>
+        <g transform="translate(20,200)"><rect width="170" height="40" rx="10" class="f-elev"/><text x="85" y="25" text-anchor="middle" class="t">AnalogBook · 회로</text></g>
+        <g transform="translate(20,260)"><rect width="170" height="40" rx="10" class="f-elev"/><text x="85" y="25" text-anchor="middle" class="t">ColorBook · 색 변환</text></g>
+        <g transform="translate(710,20)"><rect width="170" height="40" rx="10" class="f-elev"/><text x="85" y="25" text-anchor="middle" class="t">AIBook · 학습</text></g>
+        <g transform="translate(710,80)"><rect width="170" height="40" rx="10" class="f-elev"/><text x="85" y="25" text-anchor="middle" class="t">YieldBook · 수율</text></g>
+        <g transform="translate(710,140)"><rect width="170" height="40" rx="10" class="f-elev"/><text x="85" y="25" text-anchor="middle" class="t">TCADBook · 시뮬레이션</text></g>
+        <g transform="translate(710,200)"><rect width="170" height="40" rx="10" class="f-elev"/><text x="85" y="25" text-anchor="middle" class="t">NetworkBook · 통신</text></g>
+        <g transform="translate(710,260)"><rect width="170" height="40" rx="10" class="f-elev"/><text x="85" y="25" text-anchor="middle" class="t">ArtBook(예정) · 원근</text></g>
+        <g transform="translate(330,60)">
+          <rect width="240" height="210" rx="16" class="f-acc-soft"/>
+          <text x="120" y="34" text-anchor="middle" class="t-acc" font-size="17">MathBook</text>
+          <text x="120" y="64" text-anchor="middle" class="t-mono">05 푸리에 · 06 샘플링</text>
+          <text x="120" y="88" text-anchor="middle" class="t-mono">07 확률·통계</text>
+          <text x="120" y="112" text-anchor="middle" class="t-mono">02 복소수 · 04 미분방정식</text>
+          <text x="120" y="136" text-anchor="middle" class="t-mono">03 선형대수 · 09 최적화</text>
+          <text x="120" y="160" text-anchor="middle" class="t-mono">08 정보 이론 · 10 수치 해석</text>
+          <text x="120" y="184" text-anchor="middle" class="t-mono">11 기하 · 12 대칭</text>
+        </g>
+      </g>
+      <g stroke="var(--text-faint)" stroke-width="1.4" fill="none" marker-end="url(#arr)">
+        <path d="M192 40 C 260 40, 270 120, 326 120"/><path d="M192 100 C 260 100, 270 145, 326 145"/><path d="M192 160 C 260 160, 270 125, 326 125"/>
+        <path d="M192 220 C 260 220, 270 170, 326 170"/><path d="M192 280 C 260 280, 270 195, 326 195"/>
+        <path d="M708 40 C 640 40, 630 195, 574 195"/><path d="M708 100 C 640 100, 630 145, 574 145"/><path d="M708 160 C 640 160, 630 220, 574 220"/>
+        <path d="M708 220 C 640 220, 630 220, 574 220"/><path d="M708 280 C 640 280, 630 245, 574 245"/>
+      </g>
+    </svg>
+    <figcaption><b>그림 0-1.</b> 시리즈의 다른 책에서 "더 깊이" 들어가야 하는 수학은 MathBook의 장으로 모입니다. 책별 상세 대응표는 <a href="chapters/glossary.html#tool-map">도구 지도</a>에 있습니다.</figcaption>
+  </figure>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>추천 학습 경로</h2>
+  <p class="sub">목적에 맞게 골라 읽으세요.</p>
+  <div class="paths">
+    <div class="path"><h3>📡 신호와 회로</h3><p>교류 회로, 필터, 샘플링, 통신. 회로·DSP·무선을 공부한다면.</p><div class="steps"><a href="chapters/complex.html">02</a><a href="chapters/ode.html">04</a><a href="chapters/fourier.html">05</a><a href="chapters/sampling.html">06</a><a href="chapters/information.html">08</a></div></div>
+    <div class="path"><h3>📷 이미지와 광학</h3><p>색 보정, MTF, 모아레, 샷 노이즈, 렌즈 수차. 카메라·센서·디스플레이라면.</p><div class="steps"><a href="chapters/linalg.html">03</a><a href="chapters/fourier.html">05</a><a href="chapters/sampling.html">06</a><a href="chapters/probability.html">07</a><a href="chapters/geometry.html">11</a></div></div>
+    <div class="path"><h3>🏭 공정과 수율</h3><p>산포, 공정능력, 불량 판정, 확산, 결정 방향. 반도체 제조라면.</p><div class="steps"><a href="chapters/probability.html">07</a><a href="chapters/ode.html">04</a><a href="chapters/numerics.html">10</a><a href="chapters/symmetry.html">12</a></div></div>
+    <div class="path"><h3>🤖 데이터와 AI</h3><p>행렬, SVD, 엔트로피, 경사 하강, 부동소수점 정밀도.</p><div class="steps"><a href="chapters/linalg.html">03</a><a href="chapters/probability.html">07</a><a href="chapters/information.html">08</a><a href="chapters/optimization.html">09</a><a href="chapters/numerics.html">10</a></div></div>
+  </div>
+</section>
+
+<section class="home-section" style="padding-top:0">
+  <h2>함께 읽으면 좋은 책</h2>
+  <p class="sub">이 책의 도구가 실제로 일하는 현장입니다.</p>
+  <div class="paths">
+    <div class="path"><h3>MusicBook — 음악 교과서</h3><p>푸리에 급수와 배음, 샘플링과 DSP를 귀로 듣는다.</p><div class="steps"><a href="https://musicbook.euiyun.com/">musicbook.euiyun.com ↗</a></div></div>
+    <div class="path"><h3>SensorBook — 이미지 센서</h3><p>샷 노이즈, MTF, 픽셀 광학 시뮬레이션의 현장.</p><div class="steps"><a href="https://sensorbook.euiyun.com/">sensorbook.euiyun.com ↗</a></div></div>
+    <div class="path"><h3>전체 책</h3><p>반도체·SW·AI·전자부터 돈·건강·취미까지.</p><div class="steps"><a href="https://books.euiyun.com/">books.euiyun.com ↗</a></div></div>
+  </div>
+</section>
+
+<script>
+(function () {
+  document.getElementById("ch-grid").innerHTML = MB.CHAPTERS.map((c) =>
+    `<a class="ch-card" href="chapters/${c.slug}.html"><span class="num">CHAPTER ${c.num}</span><h3>${c.title}</h3><p>${c.desc}</p><div class="tags">${c.tags.map((t) => t === "sim" ? '<span class="t-sim">시뮬레이터</span>' : `<span>${t}</span>`).join("")}</div></a>`).join("");
+
+  // 히어로: 기저 벡터를 끌면 격자가 휜다
+  const PRESETS = { shear: [[1, 0], [1, 1]], rot: [[0.866, 0.5], [-0.5, 0.866]], flip: [[1, 0.3], [0.6, -1]], squash: [[1.5, 0.75], [0.6, 0.3]] };
+  const msg = document.getElementById("hero-msg");
+  const pts = [{ x: 1, y: 0, label: "î", snap: 0.05 }, { x: 1, y: 1, label: "ĵ", snap: 0.05 }];
+  let target = null, anim = null;
+  const pl = MB.plane("#cv-hero", {
+    x: [-3.2, 3.2], aspect: 0.72, maxHeight: 400, minHeight: 260, points: pts, grid: true, axes: false,
+    draw(P, api) {
+      const [i, j] = api.points, pal = P.P;
+      pts[0].color = pal.accent; pts[1].color = pal.accent2;
+      const det = i.x * j.y - i.y * j.x;
+      // 변형된 격자
+      for (let k = -8; k <= 8; k++) {
+        P.line(k * i.x - 8 * j.x, k * i.y - 8 * j.y, k * i.x + 8 * j.x, k * i.y + 8 * j.y, { color: pal.accent, width: k ? 1 : 1.6, alpha: k ? 0.35 : 0.8 });
+        P.line(k * j.x - 8 * i.x, k * j.y - 8 * i.y, k * j.x + 8 * i.x, k * j.y + 8 * i.y, { color: pal.accent2, width: k ? 1 : 1.6, alpha: k ? 0.35 : 0.8 });
+      }
+      const sq = [[0, 0], [i.x, i.y], [i.x + j.x, i.y + j.y], [j.x, j.y]];
+      P.poly(sq, { fill: det >= 0 ? pal.warn : pal.bad, alpha: 0.28, stroke: false });
+      P.poly(sq, { color: det >= 0 ? pal.warn : pal.bad, width: 1.5 });
+      // 원 → 타원
+      P.param((t) => [Math.cos(t) * i.x + Math.sin(t) * j.x, Math.cos(t) * i.y + Math.sin(t) * j.y], 0, 2 * Math.PI, { color: pal.text, width: 1.5, alpha: 0.6 });
+      P.arrow(0, 0, i.x, i.y, { color: pal.accent, width: 3 });
+      P.arrow(0, 0, j.x, j.y, { color: pal.accent2, width: 3 });
+      P.text(`det = ${det.toFixed(2)}`, P.x0 + 0.15, P.y1 - 0.25, { bold: true, size: 14, color: pal.text });
+      msg.innerHTML = `[[${i.x.toFixed(2)}, ${j.x.toFixed(2)}], [${i.y.toFixed(2)}, ${j.y.toFixed(2)}]] · ${Math.abs(det) < 0.02 ? "<b>공간이 선으로 찌그러짐</b>" : det < 0 ? "<b>뒤집힘</b>" : "넓이 ×" + det.toFixed(2)}`;
+    },
+    onDrag() { target = null; },
+  });
+  const loop = MB.loop(document.getElementById("hero"), (dt) => {
+    if (!target) return;
+    let done = true;
+    pts.forEach((p, k) => { const tx = target[0][k], ty = target[1][k]; p.x += (tx - p.x) * Math.min(1, dt * 6); p.y += (ty - p.y) * Math.min(1, dt * 6); if (Math.hypot(tx - p.x, ty - p.y) > 0.002) done = false; });
+    pl.redraw();
+    if (done) target = null;
+  });
+  anim = loop;
+  MB.seg("hero-preset", (v) => { target = PRESETS[v]; loop.start(); });
+  target = PRESETS.shear;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "id": "mathbook",
+  "title": "MathBook",
+  "description": "문제에서 출발해 도구로 가는 수학. 전력망에서 복소수를, MRI에서 푸리에를, QR 코드에서 오류 정정 부호를 만난다 — 시리즈 전체의 '더 깊이' 링크가 모이는 공통 기반 층.",
+  "url": "https://mathbook.euiyun.com/",
+  "repo": "https://github.com/geniuskey/mathbook",
+  "field": "culture",
+  "status": "published",
+  "domain": "mathbook.euiyun.com"
+}

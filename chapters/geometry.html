@@ -1,0 +1,1402 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<title>모양과 공간의 수학 · MathBook</title>
+<meta name="description" content="문서 스캔 앱이 비스듬한 종이를 펴는 호모그래피에서 출발해 오일러 특성수, 곡률과 클로소이드, 가우스 곡률과 지도 투영, 소실점, 렌즈 수차와 왜곡 보정까지 직접 끌며 익힌다.">
+<link rel="canonical" href="https://mathbook.euiyun.com/chapters/geometry.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="MathBook">
+<meta property="og:title" content="모양과 공간의 수학 · MathBook">
+<meta property="og:description" content="문서 스캔 앱이 비스듬한 종이를 펴는 호모그래피에서 출발해 오일러 특성수, 곡률과 클로소이드, 가우스 곡률과 지도 투영, 소실점, 렌즈 수차와 왜곡 보정까지 직접 끌며 익힌다.">
+<meta property="og:url" content="https://mathbook.euiyun.com/chapters/geometry.html">
+<meta property="og:image" content="https://mathbook.euiyun.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"모양과 공간의 수학","name":"모양과 공간의 수학 · MathBook","url":"https://mathbook.euiyun.com/chapters/geometry.html","mainEntityOfPage":"https://mathbook.euiyun.com/chapters/geometry.html","inLanguage":"ko","isAccessibleForFree":true,"learningResourceType":"interactive textbook chapter","position":11,"image":"https://mathbook.euiyun.com/og.png","dateModified":"2026-10-05","isPartOf":{"@type":"Book","@id":"https://mathbook.euiyun.com/#book","name":"MathBook — 문제에서 출발하는 수학 교과서","url":"https://mathbook.euiyun.com/"},"publisher":{"@type":"Organization","name":"MathBook","url":"https://mathbook.euiyun.com/"},"description":"문서 스캔 앱이 비스듬한 종이를 펴는 호모그래피에서 출발해 오일러 특성수, 곡률과 클로소이드, 가우스 곡률과 지도 투영, 소실점, 렌즈 수차와 왜곡 보정까지 직접 끌며 익힌다."},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"MathBook","item":"https://mathbook.euiyun.com/"},{"@type":"ListItem","position":2,"name":"11 모양과 공간의 수학","item":"https://mathbook.euiyun.com/chapters/geometry.html"}]}]}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<script src="../js/common.js"></script>
+<style>
+  .geo-hmat { font-size: 12px !important; line-height: 1.45; overflow-x: auto; white-space: nowrap; }
+  @media (max-width: 600px) { #sim-geo-homo .sim-readout .stat:first-child { grid-column: 1 / -1; } }
+  .split > div > canvas { display: block; width: 100%; }
+  .geo-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--text-dim); padding: 8px 14px; border-top: 1px solid var(--border); background: var(--bg-elev); }
+  .geo-legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+</style>
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3d6151a0abc94ede89285d462527fa80"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</head>
+<body data-chapter="geometry">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">Chapter 11</div>
+    <h1>모양과 공간의 수학</h1>
+    <p class="lead">기하는 '자를 대고 재는' 수학처럼 보이지만, 공학이 기하에서 정말로 빌려 쓰는 것은 <b>무엇이 변하고 무엇이 변하지 않는가</b>를 가려내는 눈입니다. 메쉬를 늘여도 변하지 않는 수(위상), 도로를 따라 달라지는 휨(곡률), 어떤 지도로도 피할 수 없는 왜곡(가우스 곡률), 사진 속에서 만나는 평행선(사영기하), 한 점에 모이지 않는 빛(수차). 이 장은 그 다섯 가지를 각각 하나의 공학 문제에서 꺼냅니다.</p>
+    <ul class="objectives">
+      <li>오일러 특성수 \(V-E+F\)로 메쉬의 구멍과 결함을 세고, 그래프의 한붓그리기·평면성 조건을 판정한다.</li>
+      <li>곡선의 곡률을 접촉원으로 이해하고, 도로·철도가 원호 앞에 클로소이드를 넣는 이유를 설명한다.</li>
+      <li>가우스 곡률과 '빼어난 정리'로 왜 구면을 평면에 왜곡 없이 펼 수 없는지, 지도 투영이 무엇을 포기하는지 안다.</li>
+      <li>동차 좌표와 호모그래피(3×3, 자유도 8)로 소실점을 계산하고, 4점 대응으로 원근을 펴는 DLT를 직접 돌린다.</li>
+      <li>구면 렌즈의 구면수차와 비구면 보정, 방사 왜곡 모델 \(r' = r(1+k_1r^2+k_2r^4)\)과 카메라 보정을 설명한다.</li>
+    </ul>
+    <div class="origin">
+      <div class="o-head"><small>이 수식이 없었다면</small><b>문서 스캔 앱</b></div>
+      <div class="o-body"><p>책상 위 영수증을 스마트폰으로 비스듬히 찍으면 직사각형 종이가 사다리꼴로 찍히고, 먼 쪽 글자는 작고 가까운 쪽 글자는 큽니다. 이미지를 회전·확대·기울이는(아핀) 어떤 조합으로도 이것은 펴지지 않습니다. 아핀 변환은 평행선을 평행하게 두는데, 사진 속 종이의 두 변은 평행하지 않고 저 멀리 한 점(소실점)에서 만나기 때문입니다. 스캔 앱은 종이의 네 모서리만 찾은 뒤, 그 네 쌍의 대응으로 3×3 <b>호모그래피</b> 행렬을 풀어 모든 픽셀을 반듯한 A4 위로 옮깁니다. 차선 인식 카메라가 도로를 하늘에서 내려다본 모습(버드아이 뷰)으로 바꾸는 것도 같은 행렬입니다.</p>
+        <div class="o-chain"><span>비스듬히 찍은 종이</span><i>→</i><span>평행선이 만난다</span><i>→</i><span>아핀으로는 못 편다</span><i>→</i><span class="tool">사영기하 · 호모그래피</span><i>→</i><span>반듯한 스캔</span></div></div>
+    </div>
+  </header>
+
+  <!-- =============================================================== 1 -->
+  <section id="topology">
+    <h2>늘여도 변하지 않는 수: 위상과 오일러 특성수</h2>
+    <div class="problem"><strong>3D 스캔 메쉬에 구멍이 있는가</strong>
+      <p>3D 스캐너가 만든 삼각형 메쉬는 수십만 개의 면으로 이루어져 있고, 스캔이 닿지 않은 곳에는 작은 구멍이 숨어 있습니다. 구멍 난 메쉬를 3D 프린터 슬라이서에 넣으면 '안'과 '밖'이 정의되지 않아 출력이 망가집니다. 면을 하나하나 눈으로 볼 수는 없습니다. 모양이 아무리 복잡해도 한 번에 답을 주는 <b>숫자 하나</b>가 필요합니다.</p>
+    </div>
+    <p>좌표·길이·각도는 메쉬를 조금만 매끄럽게 다듬어도 전부 바뀝니다. 그래서 질문을 바꿉니다. <b>찢거나 붙이지 않고 늘이고 구부리기만 할 때 변하지 않는 성질</b>은 무엇인가? 이것을 다루는 분야가 <span class="term">위상수학</span><span class="en">(Topology)</span>입니다. 위상수학자에게 도넛과 손잡이 달린 머그컵은 같은 물체입니다. 진흙 도넛을 주물러 머그컵을 만들 때 구멍 하나가 손잡이로 그대로 남기 때문입니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 190" role="img" aria-label="도넛이 머그컵으로 연속 변형되는 그림">
+        <ellipse cx="110" cy="95" rx="88" ry="52" class="f-acc-soft" stroke-width="2"/>
+        <ellipse cx="110" cy="92" rx="34" ry="12" class="f-elev" stroke-width="2"/>
+        <path d="M80 90 q30 14 60 0" class="s-line"/>
+        <text x="110" y="172" text-anchor="middle" class="t">도넛 (구멍 1)</text>
+        <path d="M215 95 h50" class="s-acc"/><path d="M265 95 l-9 -5 v10 z" class="f-acc"/>
+        <path d="M300 60 q40 -25 85 0 q20 15 15 45 q-5 30 -55 32 q-50 -2 -55 -32 q-5 -30 10 -45 z" class="f-acc-soft" stroke-width="2"/>
+        <ellipse cx="392" cy="95" rx="26" ry="20" class="f-acc-soft" stroke-width="2"/>
+        <ellipse cx="392" cy="95" rx="11" ry="8" class="f-elev" stroke-width="2"/>
+        <text x="350" y="172" text-anchor="middle" class="t">주무르는 중 (구멍 1)</text>
+        <path d="M445 95 h50" class="s-acc"/><path d="M495 95 l-9 -5 v10 z" class="f-acc"/>
+        <path d="M545 45 h120 v95 q0 18 -18 18 h-84 q-18 0 -18 -18 z" class="f-acc-soft" stroke-width="2"/>
+        <ellipse cx="605" cy="45" rx="60" ry="9" class="f-elev" stroke-width="2"/>
+        <path d="M665 65 q48 0 48 35 q0 35 -48 35 v-16 q30 0 30 -19 q0 -19 -30 -19 z" class="f-acc-soft" stroke-width="2"/>
+        <text x="620" y="182" text-anchor="middle" class="t">머그컵 (구멍 1)</text>
+        <text x="760" y="70" text-anchor="middle" class="t-acc">χ = 0</text>
+        <text x="760" y="92" text-anchor="middle" class="t-dim">셋 다</text>
+      </svg>
+      <figcaption><b>그림 11-1.</b> 찢거나 붙이지 않는 연속 변형(위상 동형)으로 도넛은 머그컵이 된다. 길이·넓이·곡률은 모두 바뀌지만 '구멍(손잡이)의 개수'는 바뀌지 않는다. 이런 불변량만 보는 것이 위상수학이다.</figcaption>
+    </figure>
+    <p>구멍의 개수를 어떻게 계산으로 셀까요? 오일러가 1750년대에 다면체에서 발견한 놀라운 사실이 답입니다. 꼭짓점 수 \(V\), 모서리 수 \(E\), 면 수 \(F\)는 다면체마다 제각각인데, \(V-E+F\)는 공처럼 생긴 다면체라면 <b>항상 2</b>입니다. 정육면체 8−12+6, 정이십면체 12−30+20 모두 2입니다. 아래에서 다면체를 바꾸고 분할을 잘게 해 보세요.</p>
+
+    <div class="sim" id="sim-geo-euler">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>V − E + F는 무엇을 세는가</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-geo-euler"></canvas><span class="hint">끌어서 회전</span></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>모양</span><select id="geo-eu-shape">
+            <option value="tetra">정사면체</option><option value="cube" selected>정육면체</option><option value="octa">정팔면체</option><option value="dodeca">정십이면체</option><option value="icosa">정이십면체</option>
+            <option value="prism">n각기둥</option><option value="sphere">구 (경위선 분할)</option><option value="torus">토러스 (도넛)</option><option value="plate">구멍 g개 뚫린 판</option>
+          </select></label>
+          <label class="ctrl"><span>분할 / 구멍 수 <output id="geo-eu-n-out"></output></span><input type="range" id="geo-eu-n" min="1" max="10" value="3"></label>
+          <label class="check"><input type="checkbox" id="geo-eu-hole"> 면 하나 떼어내기 (스캔 구멍)</label>
+          <label class="check"><input type="checkbox" id="geo-eu-spin" checked> 자동 회전</label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">꼭짓점 V</span><span class="v" id="geo-eu-v">—</span></div>
+        <div class="stat"><span class="k">모서리 E</span><span class="v" id="geo-eu-e">—</span></div>
+        <div class="stat"><span class="k">면 F</span><span class="v" id="geo-eu-f">—</span></div>
+        <div class="stat"><span class="k">χ = V − E + F</span><span class="v" id="geo-eu-chi">—</span></div>
+        <div class="stat"><span class="k">경계 고리 b · 구멍 g</span><span class="v" id="geo-eu-g">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① 정다면체 다섯 개와 '구'의 분할 수를 바꿔 보며 V, E, F는 제멋대로 변해도 χ = 2로 고정되는 것을 확인. ② 토러스와 '구멍 g개 판'으로 바꾸면 χ = 0, −2, −4…, 즉 χ = 2 − 2g. ③ '면 하나 떼어내기'를 켜면 χ가 정확히 1 줄고, 짝 없는 모서리(주황색 경계 고리)가 나타난다. 모델: 닫힌 다면체 메쉬(면은 다각형, 모든 모서리는 면 두 개에 공유). 판은 정육면체 블록을 이어 붙인 것이라 같은 평면 위에 모서리가 많지만 χ에는 영향이 없다.</div>
+    </div>
+
+    <div class="formula">$$\chi = V - E + F = 2 - 2g - b$$
+      <div class="where">\(g\): 구멍(손잡이) 수, \(b\): 경계 고리 수(메쉬가 닫혀 있지 않을 때 짝 없는 모서리가 이루는 고리). 구는 \(g=0\)이라 2, 토러스는 0, 손잡이 둘이면 −2. 면을 쪼개면 \(V,E,F\)가 함께 늘지만 늘어나는 양이 정확히 상쇄되므로 χ는 메쉬를 어떻게 나누든 같은 값이다. 그래서 '표면 자체의' 성질이다.</div>
+    </div>
+    <p>왜 쪼개도 불변일까요? 면 하나에 대각선을 그으면 \(E\)와 \(F\)가 1씩 늘어 상쇄되고, 모서리 중간에 점을 찍으면 \(V\)와 \(E\)가 1씩 늘어 상쇄됩니다. 모든 세분은 이 두 동작의 조합이니 χ는 움직이지 않습니다. 실무에서는 이 덕분에 수십만 면짜리 메쉬도 정수 세 개만 세어 "구멍 없는 공 모양인가(χ = 2, b = 0)"를 즉시 판정할 수 있습니다. 메쉬 처리 라이브러리의 '물샐틈없음(watertight)' 검사가 짝 없는 모서리와 함께 확인하는 값입니다.</p>
+    <div class="callout tip"><strong>엔지니어의 눈으로</strong> χ는 결함 검출기다. 스캔 메쉬가 χ = 2를 기대했는데 1이 나오면 구멍이 하나, 0이 나오면 원치 않는 '손잡이'(얇은 부분이 서로 붙어 생긴 터널)가 하나 생긴 것이다. 위치는 몰라도 '있다'는 것은 숫자 하나로 안다.</div>
+  </section>
+
+  <!-- =============================================================== 2 -->
+  <section id="graph-planarity">
+    <h2>다리 일곱 개와 칩 배선: 그래프와 평면성</h2>
+    <p>위상적 사고의 출발점은 오히려 다면체보다 앞선 1736년의 퍼즐이었습니다. 프로이센 쾨니히스베르크(지금의 칼리닌그라드)에는 강 사이 땅 넷을 잇는 다리가 일곱 개 있었고, 시민들은 "모든 다리를 꼭 한 번씩만 건너는 산책"이 가능한지 궁금해했습니다. 오일러는 땅의 모양·다리 길이를 모두 버리고 <b>땅 = 점, 다리 = 선</b>으로만 남긴 <span class="term">그래프</span><span class="en">(Graph)</span>로 바꿨습니다. 거리를 버리고 연결만 남긴다는 것, 이것이 위상적 사고입니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 210" role="img" aria-label="쾨니히스베르크의 다리와 그래프">
+        <rect x="10" y="50" width="350" height="24" class="f-acc-soft" style="stroke:none"/>
+        <rect x="10" y="130" width="350" height="24" class="f-acc-soft" style="stroke:none"/>
+        <rect x="10" y="74" width="20" height="56" class="f-acc-soft" style="stroke:none"/>
+        <rect x="200" y="74" width="22" height="56" class="f-acc-soft" style="stroke:none"/>
+        <g stroke="var(--text-dim)" stroke-width="6" stroke-linecap="round">
+          <path d="M75 46v32M145 46v32M75 126v32M145 126v32M196 102h30M290 46v32M290 126v32"/>
+        </g>
+        <text x="185" y="32" text-anchor="middle" class="t-acc">A (북쪽 둑)</text>
+        <text x="185" y="185" text-anchor="middle" class="t-acc">B (남쪽 둑)</text>
+        <text x="110" y="106" text-anchor="middle" class="t-acc">C (섬)</text>
+        <text x="292" y="106" text-anchor="middle" class="t-acc">D</text>
+        <text x="185" y="205" text-anchor="middle" class="t-dim">강(파란 띠) · 다리(굵은 회색 선) 7개</text>
+        <path d="M395 105 h40" class="s-acc"/><path d="M435 105 l-9 -5 v10 z" class="f-acc"/>
+        <g class="s-line" stroke-width="2">
+          <path d="M520 105 Q545 50 610 32"/><path d="M520 105 Q590 85 610 32"/>
+          <path d="M520 105 Q545 160 610 180"/><path d="M520 105 Q590 125 610 180"/>
+          <path d="M520 105 L720 105"/><path d="M610 32 L720 105"/><path d="M610 180 L720 105"/>
+        </g>
+        <g class="f-acc"><circle cx="610" cy="32" r="9"/><circle cx="610" cy="180" r="9"/><circle cx="520" cy="105" r="9"/><circle cx="720" cy="105" r="9"/></g>
+        <text x="630" y="28" class="t">A · 차수 3</text><text x="630" y="196" class="t">B · 차수 3</text>
+        <text x="470" y="88" class="t">C · 차수 5</text><text x="734" y="96" class="t">D · 차수 3</text>
+      </svg>
+      <figcaption><b>그림 11-2.</b> 쾨니히스베르크의 다리(개략도)와 그 그래프. 각 점에 붙은 선의 수(차수)가 모두 홀수다. 중간에 지나가는 점은 '들어왔다 나가는' 쌍이 필요하므로 차수가 짝수여야 하고, 홀수 차수 점은 출발점이나 도착점만 될 수 있다.</figcaption>
+    </figure>
+    <div class="formula">$$\text{한붓그리기 가능} \iff \text{연결되어 있고, 홀수 차수 꼭짓점이 0개 또는 2개}$$
+      <div class="where">0개면 출발점으로 돌아오는 오일러 회로, 2개면 한 홀수점에서 출발해 다른 홀수점에서 끝나는 오일러 경로. 쾨니히스베르크는 홀수점이 4개라 불가능하다. 이 조건은 배선 검사 로봇이나 CNC·레이저 절단기가 공구를 들지 않고 한 번에 그을 수 있는 경로(펜 들기 횟수 최소화)를 계산할 때 그대로 쓰인다.</div>
+    </div>
+    <h3>평면 그래프: 배선이 교차하지 않으려면</h3>
+    <p>인쇄 회로 기판(PCB)이나 칩의 한 배선층에서는 선이 서로 교차할 수 없습니다. 교차가 필요하면 비아(via)로 다른 층으로 넘어가야 하고, 층과 비아는 곧 비용입니다. 그러면 "이 연결은 한 층에 교차 없이 그릴 수 있는가?"가 궁금해집니다. 여기서도 오일러 공식이 결정적입니다. 교차 없이 평면에 그린 연결 그래프는 바깥 영역까지 면으로 세면 \(V-E+F=2\)를 만족하고, 각 면이 적어도 세 변으로 둘러싸인다는 사실(\(3F \le 2E\))과 합치면 강력한 부등식이 나옵니다.</p>
+    <div class="formula">$$E \le 3V - 6 \qquad (\text{삼각형이 없는 그래프는 } E \le 2V-4)$$
+      <div class="where">\(K_5\)(점 5개를 모두 잇기): \(E=10 > 3\cdot5-6=9\) → 평면에 못 그린다. \(K_{3,3}\)(집 3채와 수도·전기·가스 3곳을 모두 잇는 퍼즐): 삼각형이 없으므로 \(E=9 > 2\cdot6-4=8\) → 못 그린다. 쿠라토프스키 정리(1930)는 거꾸로, 평면에 못 그리는 그래프에는 반드시 이 둘 중 하나가 (세분된 형태로) 숨어 있다고 말한다.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 200" role="img" aria-label="K5와 K3,3">
+        <g id="geo-fig-k"></g>
+      </svg>
+      <figcaption><b>그림 11-3.</b> 평면 그래프가 될 수 없는 두 기본 그래프. 어떻게 다시 배치해도 적어도 한 번(빨간 점)은 교차한다. 배선 설계 도구는 교차를 피하려 층을 나누고, 그 최소 층수를 줄이는 것이 배치·배선(P&amp;R) 최적화의 한 목표다.</figcaption>
+    </figure>
+    <div class="callout deep"><strong>오일러 공식의 쓰임 하나 더</strong> 축구공은 정오각형 12개와 정육각형 20개로 되어 있다. 꼭짓점마다 세 면이 만나는 다면체가 오각형과 육각형만으로 닫히려면 오일러 공식에서 \(F_5 = 12\)가 강제된다(육각형 수는 자유). 탄소 60개로 된 풀러렌 C₆₀, 지오데식 돔이 정확히 12개의 '결함' 꼭짓점을 갖는 이유도 같다. 평면은 육각형만으로 덮이지만(그래핀), 구로 닫으려면 χ = 2가 오각형 12개를 요구한다.</div>
+  </section>
+
+  <!-- =============================================================== 3 -->
+  <section id="curvature">
+    <h2>핸들을 언제 꺾을까: 곡률과 완화곡선</h2>
+    <div class="problem"><strong>직선 도로 끝에 원형 커브를 바로 붙이면</strong>
+      <p>반지름 100 m 커브를 시속 60 km로 돌면 차는 약 2.8 m/s²의 원심 가속도를 받습니다(\(v^2/R\)). 직선 끝에서 원호가 곧바로 시작되면, 이 가속도가 0에서 2.8 m/s²로 <b>한순간에</b> 튀어야 하고 운전자는 핸들을 순간적으로 꺾어야 합니다. 실제로는 그럴 수 없으니 차가 차선을 벗어납니다. 직선과 원호는 매끄럽게(접선 방향이 같게) 이어져 있는데 무엇이 문제일까요?</p>
+    </div>
+    <p>접선이 연속이어도 '휘는 정도'가 불연속이기 때문입니다. 곡선이 한 점에서 얼마나 휘는지를 재는 가장 자연스러운 방법은 그 점에 <b>가장 잘 들러붙는 원</b>, 즉 <span class="term">접촉원</span><span class="en">(Osculating Circle)</span>을 찾는 것입니다. 곡선 위 가까운 세 점을 지나는 원의 극한이고, 그 반지름이 곡률 반지름 \(R\), 역수가 <span class="term">곡률</span><span class="en">(Curvature)</span> \(\kappa = 1/R\)입니다. 직선은 \(\kappa=0\)(\(R=\infty\)), 반지름 100 m 원은 어디서나 \(\kappa = 0.01\ \text{m}^{-1}\).</p>
+    <div class="formula">$$\kappa = \frac{d\theta}{ds} = \frac{x'y'' - y'x''}{(x'^2+y'^2)^{3/2}}, \qquad a_\perp = v^2 \kappa$$
+      <div class="where">\(\theta\): 접선 방향 각, \(s\): 호의 길이. 곡률은 '진행 거리당 방향 회전율'이다. 그래프 \(y=f(x)\)이면 \(\kappa = f''/(1+f'^2)^{3/2}\). 부호는 왼쪽으로 휘면 +. 일정 속도 \(v\)로 달리는 차의 횡가속도는 \(v^2\kappa\), 곧 핸들 각은 (저속 근사로) 곡률에 비례한다.</div>
+    </div>
+    <p>그러니 운전자가 핸들을 <b>일정한 속도로</b> 돌리게 하려면 곡률이 주행 거리에 비례해 0에서 \(1/R\)까지 서서히 늘어나는 곡선을 직선과 원호 사이에 끼워야 합니다. \(\kappa(s) = s/A^2\)인 곡선, 이것이 <span class="term">클로소이드</span><span class="en">(Clothoid, Euler spiral)</span>이고, 도로 설계에서 <span class="term">완화곡선</span><span class="en">(Transition Curve)</span>으로 쓰입니다. 철도는 3차 포물선 같은 다른 완화곡선도 쓰지만 목적은 같습니다: 곡률(=횡가속도)을 연속으로 만드는 것.</p>
+
+    <div class="sim" id="sim-geo-curv">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>접촉원을 끌고 다니며 곡률 읽기</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-geo-curv"></canvas><canvas id="cv-geo-curv-k"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>곡선</span><div class="seg" id="geo-cv-type"><button data-value="road" class="on">도로</button><button data-value="sine">사인</button><button data-value="ellipse">타원</button></div></div>
+          <label class="ctrl"><span><span id="geo-cv-p-lab">완화곡선 길이 L</span> <output id="geo-cv-p-out"></output></span><input type="range" id="geo-cv-p" min="0" max="100" value="0"></label>
+          <label class="ctrl"><span>곡선 위 위치 <output id="geo-cv-pos-out"></output></span><input type="range" id="geo-cv-pos" min="0" max="1000" value="380"></label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">곡률 κ</span><span class="v" id="geo-cv-k">—</span></div>
+        <div class="stat"><span class="k">곡률 반지름 R</span><span class="v" id="geo-cv-r">—</span></div>
+        <div class="stat"><span class="k">횡가속도 @60 km/h</span><span class="v" id="geo-cv-a">—</span></div>
+        <div class="stat"><span class="k">횡저크(가속도 변화율)</span><span class="v" id="geo-cv-j">—</span></div>
+      </div>
+      <div class="sim-note">위: 곡선과 접촉원(점을 끌거나 '위치' 슬라이더), 아래: 호의 길이 \(s\)에 따른 곡률 \(\kappa(s)\). 해볼 것: ① '도로'에서 L = 0이면 직선(회색)→원호(파랑) 경계에서 κ가 계단처럼 튀고 횡저크가 무한대가 된다. L을 늘리면 클로소이드(주황) 구간에서 κ가 직선적으로 오른다. ② '사인'에서 꼭대기의 접촉원이 가장 작고, 변곡점(κ = 0)에서 원이 반대편으로 뒤집히는 것. ③ '타원'을 납작하게 하면 장축 끝의 곡률이 커진다(\(\kappa = a/b^2\)). 모델: 도로는 직선 120 m + 클로소이드 L + 반지름 100 m 원호 160 m. 저크는 클로소이드 구간의 \(v^3/(RL)\).</div>
+    </div>
+    <p>L = 0일 때와 L = 75 m일 때를 비교하면 이 절의 메시지가 보입니다. 원호의 반지름(최대 곡률)은 같은데, 곡률이 <b>시작되는 방식</b>이 달라졌습니다. 클로소이드 구간의 횡저크 \(v^3/(RL)\)는 60 km/h, L = 75 m에서 약 0.6 m/s³으로, 일반적으로 쾌적하다고 보는 범위 안입니다. 롤러코스터 루프가 원이 아니라 위로 갈수록 좁아지는 물방울 모양인 것도 비슷한 이유로, 곡률을 점진적으로 바꿔 가속도의 급변을 줄이기 위해서라고 알려져 있습니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 170" role="img" aria-label="세 가지 곡선 연결의 곡률 그래프">
+        <g transform="translate(40,20)">
+          <path d="M0 120 H700" class="s-axis"/><path d="M0 120 V0" class="s-axis"/>
+          <path d="M0 118 H250 V40 H700" class="s-line" stroke-dasharray="6 5"/>
+          <path d="M0 116 H220 L370 40 H700" class="s-acc" stroke-width="3"/>
+          <text x="10" y="12" class="t-dim">κ</text><text x="690" y="138" class="t-dim">s</text>
+          <text x="258" y="30" class="t-dim">직선→원호: 계단 (핸들을 순간에 꺾어야)</text>
+          <text x="380" y="70" class="t-acc">직선→클로소이드→원호: 기울기 (핸들을 일정 속도로)</text>
+          <text x="40" y="108" class="t-mono">직선 κ=0</text><text x="560" y="34" class="t-mono">원호 κ=1/R</text>
+        </g>
+      </svg>
+      <figcaption><b>그림 11-4.</b> 곡률 그래프로 보면 도로 설계의 핵심이 분명하다. 위치(곡선 모양)는 둘 다 매끄럽게 이어지지만, 곡률의 연속성이 다르다. 곡률은 위치의 2차 미분이므로, '모양이 매끄러워 보인다'와 '달리기에 매끄럽다'는 다른 조건이다.</figcaption>
+    </figure>
+    <div class="callout deep"><strong>클로소이드 계산</strong> \(\kappa = s/A^2\)를 적분하면 \(\theta = s^2/(2A^2)\), 좌표는 \(x = \int_0^s \cos\frac{t^2}{2A^2}dt,\; y=\int_0^s \sin\frac{t^2}{2A^2}dt\)로 프레넬 적분이 된다. 닫힌 형태가 없어 수치 적분(4장의 룽게–쿠타, 10장)으로 계산한다. 매개변수 \(A^2 = RL\)이 설계값이다. 같은 아이디어가 CNC 공구 경로와 로봇 경로 계획에서 '곡률 연속(G2)' 이음으로 쓰인다.</div>
+  </section>
+
+  <!-- =============================================================== 4 -->
+  <section id="gauss-curvature">
+    <h2>오렌지 껍질은 평평해지지 않는다: 가우스 곡률</h2>
+    <div class="problem"><strong>휘는 디스플레이는 왜 한 방향으로만 휘는가</strong>
+      <p>돌돌 마는 디스플레이, 접는 스마트폰, 곡면 모니터는 모두 화면을 <b>한 방향으로만</b> 휩니다. 얇은 OLED 필름을 반구 모양 돔에 붙이려 하면 가장자리가 주름지거나 찢어집니다. 종이 한 장으로 원통은 쉽게 말지만 공은 감싸지 못하는 것과 같습니다. 원통과 공은 둘 다 '휘어 있는데' 무엇이 다를까요?</p>
+    </div>
+    <p>곡면 위 한 점에서는 방향마다 곡선의 곡률이 다릅니다. 가장 크게 휘는 방향과 가장 작게 휘는 방향의 곡률을 <span class="term">주곡률</span><span class="en">(Principal Curvatures)</span> \(\kappa_1,\kappa_2\)라 하고, 그 곱을 <span class="term">가우스 곡률</span><span class="en">(Gaussian Curvature)</span>이라 부릅니다.</p>
+    <div class="formula">$$K = \kappa_1 \kappa_2 = \frac{1}{R_1 R_2}$$
+      <div class="where">구(반지름 \(R\)): 두 방향 모두 \(1/R\) → \(K = 1/R^2 > 0\). 원통: 둘레 방향 \(1/R\), 축 방향 0 → \(K=0\). 말안장: 두 방향이 반대로 휨 → \(K<0\). 주곡률의 부호는 법선 쪽으로 휘는지로 정한다.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 210" role="img" aria-label="양, 영, 음의 가우스 곡률 곡면">
+        <circle cx="130" cy="95" r="70" class="f-acc-soft" stroke-width="2"/>
+        <ellipse cx="130" cy="95" rx="70" ry="18" class="s-line" stroke-dasharray="4 4"/>
+        <path d="M130 30 Q100 80 88 108 Q130 118 172 108 Q160 80 130 30 z" fill="none" stroke="var(--accent-2)" stroke-width="2.4"/>
+        <text x="130" y="190" text-anchor="middle" class="t">구 K &gt; 0</text>
+        <text x="130" y="206" text-anchor="middle" class="t-dim">내각 합 &gt; 180°</text>
+        <rect x="340" y="40" width="120" height="110" class="f-acc-soft" stroke-width="2"/>
+        <ellipse cx="400" cy="40" rx="60" ry="14" class="f-elev" stroke-width="2"/>
+        <path d="M340 150 Q400 178 460 150" class="s-line" stroke-dasharray="4 4"/>
+        <path d="M372 62 L432 70 L390 128 Z" fill="none" stroke="var(--accent-2)" stroke-width="2.4"/>
+        <text x="400" y="190" text-anchor="middle" class="t">원통 K = 0</text>
+        <text x="400" y="206" text-anchor="middle" class="t-dim">내각 합 = 180° (펴진다)</text>
+        <path d="M580 60 Q670 110 760 60 L760 130 Q670 80 580 130 Z" class="f-acc-soft" stroke-width="2"/>
+        <path d="M580 60 Q600 95 580 130 M760 60 Q740 95 760 130" class="s-line"/>
+        <path d="M630 80 Q660 98 700 84 Q682 100 676 120 Q656 100 630 80 Z" fill="none" stroke="var(--accent-2)" stroke-width="2.4"/>
+        <text x="670" y="190" text-anchor="middle" class="t">안장 K &lt; 0</text>
+        <text x="670" y="206" text-anchor="middle" class="t-dim">내각 합 &lt; 180°</text>
+      </svg>
+      <figcaption><b>그림 11-5.</b> 가우스 곡률의 세 부호. 주황색은 곡면 위의 측지선(가장 짧은 길) 삼각형이다. 원통은 휘어 보여도 K = 0이라 잘라서 펴면 평면이 되고 삼각형 내각 합도 정확히 180°다. 구와 안장은 어떻게 해도 펴지지 않는다.</figcaption>
+    </figure>
+    <p>가우스는 1827년, 이 곱이 곡면이 3차원 공간에 '어떻게 놓였는지'와 무관하게 <b>곡면 위에서 잰 거리만으로</b> 결정된다는 것을 증명하고 스스로 <span class="term">빼어난 정리</span><span class="en">(Theorema Egregium)</span>라 이름 붙였습니다. 곡면을 늘이거나 줄이지 않고 구부리기만 하면(등거리 변형) 곡면 위 모든 거리가 그대로이니 \(K\)도 그대로입니다. 결론은 단호합니다.</p>
+    <ul>
+      <li>종이(평면, \(K=0\))는 원통·원뿔(\(K=0\))로는 말리지만 구(\(K>0\))는 감싸지 못한다 → 휘는 디스플레이는 한 방향으로만 휜다. 두 방향으로 휘려면 재료가 <b>늘어나야</b> 한다.</li>
+      <li>구면(지구)은 어떤 방법으로도 거리 왜곡 없이 평면 지도로 펼 수 없다 → 다음 절의 지도 투영 문제.</li>
+      <li>피자 조각 끝을 손가락으로 U자로 접으면 끝이 처지지 않는다. 한 방향을 휘게 하면 \(K=0\)을 유지하려고 다른 방향의 곡률이 0으로 강제되기 때문이다. 골판지·주름 강판·함석 지붕이 휨에 강한 이유도 같다.</li>
+    </ul>
+    <p>곡률이 '안에서' 보인다는 말은 무슨 뜻일까요? 곡면 위에 측지선(가장 짧은 길)으로 삼각형을 그리고 내각을 재면 됩니다. 평면에서는 180°지만 곡면에서는 그 안에 들어 있는 곡률만큼 어긋납니다.</p>
+    <div class="formula">$$\alpha + \beta + \gamma = \pi + \iint_{\triangle} K\, dA \quad\xrightarrow{\ \text{구}\ }\quad \alpha+\beta+\gamma = \pi + \frac{\text{넓이}}{R^2}$$
+      <div class="where">가우스–보네 정리의 삼각형 판. 구면에서는 지라르의 정리라 부른다. 남는 각 \(\varepsilon = \alpha+\beta+\gamma-\pi\)(구면 초과량)가 곧 넓이다. 작은 삼각형일수록 넓이가 작아 평면처럼 보인다. 땅 위 측량이 대부분 평면 기하로 충분한 이유다.</div>
+    </div>
+
+    <div class="sim" id="sim-geo-sphere">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>구 위의 삼각형: 내각의 합은 180°가 아니다</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-geo-sph"></canvas><span class="hint">점을 끌기 · 빈 곳을 끌면 회전</span></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>삼각형 프리셋</span>
+            <div class="btn-row"><button class="btn" id="geo-sp-small">작은 삼각형</button><button class="btn" id="geo-sp-oct">직각 셋 (1/8 구)</button><button class="btn" id="geo-sp-city">서울·런던·뉴욕</button></div>
+          </div>
+          <label class="check"><input type="checkbox" id="geo-sp-grid" checked> 경위선 보기</label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">∠A · ∠B · ∠C</span><span class="v" id="geo-sp-ang">—</span></div>
+        <div class="stat"><span class="k">내각의 합</span><span class="v" id="geo-sp-sum">—</span></div>
+        <div class="stat"><span class="k">구면 초과량 ε</span><span class="v" id="geo-sp-ex">—</span></div>
+        <div class="stat"><span class="k">넓이 (지구, R = 6371 km)</span><span class="v" id="geo-sp-area">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① '작은 삼각형'에서 세 점을 서로 가까이 모으면 합이 180°에 다가간다(넓이 → 0). ② '직각 셋'은 북극과 적도 위 경도 0°·90° 점으로, 세 각이 모두 90°(합 270°)이고 넓이는 정확히 구의 1/8(약 6,380만 km²). ③ '서울·런던·뉴욕'은 대권(최단 항로)으로 이은 삼각형 — 지도 위에서 굽어 보이는 항공로가 실제로는 '직선'이다. 모델: 반지름 1인 구, 정사영(멀리서 본 모습) 렌더. 변은 대원호(측지선), 각은 꼭짓점에서의 접선 벡터 사이 각.</div>
+    </div>
+  </section>
+
+  <!-- =============================================================== 5 -->
+  <section id="map-projection">
+    <h2>지구를 종이에: 지도 투영과 티소 지시원</h2>
+    <div class="problem"><strong>나침반 하나로 대양을 건너려면</strong>
+      <p>16세기 항해사는 "북동쪽 45°로 계속 가라" 같은 일정한 나침반 방위로 항해했습니다(항정선). 그런데 지구본 위에서 이 경로는 극을 향해 감기는 나선이라, 평범한 격자 지도에서는 곡선으로 그려져 자로 방위를 읽을 수 없었습니다. 빼어난 정리 때문에 완벽한 지도는 없으니, 무엇을 지키고 무엇을 버릴지 골라야 합니다.</p>
+    </div>
+    <p>메르카토르(1569)의 선택은 <b>각도</b>였습니다. 경선을 평행한 세로선으로 펴면 위도 \(\varphi\)에서 동서 방향이 \(\sec\varphi\)배 늘어나므로, 남북 방향도 같은 비율로 늘이면 국소적으로 모양(각도)이 보존됩니다. 이런 지도를 <span class="term">등각 투영</span><span class="en">(Conformal Projection)</span>이라 하고, 그 위에서 항정선은 직선이 됩니다. 대가는 넓이입니다. 길이 배율 \(\sec\varphi\)가 두 방향에 다 걸리니 넓이는 \(\sec^2\varphi\)배, 위도 60°에서 4배, 70°에서 약 8.5배입니다.</p>
+    <div class="formula">$$\text{메르카토르: } x = R\lambda,\quad y = R\ln\tan\!\Big(\frac{\pi}{4}+\frac{\varphi}{2}\Big) \qquad \text{람베르트 등적 원통: } x = R\lambda,\quad y = R\sin\varphi$$
+      <div class="where">\(\lambda\): 경도, \(\varphi\): 위도(라디안). 메르카토르의 \(y\)는 \(dy/d\varphi = R\sec\varphi\)를 적분한 것. 등적 원통은 남북을 \(\cos\varphi\)배로 눌러 동서 확대 \(\sec\varphi\)를 상쇄 → 넓이는 보존, 대신 고위도에서 모양이 납작해진다. 하나의 지도가 각도와 넓이를 동시에 보존하는 것은 불가능하다(그러면 거리까지 보존되어 빼어난 정리에 어긋난다).</div>
+    </div>
+    <p>투영이 어디서 얼마나 왜곡하는지 한눈에 보는 도구가 19세기 프랑스 수학자 티소의 <span class="term">지시원</span><span class="en">(Tissot's Indicatrix)</span>입니다. 지구 위 곳곳에 같은 크기의 작은 원을 놓고 지도에 투영하면, 원이 타원으로 바뀝니다. 타원의 두 반지름 \(a, b\)가 그 지점의 최대·최소 길이 배율이고, \(ab\)가 넓이 배율, \(a/b\)가 각도 왜곡입니다. 수학적으로는 투영의 야코비 행렬(국소 선형 근사)의 특이값입니다(3장의 SVD).</p>
+
+    <div class="sim" id="sim-geo-tissot">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>티소 지시원: 같은 원이 지도마다 어떻게 변하나</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-geo-tis"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>투영</span><div class="seg" id="geo-ts-proj"><button data-value="merc" class="on">메르카토르</button><button data-value="eq">정거 원통</button><button data-value="lam">등적 원통</button><button data-value="moll">몰바이데</button></div></div>
+          <label class="ctrl"><span>탐침 위도 φ <output id="geo-ts-lat-out"></output></span><input type="range" id="geo-ts-lat" min="-80" max="80" value="60"></label>
+          <label class="check"><input type="checkbox" id="geo-ts-land" checked> 그린란드·아프리카 윤곽(개략)</label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">길이 배율 a · b</span><span class="v" id="geo-ts-ab">—</span></div>
+        <div class="stat"><span class="k">넓이 배율 ab</span><span class="v" id="geo-ts-area">—</span></div>
+        <div class="stat"><span class="k">최대 각 왜곡</span><span class="v" id="geo-ts-ang">—</span></div>
+        <div class="stat"><span class="k">지도 위 넓이 그린란드/아프리카</span><span class="v" id="geo-ts-ratio">—</span></div>
+      </div>
+      <div class="sim-note">파란 원은 지구 위에서 모두 같은 크기(지름 약 1,300 km)이고, 노란 원이 탐침 위도의 원이다. 해볼 것: ① 메르카토르에서 탐침을 0° → 80°로 올리면 원은 원 모양 그대로(각 왜곡 0) 커지기만 한다(\(a=b=\sec\varphi\)). 그린란드가 아프리카보다 커 보이지만 실제 넓이는 약 217만 km² 대 약 3,030만 km²(약 1/14). ② 등적 원통으로 바꾸면 넓이 배율이 어디서나 1, 대신 고위도 원이 가로로 납작한 타원이 된다. ③ 몰바이데는 넓이를 지키면서 각 왜곡을 가장자리로 몰아낸 절충안. 모델: 구형 지구, 원은 반지름 6°의 측지 원을 그대로 투영(그래서 고위도 메르카토르 원은 약간 달걀형). 대륙 윤곽은 수십 개 점으로 만든 개략 다각형이다.</div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>투영</th><th>지키는 것</th><th>버리는 것</th><th>쓰이는 곳</th></tr></thead>
+      <tbody>
+        <tr><td>메르카토르(웹 메르카토르)</td><td>각도(등각) → 항정선이 직선, 확대해도 모양 유지</td><td>넓이(고위도 과장), 극 표현 불가</td><td>해도, 웹 지도 타일(확대 축소해도 길모퉁이가 직각)</td></tr>
+        <tr><td>정거 원통(위경도 그대로)</td><td>경선 방향 거리, 계산의 단순함</td><td>각도·넓이 모두</td><td>위성 영상·기후 데이터 격자, 360° 파노라마 저장 형식</td></tr>
+        <tr><td>람베르트 등적 원통 · 몰바이데</td><td>넓이(등적)</td><td>각도(모양)</td><td>인구·식생 분포처럼 '면적이 곧 양'인 주제도</td></tr>
+        <tr><td>심사 투영(그노몬)</td><td>대원 → 직선</td><td>각도·넓이, 반구 이하만</td><td>대권 항로 계획</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout tip"><strong>카메라도 지도다</strong> 360° 카메라와 어안 렌즈는 구면(모든 방향)을 평면 센서에 담는 지도 투영 문제를 그대로 푼다. 파노라마를 위경도 격자(정거 원통)로 저장하면 하늘과 바닥이 늘어나고, 어안 렌즈는 등거리·등입체각 같은 서로 다른 투영 공식을 따른다. 이 장 끝의 '왜곡' 절과 이어지는 이야기다.</div>
+  </section>
+
+  <!-- =============================================================== 6 -->
+  <section id="projective">
+    <h2>평행선이 만나는 곳: 사영기하와 소실점</h2>
+    <div class="problem"><strong>차선 인식 카메라가 본 도로</strong>
+      <p>앞 유리의 카메라가 찍은 도로에서 평행한 두 차선은 화면 위쪽 한 점으로 모입니다. 차선 사이 폭은 아래에서 300픽셀, 위에서 20픽셀입니다. 차가 차선 중앙에서 얼마나 벗어났는지 미터 단위로 알려면 이 '모여드는' 기하를 되돌려야 합니다. 유클리드 기하에는 "평행선은 만나지 않는다"는 공리가 있는데, 사진 속에서는 매번 만납니다.</p>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 220" role="img" aria-label="철로가 소실점에서 만나는 원근 그림">
+        <path d="M0 70 H800" class="s-line" stroke-dasharray="6 5"/>
+        <text x="10" y="62" class="t-dim">지평선(소실선)</text>
+        <path d="M150 215 L400 70 L650 215" class="s-acc" stroke-width="3"/>
+        <path d="M60 215 L400 70" class="s-line" stroke-dasharray="3 4"/><path d="M740 215 L400 70" class="s-line" stroke-dasharray="3 4"/>
+        <g id="geo-fig-rail"></g>
+        <circle cx="400" cy="70" r="6" fill="var(--accent-2)"/>
+        <text x="412" y="56" class="t" style="font-weight:700">소실점</text>
+        <text x="520" y="120" class="t-dim">침목 간격(실제로는 같음)이</text>
+        <text x="520" y="138" class="t-dim">위로 갈수록 좁아진다 → 비율은 깨지지만</text>
+        <text x="520" y="156" class="t-dim">'직선은 직선'과 교차비는 남는다</text>
+      </svg>
+      <figcaption><b>그림 11-6.</b> 원근 사진에서 실제로 평행한 직선들은 한 소실점에서 만나고, 같은 평면(지면) 위의 모든 평행선 묶음의 소실점은 한 직선(지평선) 위에 있다. 길이·각도·평행은 깨지지만 '직선은 직선', '점이 직선 위에 있음', 그리고 교차비는 보존된다.</figcaption>
+    </figure>
+    <p>원근(핀홀 카메라)은 3차원 점 \((X,Y,Z)\)를 \((fX/Z,\ fY/Z)\)로 보냅니다. <b>\(Z\)로 나누기</b>가 모든 것의 원인입니다. 나눗셈은 선형이 아니라서 3장의 행렬로 바로 쓸 수 없습니다. 해결책은 좌표를 하나 더 붙이는 <span class="term">동차 좌표</span><span class="en">(Homogeneous Coordinates)</span>입니다. 평면의 점 \((x,y)\)를 \((x,y,1)\)로 쓰고, \((wx, wy, w)\)는 모두 같은 점으로 칩니다. 그러면 '마지막 성분으로 나누기'를 맨 끝으로 미룰 수 있고, 그 전까지는 전부 행렬 곱입니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 200" role="img" aria-label="동차 좌표: 원점을 지나는 직선과 w=1 평면의 교점">
+        <path d="M60 170 H760" class="s-axis"/><path d="M400 190 V20" class="s-axis"/>
+        <path d="M60 70 H760" class="s-acc" stroke-width="2.5"/>
+        <text x="740" y="60" class="t-acc" text-anchor="end">w = 1 (실제 화면)</text>
+        <text x="410" y="30" class="t-dim">w</text><text x="770" y="185" class="t-dim">x</text>
+        <g class="s-line">
+          <path d="M400 170 L250 20"/><path d="M400 170 L520 20"/><path d="M400 170 L700 20"/>
+        </g>
+        <path d="M400 170 L780 170" stroke="var(--accent-2)" stroke-width="2.5" stroke-dasharray="6 4"/>
+        <g class="f-acc"><circle cx="300" cy="70" r="6"/><circle cx="480" cy="70" r="6"/><circle cx="600" cy="70" r="6"/></g>
+        <text x="270" y="100" class="t-mono">(−1,1)</text><text x="485" y="100" class="t-mono">(0.8,1)</text><text x="606" y="100" class="t-mono">(2,1)</text>
+        <text x="600" y="160" class="t" fill="var(--accent-2)">w = 0: 화면과 평행 → 무한원점</text>
+        <text x="75" y="140" class="t-dim">원점을 지나는 직선 하나 = 점 하나</text>
+      </svg>
+      <figcaption><b>그림 11-7.</b> 동차 좌표의 그림(한 차원 낮춘 판). '점'은 원점을 지나는 직선이고, 화면(w = 1)과 만나는 곳이 우리가 보는 위치다. 화면과 평행한 직선(w = 0)은 화면 어디와도 만나지 않는다: 이것이 '무한원점'이고, 평행선이 만나는 곳이다. 카메라를 기울이면 이 점이 화면 안으로 들어와 소실점이 된다.</figcaption>
+    </figure>
+    <p>동차 좌표에서는 직선도 벡터 \(\ell = (a,b,c)\)(직선 \(ax+by+c=0\))로 쓰이고, 놀랍게도 점과 직선이 대칭이 됩니다.</p>
+    <div class="formula">$$\ell = \mathbf p \times \mathbf q \ \ (\text{두 점을 지나는 직선}), \qquad \mathbf v = \ell_1 \times \ell_2 \ \ (\text{두 직선의 교점})$$
+      <div class="where">외적 한 번으로 '두 점 → 직선', '두 직선 → 교점'이 끝난다. 평행한 두 직선의 교점은 \(w=0\)인 \((a, b, 0)\) 꼴, 즉 방향만 있는 무한원점이 나온다. 그래서 사영 평면에서는 <b>어떤 두 직선도 정확히 한 점에서 만난다</b>. 예외가 사라진다. 사진 속 종이의 위·아래 변으로 직선 두 개를 만들고 외적을 하면 소실점이 나온다(다음 시뮬레이터에서 그대로 쓴다).</div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>기하</th><th>허용하는 변환</th><th>자유도(평면)</th><th>보존되는 것(불변량)</th></tr></thead>
+      <tbody>
+        <tr><td>유클리드</td><td>회전 + 이동</td><td class="num">3</td><td>길이, 각도, 넓이</td></tr>
+        <tr><td>닮음</td><td>+ 균일 확대</td><td class="num">4</td><td>각도, 길이의 비</td></tr>
+        <tr><td>아핀</td><td>+ 기울임·비균일 확대 (2×2 행렬 + 이동)</td><td class="num">6</td><td>평행, 같은 직선 위 길이의 비, 넓이의 비</td></tr>
+        <tr><td>사영</td><td>+ 원근 (3×3 행렬, 동차 좌표)</td><td class="num">8</td><td>직선, 접합(점이 직선 위), 교차비</td></tr>
+        <tr><td>위상</td><td>연속 변형</td><td class="num">∞</td><td>연결성, 구멍 수, 오일러 특성수</td></tr>
+      </tbody>
+    </table></div>
+    <p>이 표는 펠릭스 클라인이 1872년 에를랑겐 프로그램에서 제시한 관점, "<b>기하란 어떤 변환들 아래서 변하지 않는 성질을 연구하는 것</b>"을 요약합니다. 아래로 갈수록 허용하는 변환이 많아지고 남는 불변량은 적어집니다. 변환들이 이루는 '군'은 <a href="symmetry.html">12장</a>의 주제입니다. 사영 아래서도 살아남는 대표 불변량은 한 직선 위 네 점의 <span class="term">교차비</span><span class="en">(Cross Ratio)</span> \(\frac{AC\cdot BD}{BC\cdot AD}\)입니다. 침목 간격처럼 길이의 비는 원근에서 깨지지만 교차비는 그대로라서, 사진 한 장으로 도로 위 거리를 재는 데 쓸 수 있습니다. 화가들이 르네상스 시기에 정립한 원근법도 결국 이 기하를 손으로 구현한 것입니다(집필 예정인 ArtBook에서 다룰 예정).</p>
+  </section>
+
+  <!-- =============================================================== 7 -->
+  <section id="homography">
+    <h2>네 점이면 충분하다: 호모그래피와 문서 스캔</h2>
+    <p>카메라가 <b>평면</b>(종이, 도로 면, 체스판)을 찍을 때, 평면 위 점 \((u,v)\)와 사진 속 점 \((x,y)\) 사이의 관계는 정확히 3×3 행렬 하나로 쓰입니다. 이것이 <span class="term">호모그래피</span><span class="en">(Homography, 사영 변환)</span>입니다.</p>
+    <div class="formula">$$\begin{bmatrix} x' \\ y' \\ w' \end{bmatrix} = \underbrace{\begin{bmatrix} h_{11} & h_{12} & h_{13} \\ h_{21} & h_{22} & h_{23} \\ h_{31} & h_{32} & h_{33} \end{bmatrix}}_{H} \begin{bmatrix} u \\ v \\ 1 \end{bmatrix}, \qquad x = \frac{x'}{w'},\ \ y = \frac{y'}{w'}$$
+      <div class="where">원소는 9개지만 \(H\)와 \(2H\)는 같은 변환이므로(동차 좌표의 배율 자유) 자유도는 <b>8</b>. 아래 행 \((h_{31}, h_{32})\)이 0이면 아핀 변환(평행 유지)이고, 0이 아니면 \(w'\)가 위치마다 달라져 원근이 생긴다. 평면 \(Z=0\)을 찍는 카메라 \(K[R\,|\,\mathbf t]\)에서 세 번째 열이 빠지며 \(H = K[\mathbf r_1\ \mathbf r_2\ \mathbf t]\)가 된다.</div>
+    </div>
+    <p>미지수가 8개이고, 대응점 하나가 식 두 개(\(x\)와 \(y\))를 주므로 <b>점 네 쌍</b>이면 됩니다(그중 세 점이 한 직선 위에 있지 않아야 함). \(h_{33}=1\)로 두고 분모를 양변에 곱하면 선형식이 됩니다. 이 방법을 <span class="term">DLT</span><span class="en">(Direct Linear Transform)</span>라 합니다.</p>
+    <div class="formula">$$\begin{aligned} u\,h_{11} + v\,h_{12} + h_{13} - u x\, h_{31} - v x\, h_{32} &= x \\ u\,h_{21} + v\,h_{22} + h_{23} - u y\, h_{31} - v y\, h_{32} &= y \end{aligned} \quad (\text{점마다 2줄} \times 4 = 8\times 8\ \text{선형계})$$
+      <div class="where">문서 스캔 앱은 (1) 가장자리 검출로 종이의 네 모서리를 찾고 (2) 이 8×8 계를 풀어 \(H\)를 얻은 뒤 (3) 출력 A4의 각 픽셀 \((u,v)\)마다 \(H(u,v,1)^\top\)를 계산해 사진에서 그 위치의 색을 가져온다(역방향 매핑 + 보간, 6장의 재표본화). 점이 많고 잡음이 있으면 최소제곱(SVD)과 RANSAC으로 푼다.</div>
+    </div>
+
+    <div class="sim" id="sim-geo-homo">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>문서 스캐너: 네 꼭짓점으로 원근 펴기</h3></div>
+      <div class="sim-body">
+        <div class="sim-view">
+          <div class="split">
+            <div><canvas id="cv-geo-ho-src"></canvas><span class="cap">찍힌 사진 · 꼭짓점 4개를 끄세요</span></div>
+            <div><canvas id="cv-geo-ho-dst"></canvas><span class="cap">H로 편 결과</span></div>
+          </div>
+        </div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>사진 위에 표시</span><div class="seg" id="geo-ho-view"><button data-value="grid" class="on">격자</button><button data-value="vp">소실점</button><button data-value="none">없음</button></div></div>
+          <label class="check"><input type="checkbox" id="geo-ho-affine"> 아핀으로 근사 (점 3개만 사용)</label>
+          <div class="btn-row"><button class="btn primary" id="geo-ho-snap">모서리 자동 맞춤</button><button class="btn" id="geo-ho-reset">초기화</button><button class="btn" id="geo-ho-new">다른 각도의 사진</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">H (단위 정사각형 → 픽셀, h₃₃=1)</span><span class="v geo-hmat" id="geo-ho-H">—</span></div>
+        <div class="stat"><span class="k">소실점 (위·아래 변)</span><span class="v" id="geo-ho-vp1">—</span></div>
+        <div class="stat"><span class="k">소실점 (좌·우 변)</span><span class="v" id="geo-ho-vp2">—</span></div>
+        <div class="stat"><span class="k">모서리 평균 오차</span><span class="v" id="geo-ho-err">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① 네 점을 종이의 네 모서리에 맞추면(또는 '자동 맞춤') 오른쪽에 반듯한 문서가 나타난다. 모서리를 몇 픽셀만 어긋나게 해도 표의 선이 기울어지는 것을 보라. ② '소실점'을 켜고 종이의 마주 보는 변을 연장하면 사진 밖 어딘가에서 만난다. 두 소실점을 잇는 선이 책상 면의 지평선이다. ③ '아핀으로 근사'를 켜면 네 번째 점이 무시되고(점선 평행사변형) 아무리 맞춰도 먼 쪽 글자가 펴지지 않는다. 모델: 합성 '사진'은 정답 호모그래피로 만든 흑백 이미지, 결과는 역방향 매핑 + 쌍선형 보간. H는 8×8 선형계를 가우스–조르단으로 푼다.</div>
+    </div>
+    <div class="callout tip"><strong>같은 행렬, 다른 제품</strong> 차선 인식의 버드아이 뷰(역원근 변환, IPM)는 도로 면 위 네 점과 화면 위 네 점으로 \(H\)를 정한 것이다. 파노라마 사진 이어 붙이기(카메라가 제자리에서 회전하면 두 사진 사이가 호모그래피), 축구 중계의 가상 오프사이드 선, 증강현실의 평면 마커 추적도 모두 3×3 행렬 하나다. 카메라 보정의 표준인 장정유(Zhang) 방법(2000)도 체스판 사진마다 호모그래피를 구한 뒤 거기서 카메라 내부 행렬 \(K\)를 뽑아낸다.</div>
+    <div class="callout warn"><strong>수치 함정</strong> 픽셀 좌표(수백~수천)를 그대로 넣으면 8×8 계의 원소 크기가 \(1\)에서 \(10^6\)까지 섞여 조건수가 나빠진다(<a href="numerics.html">10장</a>). 실전 DLT는 점들을 원점 중심, 평균 거리 \(\sqrt2\)로 정규화한 뒤 풀고 되돌린다(하틀리 정규화). 이 시뮬레이터는 출력 쪽을 단위 정사각형으로 두어 규모 차이를 줄였다.</div>
+  </section>
+
+  <!-- =============================================================== 8 -->
+  <section id="aberration">
+    <h2>구면은 한 점에 모으지 못한다: 렌즈 수차</h2>
+    <div class="problem"><strong>스마트폰 카메라 렌즈는 왜 이상한 모양인가</strong>
+      <p>스마트폰 카메라 모듈을 잘라 보면 렌즈가 교과서 그림의 볼록렌즈가 아니라 가장자리가 물결치듯 휜 플라스틱 조각 여러 장입니다. 수백 년 동안 렌즈는 구면으로 만들어졌습니다. 두 면을 서로 비비며 갈면 어느 방향으로 맞대도 꼭 맞는 유일한 모양인 구면으로 저절로 수렴하기 때문입니다. 만들기 쉬운 이 구면이 왜 부족할까요?</p>
+    </div>
+    <p>교과서의 렌즈 공식(얇은 렌즈, 근축 근사)은 \(\sin\theta \approx \theta\)를 가정합니다. 렌즈 중심 가까이 들어오는 광선에만 맞는 근사입니다. 실제 스넬 법칙 \(n_1\sin\theta_1 = n_2\sin\theta_2\)를 정확히 따라가면, 구면의 가장자리로 들어온 광선은 중심 광선보다 <b>더 앞에서</b> 축을 만납니다. 이것이 <span class="term">구면수차</span><span class="en">(Spherical Aberration)</span>입니다. 해결책은 면의 모양 자체를 바꾸는 것, 곧 <span class="term">비구면</span><span class="en">(Asphere)</span>입니다.</p>
+    <div class="formula">$$z(r) = \frac{c\,r^2}{1+\sqrt{1-(1+K)\,c^2 r^2}} + A_4 r^4 + A_6 r^6 + \cdots$$
+      <div class="where">\(z\): 면의 처짐(sag), \(r\): 축에서의 높이, \(c=1/R\): 꼭짓점 곡률. \(K\): 원뿔 상수. \(K=0\) 구, \(-1<K<0\) 장축 방향 타원, \(K=-1\) 포물면, \(K<-1\) 쌍곡면. \(A_4, A_6,\dots\)는 고차 비구면 계수. 평행광을 굴절률 \(n\)인 유리 속 한 점에 정확히 모으는 면은 \(K=-1/n^2\)인 타원면, 평면을 앞에 둔 평볼록 렌즈의 뒷면은 \(K=-n^2\)인 쌍곡면이다(데카르트가 17세기에 밝힌 '데카르트 난형'의 특수한 경우).</div>
+    </div>
+
+    <div class="sim" id="sim-geo-ray">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>스넬 법칙으로 광선 추적: 구면수차와 비구면 보정</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-geo-ray"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>광학계</span><div class="seg" id="geo-ry-mode"><button data-value="single" class="on">굴절면 하나</button><button data-value="front">볼록면 앞</button><button data-value="back">평면 앞</button></div></div>
+          <label class="ctrl"><span>굴절률 n <output id="geo-ry-n-out"></output></span><input type="range" id="geo-ry-n" min="1.4" max="1.9" step="0.01" value="1.5"></label>
+          <label class="ctrl"><span>입사 높이(조리개) <output id="geo-ry-ap-out"></output></span><input type="range" id="geo-ry-ap" min="10" max="62" value="50"></label>
+          <label class="ctrl"><span>원뿔 상수 K <output id="geo-ry-k-out"></output></span><input type="range" id="geo-ry-k" min="-4" max="1" step="0.01" value="0"></label>
+          <div class="btn-row"><button class="btn primary" id="geo-ry-best">K 최적화</button><button class="btn" id="geo-ry-sph">구면 (K = 0)</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">근축 초점 z (첫 면 기준)</span><span class="v" id="geo-ry-fp">—</span></div>
+        <div class="stat"><span class="k">가장자리 광선 초점</span><span class="v" id="geo-ry-fm">—</span></div>
+        <div class="stat"><span class="k">종구면수차 LSA</span><span class="v" id="geo-ry-lsa">—</span></div>
+        <div class="stat"><span class="k">최소 흐림 원 반지름</span><span class="v" id="geo-ry-spot">—</span></div>
+      </div>
+      <div class="sim-note">위: 평행광 광선 추적(바깥 광선일수록 주황), 아래: 입사 높이 \(h\)별 초점 위치의 어긋남(종구면수차). 길이 단위는 꼭짓점 곡률 반지름 R. 해볼 것: ① K = 0(구면)에서 조리개를 키우면 초점이 번지고 아래 곡선이 대략 \(h^2\)에 비례해 내려간다. 조리개를 조이면 수차가 빠르게 준다(사진에서 조리개를 조이면 선명해지는 한 이유). ② 'K 최적화'를 누르면 '굴절면 하나'는 \(K=-1/n^2\), '평면 앞'은 \(K=-n^2\)으로 가며 수차가 0이 된다. ③ 같은 구면 평볼록 렌즈라도 '볼록면 앞'이 '평면 앞'보다 수차가 훨씬 작다. 렌즈는 방향도 중요하다. 모델: 2차원 자오면, 단색광, 스넬 법칙 정확 계산(근사 없음). 렌즈 두께 0.6R. 전반사된 광선은 그리지 않는다.</div>
+    </div>
+    <p>렌즈 설계는 곧 이런 '면 모양 최적화'입니다(<a href="optimization.html">9장</a>). 구면만 쓰면 한 면이 지울 수 있는 수차가 적어서 렌즈를 여러 장 겹쳐 서로 상쇄시켜야 합니다. 비구면 한 장이 구면 여러 장의 일을 하므로, 두께가 몇 mm뿐인 스마트폰 카메라는 사출 성형한 플라스틱 비구면 렌즈 여러 장(대개 5~7장 안팎)으로 이 문제를 풉니다. 성형은 금형만 한 번 정밀하게 깎으면 같은 비구면을 대량으로 찍어낼 수 있어서, '갈기 쉬운 구면'의 경제학을 뒤집었습니다.</p>
+    <div class="callout deep"><strong>수차의 족보</strong> 근축 근사 다음 항(\(\sin\theta \approx \theta - \theta^3/6\))까지 넣은 3차 이론에서 단색 수차는 다섯 가지로 갈린다(자이델 수차): 구면수차, 코마, 비점수차, 상면 만곡, 왜곡. 이 중 앞의 넷은 점을 '흐리게' 만들고, 마지막 <b>왜곡</b>은 점은 선명하게 두되 <b>위치</b>를 옮긴다. 그래서 왜곡만은 사진을 찍은 뒤 계산으로 되돌릴 수 있다. 다음 절의 주제다.</div>
+  </section>
+
+  <!-- =============================================================== 9 -->
+  <section id="distortion">
+    <h2>직선이 휘는 사진: 방사 왜곡과 카메라 보정</h2>
+    <div class="problem"><strong>광각 블랙박스 영상에서 차선이 휜다</strong>
+      <p>화각이 넓은 블랙박스·액션캠 영상에서는 화면 가장자리의 곧은 건물과 차선이 바깥으로 불룩하게 휩니다(배럴 왜곡). 사람 눈에는 '광각 느낌'이지만, 차선 검출기는 직선을 찾고 앞 절의 호모그래피는 직선이 직선으로 찍힌다고 가정합니다. 렌즈를 바꾸지 않고 소프트웨어로 펴려면 휨을 수식으로 써야 합니다.</p>
+    </div>
+    <p>렌즈가 축 대칭이면 왜곡도 축 대칭입니다. 화면 중심에서 거리 \(r\)인 점이 \(r'\)로 옮겨지는데, \(r'\)은 \(r\)의 홀함수여야 하므로(축 반대쪽은 반대로) 테일러 전개는 홀수 차수만 남습니다. 이것이 브라운–콘래디 계열의 <span class="term">방사 왜곡 모델</span><span class="en">(Radial Distortion Model)</span>이고, OpenCV 같은 카메라 보정 도구의 기본형입니다.</p>
+    <div class="formula">$$\mathbf x_d = \mathbf x\,\big(1 + k_1 r^2 + k_2 r^4 + k_3 r^6\big), \qquad r = \|\mathbf x\|$$
+      <div class="where">\(\mathbf x\): 정규화된 이상적 좌표(핀홀이 찍었을 위치), \(\mathbf x_d\): 실제 찍힌 위치. \(k_1<0\): 바깥이 안으로 눌림 → <b>배럴</b>(광각). \(k_1>0\): 바깥이 늘어남 → <b>핀쿠션</b>(망원). \(k_1<0, k_2>0\)이 섞이면 중심은 배럴, 가장자리는 핀쿠션인 '콧수염' 왜곡. 렌즈와 센서가 기울어 생기는 접선 왜곡 \(p_1,p_2\) 항을 더하기도 한다.</div>
+    </div>
+
+    <div class="sim" id="sim-geo-dist">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>직접 해 보는 렌즈 왜곡 보정</h3></div>
+      <div class="sim-body">
+        <div class="sim-view">
+          <div class="split">
+            <div><canvas id="cv-geo-ds-raw"></canvas><span class="cap">찍힌 격자 (렌즈 왜곡)</span></div>
+            <div><canvas id="cv-geo-ds-fix"></canvas><span class="cap">보정 결과</span></div>
+          </div>
+        </div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>렌즈</span><div class="seg" id="geo-ds-lens"><button data-value="barrel" class="on">광각(배럴)</button><button data-value="pin">망원(핀쿠션)</button><button data-value="mus">콧수염</button></div></div>
+          <label class="ctrl"><span>보정 k₁ <output id="geo-ds-k1-out"></output></span><input type="range" id="geo-ds-k1" min="-0.4" max="0.4" step="0.01" value="0"></label>
+          <label class="ctrl"><span>보정 k₂ <output id="geo-ds-k2-out"></output></span><input type="range" id="geo-ds-k2" min="-0.2" max="0.2" step="0.01" value="0"></label>
+          <div class="btn-row"><button class="btn primary" id="geo-ds-auto">자동 보정 (직선 맞춤)</button><button class="btn" id="geo-ds-zero">보정 끄기</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">직선 오차 (RMS, 폭 1000 px 기준)</span><span class="v" id="geo-ds-res">—</span></div>
+        <div class="stat"><span class="k">렌즈 사양 k₁ · k₂</span><span class="v" id="geo-ds-true">—</span></div>
+        <div class="stat"><span class="k">판정</span><span class="v" id="geo-ds-msg">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① k₁ 슬라이더만으로 배럴 렌즈의 격자를 곧게 펴 보라(오차 1 px 아래가 목표). 보정 결과의 점선 테두리는 원래 사진의 가장자리로, 배럴을 펴면 모서리가 바깥으로 뻗친 '핀쿠션 모양 이미지'가 되어 직사각형으로 잘라 써야 한다. ② '콧수염' 렌즈는 k₁만으로는 중심과 가장자리를 동시에 펼 수 없다. k₂가 필요하다. ③ '자동 보정'은 모든 격자선이 직선이 되도록 (k₁, k₂)를 탐색한다. 카메라 보정 프로그램이 체스판 사진으로 하는 일이 바로 이것이다. 모델: 정규화 좌표(가로 −1…1, 4:3), 방사 왜곡 2항, 보정은 사용자의 \((k_1,k_2)\) 모델을 뉴턴법으로 역변환한다.</div>
+    </div>
+    <p>실제 카메라 보정은 이 시뮬레이터와 같은 생각을 더 크게 합니다. 체스판을 여러 각도로 찍고, 각 사진의 모서리 점들에 대해 "핀홀 카메라 \(K[R\,|\,\mathbf t]\) + 왜곡 \((k_1,k_2,\ldots)\)로 투영한 위치"와 "실제 검출 위치"의 차이(재투영 오차)를 최소화합니다. 초깃값은 앞 절의 호모그래피로 얻고, 마무리는 비선형 최소제곱(레벤버그–마쿼트)입니다. 위상(χ), 미분기하(곡률), 사영기하(H), 광학(수차)이 카메라 한 대 안에서 만나는 셈입니다.</p>
+  </section>
+
+  <!-- =============================================================== 10 -->
+  <section id="uses">
+    <h2>이 도구가 쓰이는 곳</h2>
+    <p>이 장의 도구들이 시리즈의 다른 책에서 어떤 문제를 푸는지 모았습니다. 거꾸로, 각 책에서 '더 깊이' 링크를 따라오면 이 장의 해당 절로 연결됩니다.</p>
+    <div class="uses">
+      <a href="https://camerabook.euiyun.com/"><small>CAMERABOOK</small>호모그래피 · 카메라 보정<br><span>파노라마 합성, 체스판 보정, 왜곡 보정 프로필, 어안 렌즈 투영</span></a>
+      <a href="https://opticsbook.euiyun.com/"><small>OPTICSBOOK</small>구면수차 · 비구면 렌즈<br><span>광선 추적, 자이델 수차, 스마트폰 모듈의 플라스틱 비구면 설계</span></a>
+      <a href="https://carbook.euiyun.com/"><small>CARBOOK</small>클로소이드 · 버드아이 뷰<br><span>도로 완화곡선과 횡가속도, ADAS 차선 인식의 역원근 변환</span></a>
+      <a href="https://designbook.euiyun.com/"><small>DESIGNBOOK</small>평면 그래프 · 배선<br><span>교차 없는 배선과 층수, K₅·K₃,₃, 배치·배선 알고리즘의 그래프 모델</span></a>
+      <a href="https://displaybook.euiyun.com/"><small>DISPLAYBOOK</small>가우스 곡률<br><span>롤러블·폴더블은 한 방향으로만 휜다, 곡면 패널의 늘어남과 주름</span></a>
+      <a href="https://phonebook.euiyun.com/"><small>PHONEBOOK</small>문서 스캔 · 카메라 모듈<br><span>스캔 앱의 4점 원근 보정, 초광각 카메라의 왜곡 보정</span></a>
+      <a href="https://shipbook.euiyun.com/"><small>SHIPBOOK</small>메르카토르 · 대권 항로<br><span>해도의 등각 투영, 항정선과 대권 항해의 거리 차이</span></a>
+      <a href="https://aibook.euiyun.com/"><small>AIBOOK</small>사영 변환 · 3D 메쉬<br><span>원근 변환 데이터 증강, 메쉬 기반 3D 재구성의 위상 검사</span></a>
+    </div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>핵심 정리</h2>
+    <ol>
+      <li>위상수학은 연속 변형 아래 불변인 성질만 본다. 오일러 특성수 \(\chi = V-E+F = 2-2g-b\)는 분할 방식과 무관하며, 메쉬의 구멍·결함을 정수 하나로 검출한다.</li>
+      <li>그래프로 추상화하면 한붓그리기 조건(홀수 차수 점 0개 또는 2개)과 평면성 한계(\(E\le 3V-6\), \(K_5\)·\(K_{3,3}\)는 비평면)가 오일러 공식에서 나온다.</li>
+      <li>곡률은 접촉원 반지름의 역수이자 거리당 방향 회전율이다. 횡가속도 \(v^2\kappa\)를 연속으로 만들려고 도로는 곡률이 거리에 비례하는 클로소이드를 원호 앞에 넣는다.</li>
+      <li>가우스 곡률 \(K=\kappa_1\kappa_2\)는 곡면 안에서 잴 수 있는 양이다(빼어난 정리). 그래서 구면은 평면으로 왜곡 없이 펴지지 않고, 휘는 디스플레이는 한 방향으로만 휜다. 측지 삼각형의 내각 합은 \(\pi + \iint K\,dA\).</li>
+      <li>지도 투영은 각도(메르카토르)와 넓이(등적) 중 하나를 고른다. 티소 지시원의 두 반지름 = 투영 야코비의 특이값.</li>
+      <li>원근은 '나누기'라서 동차 좌표로 행렬화한다. 평행선은 무한원점에서 만나며 외적으로 소실점을 계산한다. 평면→사진은 호모그래피(3×3, 자유도 8)이고 대응점 4쌍의 DLT로 구한다.</li>
+      <li>구면은 만들기 쉽지만 가장자리 광선을 앞에 모은다(구면수차). 원뿔 상수·비구면 계수로 면 모양을 바꿔 보정한다. 왜곡은 위치만 옮기므로 \(r' = r(1+k_1r^2+k_2r^4)\) 모델로 계산 보정한다.</li>
+    </ol>
+  </section>
+
+  <section class="quiz-sec" id="quiz">
+    <h2>확인 퀴즈</h2>
+    <div class="quiz">
+      <div class="quiz-q"><p>정이십면체는 꼭짓점 12개, 면 20개다. 모서리는 몇 개인가?</p><div class="opts">
+        <button class="opt">20</button><button class="opt">24</button><button class="opt" data-correct>30</button><button class="opt">60</button>
+      </div><div class="quiz-exp">공 모양 다면체는 V − E + F = 2이므로 E = V + F − 2 = 30. 직접 세어도 같다: 삼각형 20개 × 변 3개 = 60인데 모서리마다 두 면이 공유하므로 30.</div></div>
+      <div class="quiz-q"><p>3D 스캔 메쉬(닫혀 있음, 경계 없음)를 검사했더니 V − E + F = −2가 나왔다. 이 표면은?</p><div class="opts">
+        <button class="opt">구멍 없는 공 모양</button><button class="opt">구멍(손잡이) 1개</button><button class="opt" data-correct>구멍(손잡이) 2개</button><button class="opt">면이 2개 빠졌다</button>
+      </div><div class="quiz-exp">닫힌 곡면은 χ = 2 − 2g이므로 g = 2. 면이 빠졌다면 경계 고리가 생기므로 '경계 없음'과 모순이다. 얇은 부분이 서로 붙어 원치 않는 터널이 생겼을 가능성이 높다.</div></div>
+      <div class="quiz-q"><p>도로에서 직선과 원호 사이에 클로소이드를 넣는 가장 직접적인 이유는?</p><div class="opts">
+        <button class="opt">도로의 총 길이를 줄이기 위해</button><button class="opt">직선과 원호의 접선 방향을 맞추기 위해</button><button class="opt" data-correct>곡률(=횡가속도)이 0에서 서서히 늘어나게 해 핸들을 일정 속도로 돌릴 수 있게</button><button class="opt">배수를 위해 노면을 기울이기 위해</button>
+      </div><div class="quiz-exp">접선 방향은 직선과 원호만으로도 맞출 수 있다. 문제는 곡률이 계단처럼 튀는 것이다. 클로소이드는 κ(s) = s/A²로 곡률이 거리에 비례하므로, 일정 속도에서 횡가속도가 선형으로 늘고 저크가 유한해진다.</div></div>
+      <div class="quiz-q"><p>지구 위에 세 각이 모두 90°인 측지선 삼각형(북극–적도 위 경도 0°–경도 90°)의 넓이는 지구 겉넓이의 몇 분의 일인가?</p><div class="opts">
+        <button class="opt">1/4</button><button class="opt" data-correct>1/8</button><button class="opt">1/12</button><button class="opt">넓이는 0이다</button>
+      </div><div class="quiz-exp">구면 초과량 ε = 270° − 180° = π/2. 넓이 = εR² = (π/2)R², 겉넓이 4πR²의 1/8. 가우스–보네(지라르) 정리가 '각도로 넓이를 잰다'는 예다.</div></div>
+      <div class="quiz-q"><p>비스듬히 찍은 문서를 반듯하게 펴는 호모그래피를 정하려면 최소 몇 쌍의 대응점이 필요한가?</p><div class="opts">
+        <button class="opt">2쌍</button><button class="opt">3쌍</button><button class="opt" data-correct>4쌍 (세 점이 한 직선 위에 있지 않게)</button><button class="opt">9쌍</button>
+      </div><div class="quiz-exp">H는 원소 9개지만 배율이 자유라 자유도 8. 대응점 하나가 x, y 두 식을 주므로 4쌍. 3쌍으로는 아핀 변환(자유도 6)까지만 정해지고, 아핀은 평행을 유지하므로 원근을 펼 수 없다.</div></div>
+      <div class="quiz-q"><p>메르카토르 지도에서 위도 60°에 있는 땅은 적도의 같은 넓이 땅보다 지도 위에서 몇 배로 그려지는가?</p><div class="opts">
+        <button class="opt">2배</button><button class="opt" data-correct>4배</button><button class="opt">√2배</button><button class="opt">같다(메르카토르는 등적이다)</button>
+      </div><div class="quiz-exp">메르카토르는 등각이라 위도 φ에서 모든 방향 길이 배율이 sec φ로 같다. 넓이 배율은 sec²φ = 1/cos²60° = 4. 각도(모양)를 지키는 대신 넓이를 버린 투영이다.</div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ======================================================================
+   11장 · 모양과 공간의 수학 — 페이지 스크립트
+   ====================================================================== */
+const GEO = {
+  font: () => getComputedStyle(document.body).getPropertyValue("--font"),
+  mono: () => getComputedStyle(document.body).getPropertyValue("--mono"),
+  /** 캔버스 포인터 헬퍼: down(x,y,touch) → 토큰(없으면 null), move(token,x,y), up() */
+  pointer(canvas, h) {
+    canvas.classList.add("drag");
+    let tok = null;
+    const pos = (e) => { const r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+    canvas.addEventListener("pointerdown", (e) => {
+      const [x, y] = pos(e);
+      tok = h.down(x, y, e.pointerType === "touch");
+      if (tok != null) { try { canvas.setPointerCapture(e.pointerId); } catch (err) {} canvas.classList.add("dragging"); e.preventDefault(); }
+    });
+    canvas.addEventListener("pointermove", (e) => { if (tok == null) return; const [x, y] = pos(e); h.move(tok, x, y); });
+    const up = () => { if (tok != null) { tok = null; canvas.classList.remove("dragging"); h.up && h.up(); } };
+    canvas.addEventListener("pointerup", up);
+    canvas.addEventListener("pointercancel", up);
+  },
+  /** 4점 대응 DLT: src[i]=[u,v] → dst[i]=[x,y], h33=1 → 3×3 */
+  homography(src, dst) {
+    const A = [], b = [];
+    for (let i = 0; i < 4; i++) {
+      const [u, v] = src[i], [x, y] = dst[i];
+      A.push([u, v, 1, 0, 0, 0, -u * x, -v * x]); b.push(x);
+      A.push([0, 0, 0, u, v, 1, -u * y, -v * y]); b.push(y);
+    }
+    const h = MB.mat.solve(A, b);
+    if (!h || h.some((t) => !isFinite(t))) return null;
+    return [[h[0], h[1], h[2]], [h[3], h[4], h[5]], [h[6], h[7], 1]];
+  },
+  apply(H, u, v) { const w = H[2][0] * u + H[2][1] * v + H[2][2]; return [(H[0][0] * u + H[0][1] * v + H[0][2]) / w, (H[1][0] * u + H[1][1] * v + H[1][2]) / w, w]; },
+  cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+  dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+  norm(a) { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; },
+};
+
+/* ---------------------------------------------------------------- 그림 11-3: K5, K3,3 */
+(function () {
+  const g = document.getElementById("geo-fig-k");
+  let s = "";
+  const seg = (a, b) => `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="s-line" stroke-width="2"/>`;
+  const node = (p) => `<circle cx="${p[0]}" cy="${p[1]}" r="8" class="f-acc"/>`;
+  // K5
+  const K5 = [...Array(5)].map((_, i) => [200 + 72 * Math.sin((i * 2 * Math.PI) / 5), 98 - 72 * Math.cos((i * 2 * Math.PI) / 5)]);
+  for (let i = 0; i < 5; i++) for (let j = i + 1; j < 5; j++) s += seg(K5[i], K5[j]);
+  K5.forEach((p) => (s += node(p)));
+  s += `<circle cx="216.2" cy="75.8" r="5" fill="var(--bad)"/>`;
+  s += `<text x="200" y="192" text-anchor="middle" class="t">K₅ · V=5, E=10 &gt; 3V−6 = 9</text>`;
+  // K3,3
+  const top = [470, 560, 650].map((x) => [x, 40]), bot = [470, 560, 650].map((x) => [x, 150]);
+  top.forEach((a) => bot.forEach((b) => (s += seg(a, b))));
+  top.forEach((p) => (s += node(p)));
+  bot.forEach((p) => (s += `<circle cx="${p[0]}" cy="${p[1]}" r="8" fill="var(--accent-2)"/>`));
+  s += `<circle cx="515" cy="95" r="5" fill="var(--bad)"/>`;
+  s += `<text x="560" y="192" text-anchor="middle" class="t">K₃,₃ · V=6, E=9 &gt; 2V−4 = 8</text>`;
+  g.innerHTML = s;
+})();
+
+/* ---------------------------------------------------------------- 그림 11-6: 침목 */
+(function () {
+  const g = document.getElementById("geo-fig-rail");
+  let s = "";
+  // 지면 위 등간격 침목을 원근 투영: 화면 y = 70 + 145 * (d0 / d)
+  for (let k = 0; k < 9; k++) {
+    const d = 1 + k * 0.55, t = 1 / d; // 깊이
+    const y = 70 + 145 * t, half = 250 * t * 1.15;
+    s += `<line x1="${400 - half}" y1="${y}" x2="${400 + half}" y2="${y}" class="s-line" stroke-width="${1 + 3 * t}"/>`;
+  }
+  g.innerHTML = s;
+})();
+
+/* ---------------------------------------------------------------- 1. 오일러 특성수 */
+(function () {
+  const PHI = (1 + Math.sqrt(5)) / 2;
+  const ring = (V, ids) => {
+    const c = [0, 0, 0]; ids.forEach((i) => { c[0] += V[i][0]; c[1] += V[i][1]; c[2] += V[i][2]; });
+    const n = GEO.norm(c);
+    let e1 = GEO.norm(GEO.cross(n, Math.abs(n[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0])), e2 = GEO.cross(n, e1);
+    return ids.slice().sort((a, b) => {
+      const pa = V[a].map((v, k) => v - c[k] / ids.length), pb = V[b].map((v, k) => v - c[k] / ids.length);
+      return Math.atan2(GEO.dot(pa, e2), GEO.dot(pa, e1)) - Math.atan2(GEO.dot(pb, e2), GEO.dot(pb, e1));
+    });
+  };
+  const triByDist = (V, d) => {
+    const F = [], n = V.length, dist = (a, b) => Math.hypot(V[a][0] - V[b][0], V[a][1] - V[b][1], V[a][2] - V[b][2]);
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) for (let k = j + 1; k < n; k++)
+      if (Math.abs(dist(i, j) - d) < 1e-6 && Math.abs(dist(j, k) - d) < 1e-6 && Math.abs(dist(i, k) - d) < 1e-6) F.push([i, j, k]);
+    return F;
+  };
+  function icosa() {
+    const V = [];
+    [-1, 1].forEach((a) => [-1, 1].forEach((b) => { V.push([0, a, b * PHI]); V.push([a, b * PHI, 0]); V.push([b * PHI, 0, a]); }));
+    return { V, F: triByDist(V, 2) };
+  }
+  const BUILD = {
+    tetra: () => { const V = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]]; return { V, F: [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]] }; },
+    cube: () => {
+      const V = []; for (let i = 0; i < 8; i++) V.push([i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1]);
+      const F = []; for (let ax = 0; ax < 3; ax++) for (const sg of [-1, 1]) F.push(ring(V, V.map((v, i) => i).filter((i) => V[i][ax] === sg)));
+      return { V, F };
+    },
+    octa: () => { const V = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]; return { V, F: triByDist(V, Math.SQRT2) }; },
+    icosa,
+    dodeca: () => {
+      const I = icosa(), V = I.F.map((f) => GEO.norm([0, 1, 2].map((k) => I.V[f[0]][k] + I.V[f[1]][k] + I.V[f[2]][k])));
+      const F = I.V.map((_, vi) => ring(V, I.F.map((f, fi) => (f.includes(vi) ? fi : -1)).filter((x) => x >= 0)));
+      return { V, F };
+    },
+    prism: (k) => {
+      const n = k + 2, V = [], F = [[], []];
+      for (let i = 0; i < n; i++) { const a = (i / n) * 2 * Math.PI; V.push([Math.cos(a), -0.75, Math.sin(a)]); V.push([Math.cos(a), 0.75, Math.sin(a)]); }
+      for (let i = 0; i < n; i++) { const j = (i + 1) % n; F.push([2 * i, 2 * j, 2 * j + 1, 2 * i + 1]); F[0].push(2 * i); F[1].push(2 * i + 1); }
+      return { V, F };
+    },
+    sphere: (k) => {
+      const nLon = k + 3, nLat = Math.max(2, Math.round((k + 3) / 2)), V = [[0, 1, 0]], F = [];
+      for (let i = 1; i < nLat; i++) for (let j = 0; j < nLon; j++) { const th = (i / nLat) * Math.PI, ph = (j / nLon) * 2 * Math.PI; V.push([Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)]); }
+      V.push([0, -1, 0]);
+      const id = (i, j) => 1 + (i - 1) * nLon + (j % nLon), S = V.length - 1;
+      for (let j = 0; j < nLon; j++) {
+        F.push([0, id(1, j), id(1, j + 1)]);
+        for (let i = 1; i < nLat - 1; i++) F.push([id(i, j), id(i + 1, j), id(i + 1, j + 1), id(i, j + 1)]);
+        F.push([id(nLat - 1, j), S, id(nLat - 1, j + 1)]);
+      }
+      return { V, F };
+    },
+    torus: (k) => {
+      const m = k + 4, n = Math.max(3, Math.round((k + 4) * 0.6)), V = [], F = [];
+      for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) { const a = (i / m) * 2 * Math.PI, b = (j / n) * 2 * Math.PI, r = 1 + 0.45 * Math.cos(b); V.push([r * Math.cos(a), 0.45 * Math.sin(b), r * Math.sin(a)]); }
+      for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) { const i2 = (i + 1) % m, j2 = (j + 1) % n; F.push([i * n + j, i2 * n + j, i2 * n + j2, i * n + j2]); }
+      return { V, F };
+    },
+    plate: (k) => {
+      const g = Math.min(k, 5), cells = new Set(), cols = 2 * g + 1, rows = g ? 3 : 1;
+      for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) if (!(g && i === 1 && j % 2 === 1)) cells.add(i + "," + j);
+      const V = [], F = [], key = new Map();
+      const vid = (x, y, z) => { const s = x + "," + y + "," + z; if (!key.has(s)) { key.set(s, V.length); V.push([x, y, z]); } return key.get(s); };
+      cells.forEach((c) => {
+        const [y, x] = c.split(",").map(Number);
+        [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].forEach(([dx, dy, dz]) => {
+          if (dz === 0 && cells.has(y + dy + "," + (x + dx))) return;
+          let q;
+          if (dx) { const X = dx > 0 ? x + 1 : x; q = [[X, y, 0], [X, y + 1, 0], [X, y + 1, 1], [X, y, 1]]; }
+          else if (dy) { const Y = dy > 0 ? y + 1 : y; q = [[x, Y, 0], [x + 1, Y, 0], [x + 1, Y, 1], [x, Y, 1]]; }
+          else { const Z = dz > 0 ? 1 : 0; q = [[x, y, Z], [x + 1, y, Z], [x + 1, y + 1, Z], [x, y + 1, Z]]; }
+          F.push(q.map((p) => vid(p[0], p[1], p[2])));
+        });
+      });
+      return { V: V.map(([x, y, z]) => [x, z * 1.2, y]), F };
+    },
+  };
+  const LABEL = { prism: (k) => `${k + 2}각기둥`, sphere: (k) => `경도 ${k + 3} × 위도 ${Math.max(2, Math.round((k + 3) / 2))}`, torus: (k) => `${k + 4} × ${Math.max(3, Math.round((k + 4) * 0.6))}`, plate: (k) => `g = ${Math.min(k, 5)}` };
+  let mesh = null, edges = [], yaw = 0.6, pitch = 0.45, info = {};
+  const shapeEl = document.getElementById("geo-eu-shape");
+  function build() {
+    const shp = shapeEl.value, k = nK ? nK() : 3;
+    const m = BUILD[shp](k);
+    // 중심·크기 정규화
+    const c = [0, 1, 2].map((a) => m.V.reduce((s, v) => s + v[a], 0) / m.V.length);
+    let V = m.V.map((v) => v.map((x, a) => x - c[a]));
+    const R = Math.max(...V.map((v) => Math.hypot(v[0], v[1], v[2])));
+    V = V.map((v) => v.map((x) => x / R));
+    let F = m.F.slice();
+    if (holeOn && holeOn()) F.splice(Math.floor(F.length / 3), 1);
+    mesh = { V, F };
+    const em = new Map();
+    F.forEach((f) => f.forEach((a, i) => { const b = f[(i + 1) % f.length], key = Math.min(a, b) + "," + Math.max(a, b); if (!em.has(key)) em.set(key, { a: Math.min(a, b), b: Math.max(a, b), n: 0 }); em.get(key).n++; }));
+    edges = [...em.values()];
+    // 경계 고리 수: 짝 없는 모서리의 연결 성분
+    const bd = edges.filter((e) => e.n === 1), par = new Map();
+    const find = (x) => { while (par.get(x) !== x) { par.set(x, par.get(par.get(x))); x = par.get(x); } return x; };
+    bd.forEach((e) => { if (!par.has(e.a)) par.set(e.a, e.a); if (!par.has(e.b)) par.set(e.b, e.b); });
+    bd.forEach((e) => { const ra = find(e.a), rb = find(e.b); if (ra !== rb) par.set(ra, rb); });
+    const b = new Set([...par.keys()].map(find)).size;
+    const usedV = new Set(); F.forEach((f) => f.forEach((i) => usedV.add(i)));
+    const Vn = usedV.size, En = edges.length, Fn = F.length, chi = Vn - En + Fn;
+    info = { Vn, En, Fn, chi, b, g: (2 - chi - b) / 2 };
+    MB.stat("geo-eu-v", Vn); MB.stat("geo-eu-e", En); MB.stat("geo-eu-f", Fn);
+    MB.stat("geo-eu-chi", `<b>${chi}</b>`);
+    MB.stat("geo-eu-g", `b = ${b} · g = ${info.g}`);
+    if (cv) cv.redraw();
+  }
+  let cv = null, nK = null, holeOn = null;
+  const spin = MB.check("geo-eu-spin");
+  holeOn = MB.check("geo-eu-hole", build);
+  nK = MB.range("geo-eu-n", (v) => (LABEL[shapeEl.value] ? LABEL[shapeEl.value](v) : "정다면체는 고정"), build);
+  shapeEl.addEventListener("change", () => { nK.set(nK(), false); build(); });
+  build();
+  cv = MB.canvas("#cv-geo-euler", (ctx, w, h) => {
+    if (!mesh) return;
+    const P = MB.palette(), S = Math.min(w, h) * 0.4, cx = w / 2, cy = h / 2;
+    const ca = Math.cos(yaw), sa = Math.sin(yaw), cb = Math.cos(pitch), sb = Math.sin(pitch);
+    const pr = mesh.V.map(([x, y, z]) => {
+      let X = ca * x + sa * z, Z = -sa * x + ca * z, Y = cb * y - sb * Z; Z = sb * y + cb * Z;
+      const f = 3.5 / (3.5 - Z); return [cx + X * S * f, cy - Y * S * f, Z];
+    });
+    // 면(반투명, 먼 것부터)
+    const faces = mesh.F.map((f) => ({ f, z: f.reduce((s, i) => s + pr[i][2], 0) / f.length })).sort((a, b) => a.z - b.z);
+    ctx.fillStyle = P.accent;
+    faces.forEach(({ f, z }) => {
+      ctx.globalAlpha = 0.06 + 0.1 * (z + 1) / 2;
+      ctx.beginPath(); f.forEach((i, k) => (k ? ctx.lineTo(pr[i][0], pr[i][1]) : ctx.moveTo(pr[i][0], pr[i][1]))); ctx.closePath(); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    // 모서리: 깊이에 따라 진하기
+    edges.slice().sort((a, b) => pr[a.a][2] + pr[a.b][2] - pr[b.a][2] - pr[b.b][2]).forEach((e) => {
+      const z = (pr[e.a][2] + pr[e.b][2]) / 2, t = MB.clamp((z + 1) / 2, 0, 1);
+      ctx.strokeStyle = e.n === 1 ? P.accent2 : P.text;
+      ctx.globalAlpha = e.n === 1 ? 1 : 0.18 + 0.72 * t;
+      ctx.lineWidth = e.n === 1 ? 3.2 : 1 + 1.2 * t;
+      ctx.beginPath(); ctx.moveTo(pr[e.a][0], pr[e.a][1]); ctx.lineTo(pr[e.b][0], pr[e.b][1]); ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+    if (mesh.V.length <= 130) { ctx.fillStyle = P.accent; pr.forEach((p) => { ctx.globalAlpha = 0.35 + 0.65 * MB.clamp((p[2] + 1) / 2, 0, 1); ctx.beginPath(); ctx.arc(p[0], p[1], 3, 0, 7); ctx.fill(); }); }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = P.dim; ctx.font = "13px " + GEO.mono(); ctx.textBaseline = "top";
+    ctx.fillText(`${info.Vn} − ${info.En} + ${info.Fn} = ${info.chi}`, 12, 10);
+  }, { aspect: 0.72, maxHeight: 420, minHeight: 260 });
+  let last = null;
+  GEO.pointer(cv.canvas, {
+    down: (x, y) => { last = [x, y]; return 1; },
+    move: (_, x, y) => { yaw += (x - last[0]) * 0.01; pitch = MB.clamp(pitch + (y - last[1]) * 0.01, -1.5, 1.5); last = [x, y]; cv.redraw(); },
+  });
+  MB.loop(cv.canvas, (dt) => { if (spin()) { yaw += dt * 0.45; cv.redraw(); } });
+})();
+
+/* ---------------------------------------------------------------- 2. 곡률과 접촉원 */
+(function () {
+  let samples = [], idx = 0, scale = 1;
+  const typeG = MB.seg("geo-cv-type", () => { setLabel(); build(); fit(); update(); });
+  const lab = document.getElementById("geo-cv-p-lab");
+  const pFmt = (v) => { const t = typeG(); return t === "road" ? `${Math.round(v * 1.5)} m` : t === "sine" ? `a = ${(0.2 + v / 100 * 1.8).toFixed(2)}` : `b = ${(0.3 + v / 100 * 1.7).toFixed(2)} (a = 2)`; };
+  const par = MB.range("geo-cv-p", pFmt, () => { build(); fit(); update(); });
+  const pos = MB.range("geo-cv-pos", (v) => (samples.length ? `s = ${MB.fmt(samples[Math.round((v / 1000) * (samples.length - 1))].s, 3)}${typeG() === "road" ? " m" : ""}` : ""), (v) => { idx = Math.round((v / 1000) * (samples.length - 1)); update(); });
+  function setLabel() { const t = typeG(); lab.textContent = t === "road" ? "완화곡선 길이 L" : t === "sine" ? "진폭 a (y = a sin x)" : "단반경 b"; }
+  function build() {
+    const t = typeG(), p = par();
+    samples = [];
+    if (t === "sine") {
+      const a = 0.2 + (p / 100) * 1.8, N = 700; let s = 0, prev = null;
+      for (let i = 0; i <= N; i++) {
+        const x = (i / N) * 2 * Math.PI, y = a * Math.sin(x), d1 = a * Math.cos(x), d2 = -a * Math.sin(x);
+        if (prev) s += Math.hypot(x - prev[0], y - prev[1]);
+        samples.push({ x, y, k: d2 / Math.pow(1 + d1 * d1, 1.5), s, th: Math.atan2(d1, 1), seg: 0 }); prev = [x, y];
+      }
+      scale = 1;
+    } else if (t === "ellipse") {
+      const a = 2, b = 0.3 + (p / 100) * 1.7, N = 700; let s = 0, prev = null;
+      for (let i = 0; i <= N; i++) {
+        const u = (i / N) * 2 * Math.PI, x = a * Math.cos(u), y = b * Math.sin(u);
+        if (prev) s += Math.hypot(x - prev[0], y - prev[1]);
+        samples.push({ x, y, k: (a * b) / Math.pow(a * a * Math.sin(u) ** 2 + b * b * Math.cos(u) ** 2, 1.5), s, th: Math.atan2(b * Math.cos(u), -a * Math.sin(u)), seg: 0 }); prev = [x, y];
+      }
+      scale = 1;
+    } else {
+      const S0 = 120, L = p * 1.5, R = 100, SA = 160, ds = 0.5, tot = S0 + L + SA;
+      let x = 0, y = 0, th = 0;
+      const kap = (s) => (s < S0 ? 0 : s < S0 + L ? (s - S0) / (L * R) : 1 / R);
+      for (let s = 0; s <= tot + 1e-9; s += ds) {
+        samples.push({ x, y, k: kap(s), s, th, seg: s < S0 ? 0 : s < S0 + L ? 1 : 2 });
+        const km = kap(s + ds / 2), thm = th + km * ds / 2; // 중점법
+        x += Math.cos(thm) * ds; y += Math.sin(thm) * ds; th += km * ds;
+      }
+      scale = 1;
+    }
+    idx = Math.round((pos() / 1000) * (samples.length - 1));
+  }
+  const opts = {
+    x: [-1, 7], aspect: 0.62, maxHeight: 380, gridStep: 1, cy: 0,
+    points: [{ x: 0, y: 0, r: 8, constrain(p) {
+      let best = 0, bd = Infinity; samples.forEach((q, i) => { const d = (q.x - p.x) ** 2 + (q.y - p.y) ** 2; if (d < bd) { bd = d; best = i; } });
+      idx = best; p.x = samples[best].x; p.y = samples[best].y;
+    } }],
+    onDrag() { pos.set(Math.round((idx / (samples.length - 1)) * 1000), false); update(false); },
+    draw(P, api) {
+      if (!samples.length) return;
+      const pal = P.P, road = typeG() === "road";
+      const segCol = [pal.dim, pal.accent2, pal.accent];
+      if (road) for (let sg = 0; sg < 3; sg++) { const pts = samples.filter((q) => q.seg === sg).map((q) => [q.x, q.y]); if (pts.length > 1) P.poly(pts, { close: false, color: segCol[sg], width: 4 }); }
+      else P.poly(samples.map((q) => [q.x, q.y]), { close: false, color: pal.text, width: 2.5 });
+      const q = samples[idx]; if (!q) return;
+      const nx = -Math.sin(q.th), ny = Math.cos(q.th);
+      const tl = (P.x1 - P.x0) * 0.12;
+      P.line(q.x - Math.cos(q.th) * tl, q.y - Math.sin(q.th) * tl, q.x + Math.cos(q.th) * tl, q.y + Math.sin(q.th) * tl, { color: pal.dim, width: 1.5, dash: [5, 4] });
+      if (Math.abs(q.k) > 1e-6) {
+        const R = 1 / q.k, cx = q.x + nx * R, cy = q.y + ny * R;
+        P.circle(cx, cy, Math.abs(R), { color: pal.accent, width: 2 });
+        P.ctx.save(); P.ctx.globalAlpha = 0.08; P.ctx.fillStyle = pal.accent; P.ctx.beginPath(); P.ctx.arc(P.X(cx), P.Y(cy), Math.abs(R) * P.unit, 0, 7); P.ctx.fill(); P.ctx.restore();
+        P.line(q.x, q.y, cx, cy, { color: pal.accent, width: 1.5, dash: [3, 3] });
+        P.dot(cx, cy, { r: 3.5, color: pal.accent });
+        P.text("R", (q.x + cx) / 2, (q.y + cy) / 2, { color: pal.accent, dx: 6, bold: true });
+      }
+      api.points[0].x = q.x; api.points[0].y = q.y;
+    },
+  };
+  setLabel(); build();
+  const pl = MB.plane("#cv-geo-curv", opts);
+  function fit() {
+    const xs = samples.map((q) => q.x), ys = samples.map((q) => q.y);
+    let x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const road = typeG() === "road";
+    // 접촉원이 보이도록 여유
+    if (typeG() === "sine") { const a = 0.2 + par() / 100 * 1.8; y0 = Math.min(y0, -a - 1); y1 = Math.max(y1, a + 1); }
+    const padX = (x1 - x0) * 0.08 + (road ? 10 : 0.3), padY = (y1 - y0) * 0.1 + (road ? 10 : 0.3);
+    x0 -= padX; x1 += padX; y0 -= padY; y1 += padY;
+    const asp = pl.cv.h / pl.cv.w, needW = Math.max(x1 - x0, (y1 - y0) / asp), mx = (x0 + x1) / 2;
+    opts.cy = (y0 + y1) / 2;
+    opts.gridStep = road ? 50 : 1;
+    pl.view({ x: [mx - needW / 2, mx + needW / 2] });
+  }
+  const kcv = MB.canvas("#cv-geo-curv-k", (ctx, w, h) => {
+    if (!samples.length) return;
+    const P = MB.palette(), road = typeG() === "road";
+    const ks = samples.map((q) => q.k), kmax = Math.max(...ks), kmin = Math.min(...ks), pad = (kmax - kmin) * 0.15 + 1e-3;
+    const q = samples[idx];
+    MB.chart(ctx, { x: 52, y: 12, w: w - 66, h: h - 44 }, {
+      x: [0, samples[samples.length - 1].s], y: [Math.min(0, kmin - pad), kmax + pad],
+      xLabel: road ? "" : "", series: [{ data: samples.map((p) => [p.s, p.k]), color: P.accent, width: 2 }],
+      vlines: q ? [{ x: q.s, color: P.accent2, dash: [3, 3] }] : [], points: q ? [{ x: q.s, y: q.k, color: P.accent2, r: 4.5 }] : [],
+      hlines: [{ y: 0, color: P.axis, dash: [] }], yFmt: (v) => (road ? (v * 1000).toFixed(1) : v.toFixed(1)),
+    });
+    ctx.fillStyle = P.dim; ctx.font = "11px " + GEO.font(); ctx.textBaseline = "bottom"; ctx.textAlign = "left";
+    ctx.fillText(road ? "κ (1/km)  vs  s (m)" : "κ  vs  호의 길이 s", 56, h - 3);
+  }, { aspect: 0.26, minHeight: 120, maxHeight: 170 });
+  function update() {
+    const q = samples[idx]; if (!q) return;
+    const road = typeG() === "road";
+    const u = road ? " /m" : "";
+    MB.stat("geo-cv-k", Math.abs(q.k) < 1e-9 ? "0" : MB.fmt(q.k, 3) + u);
+    MB.stat("geo-cv-r", Math.abs(q.k) < 1e-9 ? "∞" : MB.fmt(1 / Math.abs(q.k), 3) + (road ? " m" : ""));
+    if (road) {
+      const v = 60 / 3.6, L = par() * 1.5;
+      MB.stat("geo-cv-a", MB.fmt(v * v * q.k, 3) + " m/s²");
+      MB.stat("geo-cv-j", L < 1e-6 ? "0, 원호 진입점에서 <b>∞</b>" : q.seg === 1 ? MB.fmt((v ** 3) / (100 * L), 2) + " m/s³" : "0 (클로소이드 밖)");
+    } else { MB.stat("geo-cv-a", "— (도로에서)"); MB.stat("geo-cv-j", "—"); }
+    pl.redraw(); kcv.redraw();
+  }
+  fit(); update();
+  window.addEventListener("resize", MB.throttle(() => { fit(); update(); }));
+})();
+
+/* ---------------------------------------------------------------- 3. 구면 삼각형 */
+(function () {
+  const ll = (lat, lon) => { const a = (lat * Math.PI) / 180, b = (lon * Math.PI) / 180; return [Math.cos(a) * Math.sin(b), Math.sin(a), Math.cos(a) * Math.cos(b)]; };
+  let pts = [ll(20, -20), ll(25, 20), ll(-10, 5)];
+  // 보기 회전(행 기준 3×3)
+  let M = MB.mat.identity(3);
+  const rotX = (a) => [[1, 0, 0], [0, Math.cos(a), -Math.sin(a)], [0, Math.sin(a), Math.cos(a)]];
+  const rotY = (a) => [[Math.cos(a), 0, Math.sin(a)], [0, 1, 0], [-Math.sin(a), 0, Math.cos(a)]];
+  function lookAt(v) { // v가 화면 중심(시선 +z)으로 오도록
+    const lon = Math.atan2(v[0], v[2]), lat = Math.asin(MB.clamp(v[1], -1, 1));
+    M = MB.mat.mul(rotX(lat), rotY(-lon));
+  }
+  const grid = MB.check("geo-sp-grid", () => cv.redraw());
+  let geom = { cx: 0, cy: 0, r: 1 };
+  const slerp = (a, b, t) => {
+    const d = MB.clamp(GEO.dot(a, b), -1, 1), om = Math.acos(d);
+    if (om < 1e-6) return a.slice();
+    const s = Math.sin(om), wa = Math.sin((1 - t) * om) / s, wb = Math.sin(t * om) / s;
+    return [a[0] * wa + b[0] * wb, a[1] * wa + b[1] * wb, a[2] * wa + b[2] * wb];
+  };
+  const angleAt = (A, B, C) => {
+    const tB = B.map((x, k) => x - GEO.dot(A, B) * A[k]), tC = C.map((x, k) => x - GEO.dot(A, C) * A[k]);
+    const nb = Math.hypot(...tB), nc = Math.hypot(...tC); if (nb < 1e-9 || nc < 1e-9) return 0;
+    return Math.acos(MB.clamp(GEO.dot(tB, tC) / (nb * nc), -1, 1));
+  };
+  const cv = MB.canvas("#cv-geo-sph", (ctx, w, h) => {
+    const P = MB.palette(), r = Math.min(w, h) * 0.43, cx = w / 2, cy = h / 2;
+    geom = { cx, cy, r };
+    const pr = (v) => { const q = MB.mat.apply(M, v); return [cx + r * q[0], cy - r * q[1], q[2]]; };
+    ctx.fillStyle = P.surface; ctx.strokeStyle = P.axis; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill(); ctx.stroke();
+    const path = (fn, n, front, style) => {
+      ctx.strokeStyle = style.color; ctx.lineWidth = style.width; ctx.globalAlpha = style.alpha; ctx.setLineDash(style.dash || []);
+      ctx.beginPath(); let on = false;
+      for (let i = 0; i <= n; i++) { const p = pr(fn(i / n)), vis = front ? p[2] >= 0 : p[2] < 0; if (vis) { on ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); on = true; } else on = false; }
+      ctx.stroke(); ctx.globalAlpha = 1; ctx.setLineDash([]);
+    };
+    if (grid()) {
+      for (let lat = -60; lat <= 60; lat += 30) for (const f of [true, false]) path((t) => ll(lat, -180 + 360 * t), 120, f, { color: lat === 0 ? P.dim : P.faint, width: 1, alpha: f ? 0.8 : 0.25, dash: f ? [] : [2, 4] });
+      for (let lon = -180; lon < 180; lon += 30) for (const f of [true, false]) path((t) => ll(-90 + 180 * t, lon), 80, f, { color: P.faint, width: 1, alpha: f ? 0.8 : 0.25, dash: f ? [] : [2, 4] });
+    }
+    // 삼각형 채우기 (세 꼭짓점 모두 앞면일 때)
+    const allFront = pts.every((v) => MB.mat.apply(M, v)[2] > 0);
+    if (allFront) {
+      ctx.fillStyle = P.accent; ctx.globalAlpha = 0.16; ctx.beginPath();
+      for (let e = 0; e < 3; e++) for (let i = 0; i <= 40; i++) { const p = pr(slerp(pts[e], pts[(e + 1) % 3], i / 40)); (e || i) ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }
+      ctx.fill(); ctx.globalAlpha = 1;
+    }
+    for (let e = 0; e < 3; e++) for (const f of [false, true]) path((t) => slerp(pts[e], pts[(e + 1) % 3], t), 60, f, { color: P.accent, width: f ? 3 : 1.6, alpha: f ? 1 : 0.4, dash: f ? [] : [4, 4] });
+    const names = ["A", "B", "C"], angs = [angleAt(pts[0], pts[1], pts[2]), angleAt(pts[1], pts[2], pts[0]), angleAt(pts[2], pts[0], pts[1])];
+    pts.forEach((v, i) => {
+      const p = pr(v), front = p[2] >= 0;
+      ctx.globalAlpha = front ? 1 : 0.4;
+      ctx.fillStyle = P.accent2; ctx.strokeStyle = P.bg; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p[0], p[1], 8, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = P.text; ctx.font = "700 13px " + GEO.font(); ctx.textBaseline = "middle";
+      const dx = p[0] - cx, dy = p[1] - cy, L = Math.hypot(dx, dy) || 1;
+      ctx.textAlign = "center"; ctx.fillText(`${names[i]} ${((angs[i] * 180) / Math.PI).toFixed(1)}°`, p[0] + (dx / L) * 34, p[1] + (dy / L) * 22 + (L < 5 ? -18 : 0));
+      ctx.globalAlpha = 1;
+    });
+    const sum = angs[0] + angs[1] + angs[2], ex = sum - Math.PI;
+    MB.stat("geo-sp-ang", angs.map((a) => ((a * 180) / Math.PI).toFixed(1) + "°").join(" · "));
+    MB.stat("geo-sp-sum", `<b>${((sum * 180) / Math.PI).toFixed(2)}°</b>`);
+    MB.stat("geo-sp-ex", `${((ex * 180) / Math.PI).toFixed(2)}° <small>(${ex.toFixed(4)} rad)</small>`);
+    const area = ex * 6371 * 6371;
+    MB.stat("geo-sp-area", `${area >= 1e6 ? (area / 1e6).toFixed(2) + "백만" : Math.round(area).toLocaleString()} km² <small>(구의 ${((ex / (4 * Math.PI)) * 100).toFixed(2)}%)</small>`);
+  }, { aspect: 0.8, maxHeight: 440, minHeight: 280 });
+  let last = null;
+  GEO.pointer(cv.canvas, {
+    down(x, y, touch) {
+      const { cx, cy, r } = geom; let best = -1, bd = touch ? 30 : 18;
+      pts.forEach((v, i) => { const q = MB.mat.apply(M, v); if (q[2] < 0) return; const d = Math.hypot(cx + r * q[0] - x, cy - r * q[1] - y); if (d < bd) { bd = d; best = i; } });
+      last = [x, y];
+      return best >= 0 ? { pt: best } : { rot: true };
+    },
+    move(tok, x, y) {
+      const { cx, cy, r } = geom;
+      if (tok.rot) {
+        const dx = x - last[0], dy = y - last[1]; last = [x, y];
+        M = MB.mat.mul(MB.mat.mul(rotY(dx * 0.008), rotX(dy * 0.008)), M);
+      } else {
+        let qx = (x - cx) / r, qy = -(y - cy) / r; const d = qx * qx + qy * qy;
+        if (d > 0.995) { const s = Math.sqrt(0.995 / d); qx *= s; qy *= s; }
+        const q = [qx, qy, Math.sqrt(Math.max(0, 1 - qx * qx - qy * qy))];
+        pts[tok.pt] = GEO.norm(MB.mat.apply(MB.mat.transpose(M), q));
+      }
+      cv.redraw();
+    },
+  });
+  const centroid = () => GEO.norm([0, 1, 2].map((k) => pts[0][k] + pts[1][k] + pts[2][k]));
+  const preset = (p) => { pts = p; lookAt(centroid()); M = MB.mat.mul(rotX(0.25), M); cv.redraw(); };
+  document.getElementById("geo-sp-small").addEventListener("click", () => preset([ll(20, -20), ll(25, 20), ll(-10, 5)]));
+  document.getElementById("geo-sp-oct").addEventListener("click", () => preset([ll(90, 0), ll(0, 0), ll(0, 90)]));
+  document.getElementById("geo-sp-city").addEventListener("click", () => preset([ll(37.57, 126.98), ll(51.51, -0.13), ll(40.71, -74.01)]));
+  preset(pts);
+})();
+
+/* ---------------------------------------------------------------- 4. 지도 투영 · 티소 */
+(function () {
+  const D = Math.PI / 180;
+  const GREEN = [[-73, 78], [-67, 80.5], [-60, 82], [-45, 83], [-30, 83.5], [-20, 82], [-18, 79], [-19, 76], [-21, 72], [-22, 70], [-26, 68.5], [-32, 67.5], [-38, 65.5], [-41, 63], [-43, 60], [-46, 60.8], [-49, 62], [-51, 64], [-53, 66.5], [-54, 69.5], [-56, 72], [-59, 75.5], [-66, 76.5], [-73, 78]];
+  const AFR = [[-17, 21], [-17, 15], [-15, 11], [-12, 8], [-8, 4.5], [-2, 5], [5, 6], [9, 4], [9.5, 0], [12, -5], [13, -12], [12, -17], [15, -27], [18, -34.5], [20, -35], [26, -34], [32, -29], [35, -24], [40, -15], [40, -11], [39, -5], [42, 0], [47, 4], [51, 11.5], [44, 11], [43, 12.5], [38, 18], [35, 24], [33, 31], [29, 31], [20, 32], [11, 33], [10, 37], [3, 37], [-6, 36], [-10, 31], [-14, 26], [-17, 21]];
+  const mollTheta = (f) => { if (Math.abs(f) > 89.99 * D) return Math.sign(f) * Math.PI / 2; let t = f; for (let i = 0; i < 30; i++) { const d = -(2 * t + Math.sin(2 * t) - Math.PI * Math.sin(f)) / (2 + 2 * Math.cos(2 * t)); t += d; if (Math.abs(d) < 1e-10) break; } return t; };
+  const PROJ = {
+    merc: { f: (l, f) => [l, Math.log(Math.tan(Math.PI / 4 + MB.clamp(f, -85 * D, 85 * D) / 2))], lat: 84, ext: [Math.PI, Math.log(Math.tan(Math.PI / 4 + 42 * D))] },
+    eq: { f: (l, f) => [l, f], lat: 90, ext: [Math.PI, Math.PI / 2] },
+    lam: { f: (l, f) => [l, Math.sin(f)], lat: 90, ext: [Math.PI, 1] },
+    moll: { f: (l, f) => { const t = mollTheta(f); return [(2 * Math.SQRT2 / Math.PI) * l * Math.cos(t), Math.SQRT2 * Math.sin(t)]; }, lat: 90, ext: [2 * Math.SQRT2, Math.SQRT2] },
+  };
+  const proj = MB.seg("geo-ts-proj", () => cv.redraw());
+  const lat = MB.range("geo-ts-lat", (v) => v + "°", () => cv.redraw());
+  const land = MB.check("geo-ts-land", () => cv.redraw());
+  const circ = (lat0, lon0, rho) => { // 측지 원 → [lon,lat] (rad)
+    const c = [Math.cos(lat0) * Math.cos(lon0), Math.cos(lat0) * Math.sin(lon0), Math.sin(lat0)];
+    const e = [-Math.sin(lon0), Math.cos(lon0), 0], n = [-Math.sin(lat0) * Math.cos(lon0), -Math.sin(lat0) * Math.sin(lon0), Math.cos(lat0)];
+    const out = [];
+    for (let i = 0; i <= 48; i++) { const t = (i / 48) * 2 * Math.PI, p = [0, 1, 2].map((k) => Math.cos(rho) * c[k] + Math.sin(rho) * (Math.cos(t) * e[k] + Math.sin(t) * n[k])); out.push([Math.atan2(p[1], p[0]), Math.asin(MB.clamp(p[2], -1, 1))]); }
+    return out;
+  };
+  const shoelace = (pts) => { let s = 0; for (let i = 0; i < pts.length - 1; i++) s += pts[i][0] * pts[i + 1][1] - pts[i + 1][0] * pts[i][1]; return Math.abs(s / 2); };
+  const cv = MB.canvas("#cv-geo-tis", (ctx, w, h) => {
+    const P = MB.palette(), pj = PROJ[proj()], F = pj.f;
+    const [ex, ey] = pj.ext, s = Math.min((w - 20) / (2 * ex), (h - 20) / (2 * ey)), cx = w / 2, cy = h / 2;
+    const S = (lp) => { const [x, y] = F(lp[0], lp[1]); return [cx + x * s, cy - y * s]; };
+    const line = (arr, close) => { ctx.beginPath(); arr.forEach((p, i) => { const q = S(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); if (close) ctx.closePath(); };
+    // 지도 바탕
+    const LM = pj.lat * D, border = [];
+    for (let i = 0; i <= 60; i++) border.push([-Math.PI, -LM + (2 * LM * i) / 60]);
+    for (let i = 0; i <= 60; i++) border.push([Math.PI, LM - (2 * LM * i) / 60]);
+    ctx.save();
+    line(border, true); ctx.fillStyle = P.surface; ctx.fill(); ctx.strokeStyle = P.axis; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.clip();
+    ctx.strokeStyle = P.grid; ctx.lineWidth = 1;
+    for (let la = -75; la <= 75; la += 15) { if (Math.abs(la) > pj.lat) continue; const a = []; for (let i = 0; i <= 72; i++) a.push([-Math.PI + (i / 72) * 2 * Math.PI, la * D]); line(a); ctx.strokeStyle = la === 0 ? P.axis : P.grid; ctx.stroke(); }
+    for (let lo = -180; lo <= 180; lo += 30) { const a = []; for (let i = 0; i <= 60; i++) a.push([lo * D, -LM + (i / 60) * 2 * LM]); line(a); ctx.strokeStyle = P.grid; ctx.stroke(); }
+    if (land()) {
+      [GREEN, AFR].forEach((poly) => { line(poly.map(([lo, la]) => [lo * D, la * D]), true); ctx.fillStyle = P.accent2; ctx.globalAlpha = 0.28; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = P.accent2; ctx.lineWidth = 1.5; ctx.stroke(); });
+    }
+    // 티소 지시원
+    const rho = 6 * D;
+    [-60, -30, 0, 30, 60].forEach((la) => [-150, -90, -30, 30, 90, 150].forEach((lo) => {
+      line(circ(la * D, lo * D, rho), true); ctx.fillStyle = P.accent; ctx.globalAlpha = 0.3; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = P.accent; ctx.lineWidth = 1.3; ctx.stroke();
+    }));
+    const pl = lat() * D;
+    line(circ(pl, 0, rho), true); ctx.fillStyle = P.warn; ctx.globalAlpha = 0.55; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = P.warn; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+    if (land()) {
+      ctx.fillStyle = P.text; ctx.font = "12px " + GEO.font(); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      let q = S([-42 * D, 74 * D]); ctx.fillText("그린란드", q[0], q[1]);
+      q = S([20 * D, 5 * D]); ctx.fillText("아프리카", q[0], q[1]);
+    }
+    // 국소 배율(야코비 특이값)
+    const e = 1e-5, f0 = F(0, pl), fl = F(e, pl), ff = F(0, pl + e), cosf = Math.cos(pl);
+    const J = [[(fl[0] - f0[0]) / e / cosf, (ff[0] - f0[0]) / e], [(fl[1] - f0[1]) / e / cosf, (ff[1] - f0[1]) / e]];
+    const sv = MB.mat.svd(J).S, a = sv[0], b = sv[1];
+    MB.stat("geo-ts-ab", `${a.toFixed(2)} · ${b.toFixed(2)}`);
+    MB.stat("geo-ts-area", `<b>${(a * b).toFixed(2)}</b>×`);
+    MB.stat("geo-ts-ang", `${((2 * Math.asin(MB.clamp((a - b) / (a + b), 0, 1)) * 180) / Math.PI).toFixed(1)}°`);
+    const ag = shoelace(GREEN.map(([lo, la]) => F(lo * D, la * D))), aa = shoelace(AFR.map(([lo, la]) => F(lo * D, la * D)));
+    MB.stat("geo-ts-ratio", `${(ag / aa).toFixed(2)} <small>(실제 0.07)</small>`);
+  }, { aspect: 0.62, maxHeight: 440, minHeight: 230 });
+})();
+
+/* ---------------------------------------------------------------- 5. 호모그래피 · 문서 스캔 */
+(function () {
+  const PW = 480, PH = 340, DW = 210, DH = 297;
+  // 문서(흑백) 만들기
+  const docCv = document.createElement("canvas"); docCv.width = DW; docCv.height = DH;
+  const dc = docCv.getContext("2d");
+  dc.fillStyle = "rgb(246,246,246)"; dc.fillRect(0, 0, DW, DH);
+  dc.fillStyle = "rgb(30,30,30)"; dc.font = "700 20px sans-serif"; dc.fillText("견 적 서", 66, 34);
+  dc.fillRect(16, 44, DW - 32, 2);
+  for (let i = 0; i < 6; i++) { dc.fillStyle = "rgb(90,90,90)"; dc.fillRect(16, 58 + i * 12, (i % 3 === 2 ? 110 : 170), 5); }
+  // 표
+  dc.strokeStyle = "rgb(40,40,40)"; dc.lineWidth = 1.5;
+  for (let i = 0; i <= 5; i++) { dc.beginPath(); dc.moveTo(16, 140 + i * 18); dc.lineTo(DW - 16, 140 + i * 18); dc.stroke(); }
+  for (const x of [16, 100, 150, DW - 16]) { dc.beginPath(); dc.moveTo(x, 140); dc.lineTo(x, 230); dc.stroke(); }
+  dc.fillStyle = "rgb(70,70,70)";
+  for (let i = 0; i < 5; i++) { dc.fillRect(22, 146 + i * 18, 50 + (i * 13) % 25, 5); dc.fillRect(106, 146 + i * 18, 30, 5); dc.fillRect(156, 146 + i * 18, 28, 5); }
+  // 체스판(보정용 표식)
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) if ((i + j) % 2 === 0) { dc.fillStyle = "rgb(25,25,25)"; dc.fillRect(150 + i * 11, 245 + j * 11, 11, 11); }
+  dc.strokeStyle = "rgb(25,25,25)"; dc.strokeRect(150, 245, 44, 44);
+  for (let i = 0; i < 3; i++) { dc.fillStyle = "rgb(110,110,110)"; dc.fillRect(16, 250 + i * 12, 100, 4); }
+  const docData = dc.getImageData(0, 0, DW, DH).data, doc = new Float32Array(DW * DH);
+  for (let i = 0; i < DW * DH; i++) doc[i] = docData[i * 4];
+  const photo = new Float32Array(PW * PH);
+  const photoCv = document.createElement("canvas"); photoCv.width = PW; photoCv.height = PH;
+  const UNIT = [[0, 0], [1, 0], [1, 1], [0, 1]];
+  const SHOTS = [
+    [[150, 40], [352, 72], [418, 296], [62, 262]],
+    [[205, 30], [395, 55], [455, 318], [40, 300]],
+    [[95, 60], [300, 22], [338, 300], [130, 320]],
+    [[60, 95], [330, 40], [440, 230], [170, 318]],
+  ];
+  let shot = 0, truth = SHOTS[0];
+  function makePhoto() {
+    truth = SHOTS[shot];
+    const H0 = GEO.homography(UNIT, truth), Hi = MB.mat.inv(H0), rng = MB.rng(7 + shot);
+    for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
+      const w = Hi[2][0] * x + Hi[2][1] * y + Hi[2][2], u = (Hi[0][0] * x + Hi[0][1] * y + Hi[0][2]) / w, v = (Hi[1][0] * x + Hi[1][1] * y + Hi[1][2]) / w;
+      let g;
+      if (u >= 0 && u < 1 && v >= 0 && v < 1) {
+        g = doc[Math.floor(v * DH) * DW + Math.floor(u * DW)] * (0.86 + 0.12 * (1 - y / PH));
+      } else {
+        g = 92 + 14 * Math.sin(x * 0.045 + Math.sin(y * 0.02) * 2.2) + 8 * Math.sin(y * 0.31 + x * 0.004) + (rng() - 0.5) * 10;
+        // 종이 그림자
+        const ws = Hi[2][0] * (x - 6) + Hi[2][1] * (y - 8) + Hi[2][2], us = (Hi[0][0] * (x - 6) + Hi[0][1] * (y - 8) + Hi[0][2]) / ws, vs = (Hi[1][0] * (x - 6) + Hi[1][1] * (y - 8) + Hi[1][2]) / ws;
+        if (us >= 0 && us < 1 && vs >= 0 && vs < 1) g *= 0.7;
+      }
+      photo[y * PW + x] = g;
+    }
+    const id = photoCv.getContext("2d").createImageData(PW, PH);
+    for (let i = 0; i < PW * PH; i++) { const g = MB.clamp(photo[i], 0, 255); id.data[i * 4] = g; id.data[i * 4 + 1] = g; id.data[i * 4 + 2] = g; id.data[i * 4 + 3] = 255; }
+    photoCv.getContext("2d").putImageData(id, 0, 0);
+  }
+  const INIT = [[90, 50], [390, 50], [390, 290], [90, 290]];
+  let corners = INIT.map((p) => p.slice());
+  const view = MB.seg("geo-ho-view", () => redraw());
+  const affine = MB.check("geo-ho-affine", () => redraw());
+  let H = null;
+  function compute() {
+    if (affine()) {
+      const [a, b, , d] = corners;
+      H = [[b[0] - a[0], d[0] - a[0], a[0]], [b[1] - a[1], d[1] - a[1], a[1]], [0, 0, 1]];
+    } else H = GEO.homography(UNIT, corners);
+  }
+  // 결과(역방향 매핑)
+  const outCv = document.createElement("canvas"); outCv.width = DW; outCv.height = DH;
+  const outId = outCv.getContext("2d").createImageData(DW, DH);
+  function rectify() {
+    const d = outId.data;
+    for (let j = 0; j < DH; j++) for (let i = 0; i < DW; i++) {
+      let g = 0, k = (j * DW + i) * 4;
+      if (H) {
+        const [x, y, w] = GEO.apply(H, (i + 0.5) / DW, (j + 0.5) / DH);
+        if (w > 0 && x >= 0 && y >= 0 && x < PW - 1 && y < PH - 1) {
+          const x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0, o = y0 * PW + x0;
+          g = (photo[o] * (1 - fx) + photo[o + 1] * fx) * (1 - fy) + (photo[o + PW] * (1 - fx) + photo[o + PW + 1] * fx) * fy;
+        } else g = 40;
+      }
+      g = MB.clamp(g, 0, 255); d[k] = g; d[k + 1] = g; d[k + 2] = g; d[k + 3] = 255;
+    }
+    outCv.getContext("2d").putImageData(outId, 0, 0);
+  }
+  const src = MB.canvas("#cv-geo-ho-src", (ctx, w, h) => {
+    const P = MB.palette(), s = w / PW;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(photoCv, 0, 0, w, PH * s);
+    if (!H) return;
+    const T = (u, v) => { const [x, y] = GEO.apply(H, u, v); return [x * s, y * s]; };
+    const mode = view();
+    if (mode === "grid") {
+      ctx.strokeStyle = P.accent; ctx.lineWidth = 1; ctx.globalAlpha = 0.75;
+      for (let i = 1; i < 7; i++) { const u = i / 7; ctx.beginPath(); for (let k = 0; k <= 20; k++) { const p = T(u, k / 20); k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); } ctx.stroke(); }
+      for (let i = 1; i < 10; i++) { const v = i / 10; ctx.beginPath(); for (let k = 0; k <= 20; k++) { const p = T(k / 20, v); k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); } ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    } else if (mode === "vp") {
+      const hp = corners.map((c) => [c[0], c[1], 1]);
+      const pairs = [[GEO.cross(hp[0], hp[1]), GEO.cross(hp[3], hp[2]), [0, 3]], [GEO.cross(hp[0], hp[3]), GEO.cross(hp[1], hp[2]), [0, 1]]];
+      const vps = [];
+      pairs.forEach(([l1, l2, from], pi) => {
+        const v = GEO.cross(l1, l2);
+        ctx.strokeStyle = pi ? P.accent : P.accent2; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+        if (Math.abs(v[2]) > 1e-9 * Math.hypot(v[0], v[1])) {
+          const vx = v[0] / v[2], vy = v[1] / v[2]; vps.push([vx, vy]);
+          const ends = pi ? [corners[0], corners[1]] : [corners[0], corners[3]];
+          ends.forEach((c) => { ctx.beginPath(); ctx.moveTo(c[0] * s, c[1] * s); ctx.lineTo(vx * s, vy * s); ctx.stroke(); });
+          const other = pi ? [corners[3], corners[2]] : [corners[1], corners[2]];
+          other.forEach((c) => { ctx.beginPath(); ctx.moveTo(c[0] * s, c[1] * s); ctx.lineTo(vx * s, vy * s); ctx.stroke(); });
+          ctx.setLineDash([]);
+          if (vx * s > -20 && vx * s < w + 20 && vy * s > -20 && vy * s < h + 20) { ctx.fillStyle = pi ? P.accent : P.accent2; ctx.beginPath(); ctx.arc(vx * s, vy * s, 6, 0, 7); ctx.fill(); }
+        }
+        ctx.setLineDash([]);
+      });
+      if (vps.length === 2) {
+        const [a, b] = vps, dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, ext = 5000;
+        ctx.strokeStyle = P.warn; ctx.lineWidth = 2; ctx.beginPath();
+        ctx.moveTo((a[0] - (dx / L) * ext) * s, (a[1] - (dy / L) * ext) * s); ctx.lineTo((a[0] + (dx / L) * ext) * s, (a[1] + (dy / L) * ext) * s); ctx.stroke();
+      }
+    }
+    // 사각형
+    ctx.strokeStyle = P.accent2; ctx.lineWidth = 2.2;
+    ctx.beginPath(); [[0, 0], [1, 0], [1, 1], [0, 1]].forEach(([u, v], i) => { const p = T(u, v); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }); ctx.closePath(); ctx.stroke();
+    if (affine()) { ctx.setLineDash([4, 4]); ctx.strokeStyle = P.dim; ctx.beginPath(); ctx.moveTo(corners[1][0] * s, corners[1][1] * s); ctx.lineTo(corners[2][0] * s, corners[2][1] * s); ctx.lineTo(corners[3][0] * s, corners[3][1] * s); ctx.stroke(); ctx.setLineDash([]); }
+    corners.forEach((c, i) => {
+      ctx.fillStyle = affine() && i === 2 ? P.dim : P.accent2; ctx.strokeStyle = P.bg; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(c[0] * s, c[1] * s, 8, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = P.bg; ctx.font = "700 10px " + GEO.mono(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(i + 1, c[0] * s, c[1] * s + 0.5);
+    });
+  }, { aspect: PH / PW });
+  const dst = MB.canvas("#cv-geo-ho-dst", (ctx, w, h) => {
+    const dh = h - 16, dw = (dh * DW) / DH, x0 = (w - dw) / 2;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(outCv, x0, 8, dw, dh);
+    ctx.strokeStyle = MB.color("border"); ctx.strokeRect(x0, 8, dw, dh);
+  }, { aspect: PH / PW });
+  function stats() {
+    if (!H) { MB.stat("geo-ho-H", "특이 배치 (세 점이 한 직선 위)"); return; }
+    const f = (v) => { const a = Math.abs(v); const t = a < 5e-4 ? "0" : a >= 100 ? v.toFixed(0) : a >= 1 ? v.toFixed(1) : v.toFixed(3); return t.padStart(7, "\u00a0"); };
+    MB.stat("geo-ho-H", H.map((r) => "[" + r.map(f).join(" ") + " ]").join("<br>"));
+    const hp = corners.map((c) => [c[0], c[1], 1]);
+    const vp = (l1, l2) => { const v = GEO.cross(l1, l2); return Math.abs(v[2]) < 1e-9 * Math.hypot(v[0], v[1]) ? "∞ (평행)" : `(${Math.round(v[0] / v[2])}, ${Math.round(v[1] / v[2])})`; };
+    MB.stat("geo-ho-vp1", vp(GEO.cross(hp[0], hp[1]), GEO.cross(hp[3], hp[2])));
+    MB.stat("geo-ho-vp2", vp(GEO.cross(hp[0], hp[3]), GEO.cross(hp[1], hp[2])));
+    const err = corners.reduce((s, c, i) => s + Math.hypot(c[0] - truth[i][0], c[1] - truth[i][1]), 0) / 4;
+    MB.stat("geo-ho-err", `${err.toFixed(1)} px ${err < 3 ? '<small>✓ 맞음</small>' : ""}`);
+  }
+  function redraw() { compute(); rectify(); src.redraw(); dst.redraw(); stats(); }
+  GEO.pointer(src.canvas, {
+    down(x, y, touch) { const s = src.w / PW; let best = -1, bd = touch ? 32 : 22; corners.forEach((c, i) => { const d = Math.hypot(c[0] * s - x, c[1] * s - y); if (d < bd) { bd = d; best = i; } }); return best >= 0 ? best : null; },
+    move(i, x, y) { const s = src.w / PW; corners[i] = [MB.clamp(x / s, 0, PW), MB.clamp(y / s, 0, PH)]; redraw(); },
+  });
+  document.getElementById("geo-ho-snap").addEventListener("click", () => { corners = truth.map((p) => p.slice()); redraw(); });
+  document.getElementById("geo-ho-reset").addEventListener("click", () => { corners = INIT.map((p) => p.slice()); redraw(); });
+  document.getElementById("geo-ho-new").addEventListener("click", () => { shot = (shot + 1) % SHOTS.length; makePhoto(); corners = INIT.map((p) => p.slice()); redraw(); });
+  makePhoto(); redraw();
+})();
+
+/* ---------------------------------------------------------------- 6. 광선 추적 · 구면수차 */
+(function () {
+  const T = 0.6; // 렌즈 두께 (R 단위)
+  const sag = (y, K) => { const q = 1 - (1 + K) * y * y; return q <= 0 ? NaN : (y * y) / (1 + Math.sqrt(q)); };
+  const dsag = (y, K) => { const q = 1 - (1 + K) * y * y; return q <= 0 ? NaN : y / Math.sqrt(q); };
+  const refr = (d, N, eta) => { // N: 단위 법선
+    let ci = -(N[0] * d[0] + N[1] * d[1]); if (ci < 0) { N = [-N[0], -N[1]]; ci = -ci; }
+    const k = 1 - eta * eta * (1 - ci * ci); if (k < 0) return null;
+    const ct = Math.sqrt(k); return [eta * d[0] + (eta * ci - ct) * N[0], eta * d[1] + (eta * ci - ct) * N[1]];
+  };
+  /** 높이 h 평행광 추적 → {path:[[z,y]...], z, y, d} (마지막 점, 방향) 또는 null */
+  function trace(h, n, K, mode) {
+    const path = [[-0.7, h]];
+    if (mode === "single") {
+      const z = sag(h, K); if (!isFinite(z)) return null;
+      let N = [1, -dsag(h, K)]; const L = Math.hypot(N[0], N[1]); N = [N[0] / L, N[1] / L];
+      const d = refr([1, 0], N, 1 / n); if (!d) return null;
+      path.push([z, h]); return { path, z, y: h, d };
+    }
+    if (mode === "front") {
+      const z1 = sag(h, K); if (!isFinite(z1)) return null;
+      let N = [1, -dsag(h, K)]; let L = Math.hypot(N[0], N[1]); N = [N[0] / L, N[1] / L];
+      const d1 = refr([1, 0], N, 1 / n); if (!d1) return null;
+      path.push([z1, h]);
+      const t = (T - z1) / d1[0], y2 = h + t * d1[1];
+      const d2 = refr(d1, [-1, 0], n); if (!d2) return null;
+      path.push([T, y2]); return { path, z: T, y: y2, d: d2 };
+    }
+    // back: 평면 앞, 뒷면이 곡면 (유리 → 공기)
+    const z2 = T - sag(h, K); if (!isFinite(z2) || z2 < 0.02) return null;
+    path.push([0, h]);
+    let N = [1, dsag(h, K)]; const L = Math.hypot(N[0], N[1]); N = [N[0] / L, N[1] / L];
+    const d = refr([1, 0], N, n); if (!d) return null;
+    path.push([z2, h]); return { path, z: z2, y: h, d };
+  }
+  const axisZ = (r) => (Math.abs(r.d[1]) < 1e-12 ? NaN : r.z - (r.y / r.d[1]) * r.d[0]);
+  const mode = MB.seg("geo-ry-mode", () => cv.redraw());
+  const nI = MB.range("geo-ry-n", (v) => v.toFixed(2), () => cv.redraw());
+  const ap = MB.range("geo-ry-ap", (v) => `h ≤ ${(v / 100).toFixed(2)} R`, () => cv.redraw());
+  const kI = MB.range("geo-ry-k", (v) => v.toFixed(2), () => cv.redraw());
+  function cost(K) {
+    const n = nI(), m = mode(), hm = ap() / 100, p = trace(1e-4, n, K, m); if (!p) return 1e9;
+    const zp = axisZ(p); let s = 0;
+    for (let i = 1; i <= 12; i++) { const r = trace((i / 12) * hm, n, K, m); if (!r) { s += 10; continue; } const dz = axisZ(r) - zp; s += isFinite(dz) ? dz * dz : 10; }
+    return s;
+  }
+  document.getElementById("geo-ry-best").addEventListener("click", () => {
+    let a = -4, b = 1; const g = (Math.sqrt(5) - 1) / 2;
+    // 거친 탐색 후 황금분할
+    let best = 0, bv = Infinity; for (let K = -4; K <= 1; K += 0.05) { const c = cost(K); if (c < bv) { bv = c; best = K; } }
+    a = Math.max(-4, best - 0.05); b = Math.min(1, best + 0.05);
+    for (let i = 0; i < 40; i++) { const c = b - g * (b - a), d = a + g * (b - a); if (cost(c) < cost(d)) b = d; else a = c; }
+    kI.set(Math.round(((a + b) / 2) * 100) / 100);
+  });
+  document.getElementById("geo-ry-sph").addEventListener("click", () => kI.set(0));
+  const cv = MB.canvas("#cv-geo-ray", (ctx, w, h) => {
+    const P = MB.palette(), n = nI(), K = kI(), m = mode(), hm = ap() / 100;
+    const par = trace(1e-4, n, K, m), zp = par ? axisZ(par) : 3;
+    const zMin = -0.7, zMax = Math.max(zp, T + 0.5) * 1.12 + 0.2;
+    const topH = h * 0.64, sc = Math.min((w - 20) / (zMax - zMin), (topH - 16) / 1.45);
+    const X = (z) => 10 + (z - zMin) * sc, Y = (y) => topH / 2 + 4 - y * sc;
+    // 축
+    ctx.strokeStyle = P.axis; ctx.lineWidth = 1; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(0, Y(0)); ctx.lineTo(w, Y(0)); ctx.stroke(); ctx.setLineDash([]);
+    // 유리
+    const ymax = 0.68, prof = (fn) => { const a = []; for (let i = 0; i <= 80; i++) { const y = -ymax + (2 * ymax * i) / 80, z = fn(y); if (isFinite(z)) a.push([z, y]); } return a; };
+    ctx.fillStyle = P.accent; ctx.globalAlpha = 0.12; ctx.strokeStyle = P.accent; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    if (m === "single") { const a = prof((y) => sag(y, K)); a.forEach(([z, y], i) => (i ? ctx.lineTo(X(z), Y(y)) : ctx.moveTo(X(z), Y(y)))); ctx.lineTo(w, Y(a[a.length - 1][1])); ctx.lineTo(w, Y(a[0][1])); ctx.closePath(); }
+    else if (m === "front") { const a = prof((y) => sag(y, K)).filter(([z]) => z < T - 0.02); a.forEach(([z, y], i) => (i ? ctx.lineTo(X(z), Y(y)) : ctx.moveTo(X(z), Y(y)))); ctx.lineTo(X(T), Y(a[a.length - 1][1])); ctx.lineTo(X(T), Y(a[0][1])); ctx.closePath(); }
+    else { const a = prof((y) => T - sag(y, K)).filter(([z]) => z > 0.02); ctx.moveTo(X(0), Y(a[0][1])); a.forEach(([z, y]) => ctx.lineTo(X(z), Y(y))); ctx.lineTo(X(0), Y(a[a.length - 1][1])); ctx.closePath(); }
+    ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
+    // 광선
+    const rays = [], NR = 13;
+    for (let i = 0; i < NR; i++) {
+      const hh = -hm + (2 * hm * i) / (NR - 1); if (Math.abs(hh) < 1e-6) continue;
+      const r = trace(hh, n, K, m), t = Math.abs(hh) / hm;
+      ctx.strokeStyle = t > 0.7 ? P.accent2 : P.accent; ctx.lineWidth = 1.3; ctx.globalAlpha = 0.85;
+      if (!r) { ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.moveTo(X(-0.7), Y(hh)); ctx.lineTo(X(0), Y(hh)); ctx.stroke(); ctx.globalAlpha = 1; continue; }
+      ctx.beginPath(); r.path.forEach(([z, y], k) => (k ? ctx.lineTo(X(z), Y(y)) : ctx.moveTo(X(z), Y(y))));
+      const tEnd = (zMax - r.z) / r.d[0];
+      ctx.lineTo(X(r.z + r.d[0] * tEnd), Y(r.y + r.d[1] * tEnd)); ctx.stroke(); ctx.globalAlpha = 1;
+      rays.push(r);
+    }
+    ctx.fillStyle = P.bad; ctx.beginPath(); ctx.arc(X(zp), Y(0), 4, 0, 7); ctx.fill();
+    ctx.fillStyle = P.dim; ctx.font = "11px " + GEO.font(); ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillText("근축 초점", X(zp), Y(0) + 8);
+    // 종구면수차 그래프
+    const data = [];
+    for (let i = 1; i <= 40; i++) { const hh = (i / 40) * hm, r = trace(hh, n, K, m); if (r) data.push([hh, axisZ(r) - zp]); }
+    const mx = Math.max(0.02, ...data.map((d) => Math.abs(d[1]))) * 1.15;
+    MB.chart(ctx, { x: 52, y: topH + 14, w: w - 66, h: h - topH - 44 }, {
+      x: [0, hm], y: [-mx, mx], series: [{ data, color: P.accent2, width: 2.2 }], hlines: [{ y: 0, color: P.axis, dash: [] }],
+      yFmt: (v) => v.toFixed(2), xFmt: (v) => v.toFixed(2),
+    });
+    ctx.fillStyle = P.dim; ctx.font = "11px " + GEO.font(); ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+    ctx.fillText("초점 어긋남 Δz (세로)  vs  입사 높이 h (가로)", 56, h - 3);
+    // 수치
+    const marg = trace(hm, n, K, m), zm = marg ? axisZ(marg) : NaN;
+    MB.stat("geo-ry-fp", zp.toFixed(3) + " R");
+    MB.stat("geo-ry-fm", isFinite(zm) ? zm.toFixed(3) + " R" : "전반사");
+    MB.stat("geo-ry-lsa", isFinite(zm) ? `<b>${(zm - zp).toFixed(4)}</b> R` : "—");
+    // 최소 흐림 원: z 스캔하며 광선 높이의 최대 절댓값 최소
+    let best = Infinity;
+    if (rays.length) for (let k = 0; k <= 200; k++) { const z = Math.min(zp, isFinite(zm) ? zm : zp) - 0.05 + (Math.abs(zp - (isFinite(zm) ? zm : zp)) + 0.1) * (k / 200); let mxy = 0; rays.forEach((r) => { const t = (z - r.z) / r.d[0]; mxy = Math.max(mxy, Math.abs(r.y + r.d[1] * t)); }); best = Math.min(best, mxy); }
+    MB.stat("geo-ry-spot", isFinite(best) ? (best < 1e-4 ? "≈ 0" : best.toFixed(4) + " R") : "—");
+  }, { aspect: 0.72, maxHeight: 480, minHeight: 300 });
+})();
+
+/* ---------------------------------------------------------------- 7. 방사 왜곡 보정 */
+(function () {
+  const LENS = { barrel: [-0.22, 0.04], pin: [0.15, 0], mus: [-0.3, 0.13] };
+  const lens = MB.seg("geo-ds-lens", () => update());
+  const k1 = MB.range("geo-ds-k1", (v) => MB.signed(v, 2), () => update());
+  const k2 = MB.range("geo-ds-k2", (v) => MB.signed(v, 2), () => update());
+  const fwd = (x, y, a, b) => { const r2 = x * x + y * y, f = 1 + a * r2 + b * r2 * r2; return [x * f, y * f]; };
+  const inv = (x, y, a, b) => {
+    const rd = Math.hypot(x, y); if (rd < 1e-12) return [x, y];
+    let r = rd;
+    for (let i = 0; i < 12; i++) { const f = r + a * r ** 3 + b * r ** 5 - rd, df = 1 + 3 * a * r * r + 5 * b * r ** 4; if (df < 0.05) return null; const dr = f / df; r -= dr; if (Math.abs(dr) < 1e-10) break; }
+    if (!(r > 0)) return null;
+    return [(x * r) / rd, (y * r) / rd];
+  };
+  const inFrame = (p) => Math.abs(p[0]) <= 1 && Math.abs(p[1]) <= 0.75;
+  // 장면 직선들: 이상적 좌표
+  const LINES = [];
+  for (let x = -1.6; x <= 1.601; x += 0.2) { const a = []; for (let i = 0; i <= 90; i++) a.push([x, -1.3 + (2.6 * i) / 90]); LINES.push(a); }
+  for (let y = -1.2; y <= 1.201; y += 0.2) { const a = []; for (let i = 0; i <= 110; i++) a.push([-1.7 + (3.4 * i) / 110, y]); LINES.push(a); }
+  let captured = [];
+  function capture() { const [a, b] = LENS[lens()]; captured = LINES.map((L) => L.map(([x, y]) => fwd(x, y, a, b))); }
+  function corrected(a, b) { return captured.map((L) => L.map((p) => (inFrame(p) ? inv(p[0], p[1], a, b) : null))); }
+  function residual(lines) {
+    let s = 0, n = 0;
+    lines.forEach((L, li) => {
+      captured[li].forEach((c, i) => { if (inFrame(c) && !L[i]) fail++; });
+      const q = L.filter((p) => p); if (q.length < 6) return;
+      const mx = q.reduce((t, p) => t + p[0], 0) / q.length, my = q.reduce((t, p) => t + p[1], 0) / q.length;
+      let sxx = 0, syy = 0, sxy = 0; q.forEach(([x, y]) => { sxx += (x - mx) ** 2; syy += (y - my) ** 2; sxy += (x - mx) * (y - my); });
+      const tr = sxx + syy, det = sxx * syy - sxy * sxy, lmin = tr / 2 - Math.sqrt(Math.max(0, (tr * tr) / 4 - det));
+      s += lmin; n += q.length;
+    });
+    return n ? Math.sqrt(s / n) * 500 : Infinity;
+  }
+  let fail = 0;
+  const cost = (a, b) => { fail = 0; const r = residual(corrected(a, b)); return r + 50 * fail; };
+  const drawLines = (ctx, w, h, lines, sc, frameFn) => {
+    const P = MB.palette(), cx = w / 2, cy = h / 2;
+    ctx.strokeStyle = P.accent; ctx.lineWidth = 1.4;
+    lines.forEach((L, li) => {
+      ctx.strokeStyle = li % 4 === 0 ? P.accent2 : P.accent;
+      ctx.beginPath(); let on = false;
+      L.forEach((p) => { if (!p) { on = false; return; } const X = cx + p[0] * sc, Y = cy - p[1] * sc; on ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); on = true; });
+      ctx.stroke();
+    });
+    if (frameFn) {
+      ctx.strokeStyle = P.dim; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.2; ctx.beginPath(); let on = false;
+      const B = []; for (let i = 0; i <= 40; i++) B.push([-1 + i / 20, 0.75]); for (let i = 0; i <= 30; i++) B.push([1, 0.75 - i / 20]); for (let i = 0; i <= 40; i++) B.push([1 - i / 20, -0.75]); for (let i = 0; i <= 30; i++) B.push([-1, -0.75 + i / 20]);
+      B.forEach((p) => { const q = frameFn(p); if (!q) { on = false; return; } const X = cx + q[0] * sc, Y = cy - q[1] * sc; on ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); on = true; });
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+  };
+  const raw = MB.canvas("#cv-geo-ds-raw", (ctx, w, h) => {
+    const sc = (w / 2) * 0.96;
+    ctx.save(); ctx.beginPath(); ctx.rect(w / 2 - sc, h / 2 - 0.75 * sc, 2 * sc, 1.5 * sc); ctx.clip();
+    drawLines(ctx, w, h, captured.map((L) => L.map((p) => (inFrame(p) ? p : null))), sc);
+    ctx.restore();
+  }, { aspect: 0.75 });
+  let fixLines = [];
+  const fix = MB.canvas("#cv-geo-ds-fix", (ctx, w, h) => {
+    let mx = 1, my = 0.75; // 보정된 사진 테두리가 들어오도록 축척
+    for (let i = 0; i <= 40; i++) for (const p of [[-1 + i / 20, 0.75], [1, -0.75 + i * 0.0375], [-1 + i / 20, -0.75], [-1, -0.75 + i * 0.0375]]) { const q = inv(p[0], p[1], k1(), k2()); if (q) { mx = Math.max(mx, Math.abs(q[0])); my = Math.max(my, Math.abs(q[1])); } }
+    const sc = Math.min((w / 2) * 0.95 / Math.min(mx, 2.2), (h / 2) * 0.95 / Math.min(my, 1.7));
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
+    drawLines(ctx, w, h, fixLines, sc, (p) => inv(p[0], p[1], k1(), k2()));
+    ctx.restore();
+  }, { aspect: 0.75 });
+  function update() {
+    capture();
+    fixLines = corrected(k1(), k2());
+    raw.redraw(); fix.redraw();
+    const r = residual(fixLines), [a, b] = LENS[lens()];
+    MB.stat("geo-ds-res", isFinite(r) ? `<b>${r.toFixed(2)}</b> px` : "—");
+    MB.stat("geo-ds-true", `${MB.signed(a, 2)} · ${MB.signed(b, 2)}`);
+    MB.stat("geo-ds-msg", r < 1 ? '<span class="badge ok">직선 복원</span>' : r < 5 ? '<span class="badge warn">거의</span>' : '<span class="badge bad">휘어 있음</span>');
+  }
+  document.getElementById("geo-ds-zero").addEventListener("click", () => { k1.set(0, false); k2.set(0, false); update(); });
+  document.getElementById("geo-ds-auto").addEventListener("click", () => {
+    capture();
+    let best = [0, 0], bv = Infinity;
+    for (let a = -0.4; a <= 0.401; a += 0.04) for (let b = -0.2; b <= 0.201; b += 0.04) { const r = cost(a, b); if (r < bv) { bv = r; best = [a, b]; } }
+    for (let step = 0.02; step >= 0.0049; step /= 2) for (let it = 0; it < 6; it++) {
+      let moved = false;
+      for (const [da, db] of [[step, 0], [-step, 0], [0, step], [0, -step]]) { const a = MB.clamp(best[0] + da, -0.4, 0.4), b = MB.clamp(best[1] + db, -0.2, 0.2), r = cost(a, b); if (r < bv - 1e-9) { bv = r; best = [a, b]; moved = true; } }
+      if (!moved) break;
+    }
+    k1.set(Math.round(best[0] * 100) / 100, false); k2.set(Math.round(best[1] * 100) / 100, false); update();
+  });
+  update();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<title>가장 낮은 곳 찾기 · MathBook</title>
+<meta name="description" content="신경망 학습을 가능하게 한 경사 하강법에서 출발해 학습률과 조건수, 모멘텀과 Adam, 볼록성, 최소제곱, 라그랑주 승수, 선형계획까지 지형을 직접 만지며 익힌다.">
+<link rel="canonical" href="https://mathbook.euiyun.com/chapters/optimization.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="MathBook">
+<meta property="og:title" content="가장 낮은 곳 찾기 · MathBook">
+<meta property="og:description" content="신경망 학습을 가능하게 한 경사 하강법에서 출발해 학습률과 조건수, 모멘텀과 Adam, 볼록성, 최소제곱, 라그랑주 승수, 선형계획까지 지형을 직접 만지며 익힌다.">
+<meta property="og:url" content="https://mathbook.euiyun.com/chapters/optimization.html">
+<meta property="og:image" content="https://mathbook.euiyun.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"가장 낮은 곳 찾기","name":"가장 낮은 곳 찾기 · MathBook","url":"https://mathbook.euiyun.com/chapters/optimization.html","mainEntityOfPage":"https://mathbook.euiyun.com/chapters/optimization.html","inLanguage":"ko","isAccessibleForFree":true,"learningResourceType":"interactive textbook chapter","position":9,"image":"https://mathbook.euiyun.com/og.png","dateModified":"2026-10-05","isPartOf":{"@type":"Book","@id":"https://mathbook.euiyun.com/#book","name":"MathBook — 문제에서 출발하는 수학 교과서","url":"https://mathbook.euiyun.com/"},"publisher":{"@type":"Organization","name":"MathBook","url":"https://mathbook.euiyun.com/"},"description":"신경망 학습을 가능하게 한 경사 하강법에서 출발해 학습률과 조건수, 모멘텀과 Adam, 볼록성, 최소제곱, 라그랑주 승수, 선형계획까지 지형을 직접 만지며 익힌다."},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"MathBook","item":"https://mathbook.euiyun.com/"},{"@type":"ListItem","position":2,"name":"09 가장 낮은 곳 찾기","item":"https://mathbook.euiyun.com/chapters/optimization.html"}]}]}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<script src="../js/common.js"></script>
+<style>
+  .opt-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--text-dim); padding: 8px 14px; }
+  .opt-legend i { display: inline-block; width: 16px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .opt-legend i.l-gd { background: var(--accent); }
+  .opt-legend i.l-mom { background: var(--accent-2); }
+  .opt-legend i.l-adam { background: var(--ok); }
+  .opt-legend i.l-fit { background: var(--accent); }
+  .opt-legend i.l-man { background: var(--warn); }
+  .opt-legend i.l-sq { background: var(--accent-2-soft); border: 1px solid var(--accent-2); height: 10px; }
+  .opt-legend i.l-gf { background: var(--accent); }
+  .opt-legend i.l-gg { background: var(--accent-2); }
+  .opt-legend i.l-con { background: var(--text-dim); }
+</style>
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3d6151a0abc94ede89285d462527fa80"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</head>
+<body data-chapter="optimization">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">Chapter 09</div>
+    <h1>가장 낮은 곳 찾기</h1>
+    <p class="lead">공학 설계는 거의 언제나 "어떤 값을 가장 작게(또는 크게) 만드는 손잡이 위치를 찾아라"라는 문제로 바뀝니다. 렌즈의 수차, 회로의 전력, 공정의 불량률, 신경망의 오차. 손잡이가 두세 개라면 다 돌려 보면 되지만, 수천·수십억 개라면 다 돌려 볼 수 없습니다. 이 장은 <b>발밑의 기울기만 보고 내려가는 법</b>에서 시작해, 내려가는 속도를 좌우하는 지형의 모양(조건수·볼록성), 그리고 "예산"이라는 울타리가 있을 때의 최적화(라그랑주 승수·선형계획)까지 지형을 직접 만지며 따라갑니다.</p>
+    <ul class="objectives">
+      <li>기울기 \(\nabla f\)가 가장 가파른 오르막 방향이고 등고선에 수직인 이유를 설명하고, 경사 하강법을 쓸 수 있다.</li>
+      <li>학습률이 너무 크면 발산하고 너무 작으면 느린 이유를 \(|1-\eta\lambda|\)로 설명하고, 조건수가 수렴 속도를 정한다는 것을 안다.</li>
+      <li>모멘텀과 Adam이 협곡 지형에서 무엇을 고치는지, 확률적 기울기의 잡음이 왜 해가 아니라 득이 되기도 하는지 안다.</li>
+      <li>볼록 문제는 국소 최소가 곧 전역 최소라서 "쉬운" 문제임을 이해한다.</li>
+      <li>최소제곱 직선 맞춤을 잔차 제곱의 넓이로 보고 정규방정식을 유도하며, 이상치에 약한 이유를 안다.</li>
+      <li>제약이 있는 최적화에서 \(\nabla f=\lambda\nabla g\)의 기하적 의미와 \(\lambda\) = "제약의 가격"을 설명하고, 선형계획의 최적해가 꼭짓점에 있는 이유를 안다.</li>
+    </ul>
+    <div class="origin">
+      <div class="o-head"><small>이 수식이 없었다면</small><b>대규모 언어 모델(LLM)</b></div>
+      <div class="o-body"><p>신경망은 수십억~수천억 개의 손잡이(매개변수)를 가진 기계입니다(GPT-3가 1,750억 개). 학습이란 이 손잡이들을, 문장 데이터에 대한 오차가 가장 작아지는 위치로 맞추는 일입니다. 손잡이 하나씩 돌려 보며 오차를 재는 방법은 손잡이 수만큼 계산을 반복해야 하므로 처음부터 불가능합니다.</p>
+        <p>해법은 <b>모든 손잡이를 동시에, 각자 "오차가 줄어드는 쪽"으로 조금씩</b> 돌리는 것입니다. 그 방향이 오차 함수의 기울기(그래디언트)이고, 역전파(역방향 자동 미분)는 이 수십억 차원의 기울기를 순전파 몇 배 정도의 비용으로 한꺼번에 계산합니다. 경사 하강법과 그 후손(모멘텀, Adam)이 없었다면 오늘의 AI는 없었습니다.</p>
+        <div class="o-chain"><span>수십억 개 손잡이</span><i>→</i><span>하나씩 시험은 불가능</span><i>→</i><span class="tool">기울기 하강 −η∇f</span><i>→</i><span>학습되는 모델</span></div></div>
+    </div>
+  </header>
+
+  <!-- =============================================================== 1 -->
+  <section id="gradient-descent">
+    <h2>눈을 가리고 산에서 내려오기</h2>
+    <div class="problem"><strong>짙은 안개 속의 하산</strong>
+      <p>짙은 안개 속, 산 중턱에 서 있습니다. 지도도 없고 몇 걸음 앞도 안 보입니다. 아는 것은 <b>발밑 땅의 기울기</b>뿐입니다. 어떻게 하면 골짜기 바닥에 닿을 수 있을까요? 신경망 학습이 정확히 이 상황입니다. 오차 함수 \(f(\boldsymbol\theta)\)의 전체 모양(지도)은 알 수 없고, 지금 위치에서의 값과 기울기만 계산할 수 있습니다.</p>
+    </div>
+    <p>답은 직관 그대로입니다. <b>가장 가파르게 내려가는 방향으로 한 걸음</b> 딛고, 거기서 다시 발밑을 확인합니다. 1차원이면 "기울기가 양수면 왼쪽, 음수면 오른쪽으로"이고, 걸음 크기를 기울기에 비례하게 하면 바닥 근처(기울기 ≈ 0)에서 저절로 보폭이 줄어듭니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 260" role="img" aria-label="1차원 지형에서 접선 기울기를 따라 내려가기">
+        <polyline class="s-line" points="60,16.1 80,33.4 100,50.0 120,65.8 140,80.8 160,95.1 180,108.6 200,121.3 220,133.3 240,144.4 260,154.9 280,164.5 300,173.4 320,181.5 340,188.8 360,195.3 380,201.1 400,206.1 420,210.4 440,213.8 460,216.5 480,218.5 500,219.6 520,220.0 540,219.6 560,218.5 580,216.5 600,213.8 620,210.4 640,206.1 660,201.1 680,195.3 700,188.8 720,181.5 740,173.4 760,164.5 780,154.9" style="stroke-width:2.5"/>
+        <line x1="170" y1="108.1" x2="330" y2="191.3" class="s-axis" stroke-dasharray="5 4"/>
+        <line x1="250" y1="149.7" x2="304" y2="177.8" class="s-acc" style="stroke-width:3"/>
+        <polygon points="316,184 297,182 304,170" class="f-acc"/>
+        <circle cx="250" cy="149.7" r="8" class="f-acc"/>
+        <text x="236" y="128" class="t" text-anchor="end">현재 위치 θₖ</text>
+        <text x="322" y="214" class="t-acc">−η f′(θₖ)</text>
+        <text x="150" y="98" class="t-dim" text-anchor="end">접선: 발밑 기울기</text>
+        <line x1="520" y1="40" x2="520" y2="216" class="s-axis" stroke-dasharray="2 5"/>
+        <text x="520" y="32" class="t-dim" text-anchor="middle">보이지 않는 바닥</text>
+        <circle cx="304" cy="177.8" r="4" class="f-acc" opacity="0.5"/>
+        <circle cx="365" cy="196.9" r="4" class="f-acc" opacity="0.45"/>
+        <circle cx="410" cy="208.4" r="4" class="f-acc" opacity="0.4"/>
+        <circle cx="445" cy="214.6" r="4" class="f-acc" opacity="0.35"/>
+        <text x="640" y="250" class="t-mono" text-anchor="middle">보폭 ∝ 기울기 → 바닥 근처에서 저절로 작아진다</text>
+      </svg>
+      <figcaption><b>그림 9-1.</b> 1차원 경사 하강. 현재 위치의 접선 기울기 \(f'\)만 보고, 그 반대 방향으로 \(\eta f'\)만큼 이동한다. 기울기가 작아지는 바닥 근처에서는 보폭도 저절로 줄어 점들이 촘촘해진다.</figcaption>
+    </figure>
+    <p>손잡이가 여러 개(\(\boldsymbol\theta\in\mathbb R^n\))이면 "기울기"는 각 손잡이 방향의 편미분을 모은 벡터, <span class="term">그래디언트</span><span class="en">(Gradient)</span>가 됩니다. 1847년 코시<span class="en">(Cauchy)</span>가 연립방정식을 풀려고 제안한 것으로 알려진 <span class="term">경사 하강법</span><span class="en">(Gradient Descent)</span>은 한 줄입니다.</p>
+    <div class="formula">$$\boldsymbol\theta_{k+1} = \boldsymbol\theta_k - \eta\,\nabla f(\boldsymbol\theta_k), \qquad \nabla f = \left(\frac{\partial f}{\partial\theta_1}, \dots, \frac{\partial f}{\partial\theta_n}\right)$$
+      <div class="where">\(\eta\): <b>학습률</b>(learning rate, 보폭 계수). \(-\nabla f\)는 "가장 가파른 내리막" 방향(다음 절에서 증명). 이 규칙에는 전체 지형에 대한 정보가 전혀 필요 없다 — 현재 위치의 값과 기울기만 있으면 된다.</div>
+    </div>
+    <p>아래 지형은 2변수 함수 \(f(x,y)\)를 색과 등고선으로 그린 지도입니다(어두운 쪽이 낮음). 공은 이 지도를 모르고 발밑 기울기만 보며 굴러갑니다. 학습률과 지형을 바꿔 가며 경사 하강이 언제 잘 되고 언제 망가지는지 보세요.</p>
+
+    <div class="sim" id="sim-opt-descent">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>손실 지형 위의 경사 하강</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-opt-descent"></canvas><span class="tag-tl">어두울수록 낮음</span></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>지형</span><select id="opt-d-land">
+            <option value="bowl">둥근 그릇 (κ = 1)</option>
+            <option value="valley" selected>길쭉한 협곡 (κ = 10)</option>
+            <option value="multi">여러 골짜기</option>
+            <option value="rosen">로젠브록 바나나</option>
+            <option value="saddle">안장점</option>
+          </select></label>
+          <label class="ctrl"><span>학습률 η <output id="opt-d-lr-out"></output></span><input type="range" id="opt-d-lr" min="0" max="1000" value="700"></label>
+          <div class="ctrl"><span>재생 속도</span><div class="seg" id="opt-d-speed"><button data-value="1" class="on">1×</button><button data-value="10">10×</button><button data-value="100">100×</button></div></div>
+          <label class="check"><input type="checkbox" id="opt-d-field"> 기울기 화살표 −∇f 보기</label>
+          <div class="btn-row"><button class="btn primary" id="opt-d-play">▶ 굴리기</button><button class="btn" id="opt-d-step">한 걸음</button><button class="btn" id="opt-d-reset">처음으로</button></div>
+          <div class="btn-row"><button class="btn" id="opt-d-swarm">공 24개 뿌리기</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">단계 k</span><span class="v" id="opt-d-k">0</span></div>
+        <div class="stat"><span class="k">f(θₖ)</span><span class="v" id="opt-d-f">—</span></div>
+        <div class="stat"><span class="k">|∇f|</span><span class="v" id="opt-d-g">—</span></div>
+        <div class="stat"><span class="k">상태</span><span class="v" id="opt-d-st">—</span></div>
+      </div>
+      <div class="sim-note">지도 위 빈 곳을 클릭하거나 '시작' 점을 끌어 출발 위치를 정합니다. 해볼 것: ① '길쭉한 협곡'에서 η를 0.19 → 0.21로 넘기면 지그재그가 발산으로 바뀝니다(한계 2/λ<sub>max</sub> = 0.2). ② '여러 골짜기'에서 '공 24개 뿌리기' — 시작점에 따라 다른 바닥에 갇힙니다. ③ '안장점'은 y = 0에서 출발하면 고개(기울기 0)에 멈추지만, 시작점을 아주 살짝 위아래로 옮기면 결국 빠져나갑니다. 모델: 기울기는 수치 중앙 차분으로 계산, 잡음 없는 전체 기울기(배치 경사 하강). 색은 높이의 순위(분위수)로 칠해 지형마다 대비를 맞췄습니다. 로젠브록은 \((1-x)^2+20(y-x^2)^2\)로 원래(계수 100)보다 완만하게 했습니다.</div>
+    </div>
+    <p>몇 가지가 바로 보입니다. 둥근 그릇에서는 공이 바닥을 향해 곧장 갑니다. 협곡에서는 학습률을 조금만 키워도 가파른 벽 사이를 지그재그로 튀고, 정작 골짜기를 따라 내려가는 방향으로는 느릿느릿 움직입니다. 여러 골짜기 지형에서는 <b>어디서 출발하느냐</b>가 도착점을 정합니다. 그리고 안장점에서는 기울기가 0이라는 사실만으로는 바닥인지 고개인지 알 수 없습니다. 이 네 가지 관찰이 이 장의 나머지를 끌고 갑니다.</p>
+  </section>
+
+  <!-- =============================================================== 2 -->
+  <section id="gradient-contour">
+    <h2>기울기는 등고선에 수직이다</h2>
+    <p>왜 \(-\nabla f\)가 "가장 가파른" 내리막일까요? 현재 위치에서 아주 작은 걸음 \(\mathbf d\)를 디뎠을 때 높이의 변화는 1차 테일러 근사로</p>
+    <div class="formula">$$f(\boldsymbol\theta+\mathbf d) \approx f(\boldsymbol\theta) + \nabla f\cdot\mathbf d = f(\boldsymbol\theta) + |\nabla f|\,|\mathbf d|\cos\varphi$$
+      <div class="where">\(\varphi\): 걸음 방향과 \(\nabla f\) 사이의 각. 같은 보폭 \(|\mathbf d|\)라면 \(\cos\varphi=-1\), 즉 \(\mathbf d\)가 \(-\nabla f\)와 같은 방향일 때 가장 많이 내려간다. \(\cos\varphi=0\)(기울기에 수직)으로 걸으면 높이가 변하지 않는다 — 그 방향이 바로 등고선 방향이다.</div>
+    </div>
+    <p>마지막 문장이 핵심입니다. 등고선은 "높이가 변하지 않는 방향"을 이은 선이고, 높이가 변하지 않는 방향은 기울기에 수직입니다. 그러므로 <b>그래디언트는 항상 등고선에 수직</b>이고, 그 크기는 등고선 간격이 좁을수록(가파를수록) 큽니다. 위 시뮬레이터에서 '기울기 화살표'를 켜 보면 화살표가 모든 곳에서 등고선을 직각으로 가로지르는 것을 볼 수 있습니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 280" role="img" aria-label="타원 등고선과 그 위 한 점에서의 기울기 벡터">
+        <ellipse cx="400" cy="140" rx="63" ry="27" class="s-line" opacity="0.6"/>
+        <ellipse cx="400" cy="140" rx="115" ry="49" class="s-line" opacity="0.6"/>
+        <ellipse cx="400" cy="140" rx="165" ry="71" class="s-line" opacity="0.6"/>
+        <ellipse cx="400" cy="140" rx="210" ry="90" class="s-line" style="stroke-width:2.5"/>
+        <ellipse cx="400" cy="140" rx="262" ry="112" class="s-line" opacity="0.6"/>
+        <circle cx="400" cy="140" r="4" class="f-acc"/>
+        <text x="400" y="160" class="t-dim" text-anchor="middle">최소점</text>
+        <line x1="635.4" y1="116.3" x2="471.9" y2="41.0" class="s-axis" stroke-dasharray="6 4"/>
+        <text x="690" y="138" class="t-dim" text-anchor="middle">접선 = 등고선 방향</text><text x="690" y="155" class="t-dim" text-anchor="middle">(높이 불변)</text>
+        <line x1="553.7" y1="78.7" x2="578" y2="25.6" class="s-acc" style="stroke-width:3"/>
+        <polygon points="582.9,15.1 571,28 584.6,33.5" class="f-acc"/>
+        <text x="592" y="22" class="t-acc">∇f (가장 가파른 오르막)</text>
+        <line x1="553.7" y1="78.7" x2="529.1" y2="132" style="stroke:var(--accent-2);stroke-width:3"/>
+        <polygon points="524.4,142.2 522.7,128.2 536.2,134.4" style="fill:var(--accent-2)"/>
+        <text x="512" y="156" class="t" text-anchor="end" style="fill:var(--accent-2);font-weight:700">−∇f</text>
+        <circle cx="553.7" cy="78.7" r="6" class="f-acc"/>
+        <path d="M 545.3 74.9 L 549.1 66.5 L 557.5 70.3" fill="none" class="s-axis"/>
+        <text x="60" y="40" class="t-mono">f = x²/a² + y²/b²</text>
+        <text x="60" y="60" class="t-mono">등고선이 촘촘한 곳 = |∇f|가 큰 곳</text>
+      </svg>
+      <figcaption><b>그림 9-2.</b> 타원형 등고선과 한 점에서의 기울기. \(\nabla f\)는 등고선의 접선에 수직(작은 직각 표시)이며 바깥(높은 쪽)을 향한다. 타원이 길쭉하면 \(-\nabla f\)는 최소점을 똑바로 가리키지 않는다 — 협곡 지형에서 지그재그가 생기는 기하학적 이유다.</figcaption>
+    </figure>
+    <p>그림 9-2의 마지막 관찰이 중요합니다. 등고선이 동그라면 \(-\nabla f\)는 정확히 중심을 가리키지만, 길쭉한 타원에서는 엉뚱한 쪽(짧은 축 방향)을 가리킵니다. "가장 가파른 방향"은 국소적으로 최선일 뿐, <b>목적지를 가리키는 방향이 아닙니다</b>. 이 차이가 다음 절의 주제입니다.</p>
+    <div class="callout deep"><strong>2차 정보: 뉴턴법</strong> 테일러 전개를 2차까지 쓰면 \(f(\boldsymbol\theta+\mathbf d)\approx f+\nabla f\cdot\mathbf d+\tfrac12\mathbf d^{\mathsf T}H\mathbf d\)이고(\(H\): 헤세 행렬, 2차 편미분), 이를 최소화하는 걸음은 \(\mathbf d=-H^{-1}\nabla f\)다. 이차 함수라면 한 걸음에 바닥에 닿는다. 하지만 매개변수가 \(n\)개면 \(H\)는 \(n\times n\) — 10억 개면 \(10^{18}\)개 원소라 저장조차 못 한다. 그래서 대규모 문제는 1차(기울기) 방법과, \(H\)를 값싸게 흉내 내는 근사(대각 스케일링, L-BFGS 등)를 쓴다.</div>
+  </section>
+
+  <!-- =============================================================== 3 -->
+  <section id="learning-rate">
+    <h2>보폭의 딜레마: 학습률과 조건수</h2>
+    <div class="problem"><strong>학습률을 얼마로 잡을까</strong>
+      <p>신경망 학습을 처음 돌리면 가장 먼저 부딪히는 문제입니다. 학습률을 크게 잡으면 손실이 NaN으로 폭발하고, 작게 잡으면 며칠을 돌려도 손실이 거의 줄지 않습니다. "적당히"는 어디이며, 왜 그 폭이 지형마다 다를까요?</p>
+    </div>
+    <p>가장 단순한 지형, 1차원 포물선 \(f(x)=\tfrac{a}{2}x^2\)에서 정확히 계산할 수 있습니다. 기울기는 \(f'(x)=ax\)이므로</p>
+    <div class="formula">$$x_{k+1} = x_k - \eta a x_k = (1-\eta a)\,x_k \quad\Longrightarrow\quad x_k = (1-\eta a)^k x_0$$
+      <div class="where">\(a\): 곡률(2차 미분). 한 걸음마다 거리가 \(r=1-\eta a\)배가 된다. \(0<r<1\): 한쪽에서 단조 접근. \(-1<r<0\): 바닥을 넘나들며 진동하지만 수렴. \(|r|>1\): 발산. 따라서 수렴 조건은 \(0<\eta<2/a\)이고, \(\eta=1/a\)이면 한 걸음에 도착한다.</div>
+    </div>
+
+    <div class="sim" id="sim-opt-lr">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>포물선 위의 걸음: 학습률의 세 영역</h3></div>
+      <div class="split">
+        <div><canvas id="cv-opt-lr-a"></canvas><span class="cap">f(x) = a x²/2 위의 걸음</span></div>
+        <div><canvas id="cv-opt-lr-b"></canvas><span class="cap">|xₖ| (로그 눈금)</span></div>
+      </div>
+      <div class="sim-controls">
+        <label class="ctrl"><span>학습률 η <output id="opt-l-eta-out"></output></span><input type="range" id="opt-l-eta" min="0.02" max="1.3" step="0.01" value="0.3"></label>
+        <label class="ctrl"><span>곡률 a <output id="opt-l-a-out"></output></span><input type="range" id="opt-l-a" min="0.5" max="4" step="0.1" value="2"></label>
+        <div class="ctrl"><span>바로 가기</span><div class="seg" id="opt-l-preset"><button data-value="slow">느림</button><button data-value="best" class="on">η = 1/a</button><button data-value="osc">진동</button><button data-value="div">발산</button></div></div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">r = 1 − ηa</span><span class="v" id="opt-l-r">—</span></div>
+        <div class="stat"><span class="k">안정 한계 2/a</span><span class="v" id="opt-l-lim">—</span></div>
+        <div class="stat"><span class="k">10걸음 뒤 |x|/|x₀|</span><span class="v" id="opt-l-10">—</span></div>
+        <div class="stat"><span class="k">판정</span><span class="v" id="opt-l-st">—</span></div>
+      </div>
+      <div class="sim-note">왼쪽 포물선 위의 시작점을 좌우로 끌 수 있습니다. 해볼 것: ① η를 천천히 올리며 오른쪽 그래프의 기울기(수렴 속도)가 가장 가파른 곳이 η = 1/a인지 확인. ② η가 1/a를 넘으면 점이 바닥을 건너뛰며 좌우로 번갈아 찍힙니다. ③ 곡률 a를 키우면 같은 η가 갑자기 발산 영역이 됩니다 — 가장 가파른 방향이 학습률의 상한을 정합니다. 모델: 정확한 이차 함수, 잡음 없음, 30걸음까지.</div>
+    </div>
+
+    <p>이제 2차원 협곡을 생각합시다. 등고선이 타원인 이차 함수는 주축 방향으로 돌려 놓으면 \(f=\tfrac12(\lambda_1u^2+\lambda_2v^2)\)처럼 두 개의 독립된 포물선이 됩니다(\(\lambda_i\)는 헤세 행렬의 고유값, <a href="linalg.html">3장</a>). 경사 하강은 두 방향에 <b>같은 η</b>를 써야 하므로 딜레마가 생깁니다.</p>
+    <ul>
+      <li>발산하지 않으려면 가장 가파른 방향에 맞춰 \(\eta<2/\lambda_{\max}\)여야 하고,</li>
+      <li>그러면 가장 완만한 방향은 한 걸음에 \(1-\eta\lambda_{\min}\approx 1-2\lambda_{\min}/\lambda_{\max}\)배밖에 줄지 않습니다.</li>
+    </ul>
+    <p>두 고유값의 비 \(\kappa=\lambda_{\max}/\lambda_{\min}\)을 <span class="term">조건수</span><span class="en">(Condition Number)</span>라 합니다. 최선의 고정 학습률 \(\eta=2/(\lambda_{\max}+\lambda_{\min})\)을 써도 한 걸음당 오차는 \((\kappa-1)/(\kappa+1)\)배로만 줄어듭니다.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th class="num">조건수 κ</th><th class="num">걸음당 수렴비 (κ−1)/(κ+1)</th><th class="num">오차를 10⁻⁶로 줄이는 걸음 수</th><th>지형 모양</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td class="num">0</td><td class="num">1</td><td>둥근 그릇</td></tr>
+        <tr><td class="num">10</td><td class="num">0.818</td><td class="num">≈ 69</td><td>길쭉한 타원</td></tr>
+        <tr><td class="num">100</td><td class="num">0.980</td><td class="num">≈ 691</td><td>좁은 협곡</td></tr>
+        <tr><td class="num">1000</td><td class="num">0.998</td><td class="num">≈ 6,900</td><td>거의 평행한 두 벽</td></tr>
+      </tbody>
+    </table></div>
+    <p>걸음 수가 대략 \(\kappa\)에 비례합니다. 그래서 실무의 상당 부분은 <b>지형을 둥글게 만드는 일</b>입니다. 입력 특징을 평균 0, 분산 1로 맞추는 정규화, 신경망의 배치 정규화, 변수 단위를 비슷한 크기로 바꾸는 것 모두 헤세 행렬의 조건수를 줄여 경사 하강이 똑바로 내려가게 하려는 것입니다. 이 장 뒤의 최소제곱 시뮬레이터에서도 같은 협곡을 다시 만납니다.</p>
+    <div class="callout tip"><strong>엔지니어의 눈으로</strong> "손실이 NaN이 됐다"는 거의 언제나 어떤 방향에서 \(\eta\lambda>2\)가 됐다는 뜻이다. 학습 초반에 학습률을 서서히 올리는 워밍업(warm-up), 기울기 크기를 자르는 그래디언트 클리핑은 모두 이 한계를 넘지 않게 하는 장치다.</div>
+  </section>
+
+  <!-- =============================================================== 4 -->
+  <section id="momentum">
+    <h2>무거운 공과 Adam</h2>
+    <div class="problem"><strong>협곡에서 지그재그만 하다 끝난다</strong>
+      <p>조건수가 큰 지형에서 경사 하강은 벽 사이를 튀느라 걸음을 다 쓰고, 정작 골짜기 아래로는 거의 못 갑니다. 학습률을 줄이면 지그재그는 사라지지만 더 느려집니다. 같은 기울기 정보만으로 더 잘 내려갈 수는 없을까요?</p>
+    </div>
+    <p>관찰: 지그재그 성분은 걸음마다 <b>부호가 바뀌고</b>, 골짜기를 따라가는 성분은 <b>매번 같은 방향</b>입니다. 지난 걸음들을 평균하면 번갈아 바뀌는 성분은 상쇄되고 꾸준한 성분은 쌓입니다. 이것이 <span class="term">모멘텀</span><span class="en">(Momentum, Polyak의 heavy ball, 1964)</span>입니다. 물리적으로는 마찰 있는 무거운 공이 관성 때문에 벽에서 덜 튀고 경사를 따라 가속하는 것과 같습니다.</p>
+    <div class="formula">$$\mathbf v_{k+1} = \beta\,\mathbf v_k + \nabla f(\boldsymbol\theta_k), \qquad \boldsymbol\theta_{k+1} = \boldsymbol\theta_k - \eta\,\mathbf v_{k+1}$$
+      <div class="where">\(\beta\)(보통 0.9): 속도를 얼마나 기억하나(1−β가 마찰). 일정한 기울기 \(g\)가 계속되면 속도는 \(g/(1-\beta)\), 즉 실효 보폭이 10배가 된다. 이차 지형에서 최적 계수를 쓰면 수렴비가 \((\sqrt\kappa-1)/(\sqrt\kappa+1)\)로, 필요한 걸음 수가 \(\kappa\)가 아니라 \(\sqrt\kappa\)에 비례한다(κ = 100이면 약 10배 빠름).</div>
+    </div>
+    <p>또 다른 처방은 <b>손잡이마다 보폭을 따로</b> 정하는 것입니다. 기울기가 늘 큰 방향(가파른 벽)은 보폭을 줄이고, 늘 작은 방향(완만한 바닥)은 키우면 지형이 둥글게 펴진 것처럼 됩니다. <span class="term">Adam</span><span class="en">(Adaptive Moment Estimation, Kingma & Ba, 2014)</span>은 기울기의 이동 평균(모멘텀)과 기울기 제곱의 이동 평균(크기 추정)을 함께 써서, 성분별로 \(m/\sqrt{v}\)만큼 움직입니다.</p>
+    <div class="formula">$$\mathbf m \leftarrow \beta_1\mathbf m + (1-\beta_1)\mathbf g,\quad \mathbf v \leftarrow \beta_2\mathbf v + (1-\beta_2)\mathbf g^2,\quad \boldsymbol\theta \leftarrow \boldsymbol\theta - \eta\,\frac{\hat{\mathbf m}}{\sqrt{\hat{\mathbf v}}+\epsilon}$$
+      <div class="where">\(\hat{\mathbf m}=\mathbf m/(1-\beta_1^k)\), \(\hat{\mathbf v}=\mathbf v/(1-\beta_2^k)\)는 0에서 시작한 평균의 편향 보정. 기본값 \(\beta_1=0.9,\ \beta_2=0.999,\ \epsilon=10^{-8}\). 제곱·나눗셈은 성분별. 기울기 크기와 무관하게 한 걸음이 대략 η 정도라서, 학습률을 "좌표 공간에서의 보폭"으로 해석할 수 있다.</div>
+    </div>
+    <p>마지막 요소는 <b>잡음</b>입니다. 실제 신경망 학습은 전체 데이터(수조 토큰)로 기울기를 계산하지 않고, 수백~수천 개 표본의 <span class="term">미니배치</span><span class="en">(Mini-batch)</span>로 추정한 기울기를 씁니다. 이것이 <span class="term">확률적 경사 하강</span><span class="en">(SGD, Stochastic Gradient Descent)</span>입니다. 추정이므로 매번 잡음이 섞이는데, 이 잡음이 얕은 국소 최소나 안장점에서 공을 흔들어 빠져나오게 돕기도 합니다.</p>
+
+    <div class="sim" id="sim-opt-race">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>경사 하강 vs 모멘텀 vs Adam</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-opt-race"></canvas>
+          <div class="opt-legend"><span><i class="l-gd"></i>경사 하강(GD)</span><span><i class="l-mom"></i>모멘텀 β=0.9</span><span><i class="l-adam"></i>Adam</span></div>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>지형</span><select id="opt-r-land">
+            <option value="valley" selected>길쭉한 협곡 (κ = 10)</option>
+            <option value="canyon">좁은 협곡 (κ = 100)</option>
+            <option value="multi">여러 골짜기</option>
+            <option value="rosen">로젠브록 바나나</option>
+            <option value="saddle">안장점</option>
+          </select></label>
+          <label class="ctrl"><span>η (GD·모멘텀) <output id="opt-r-lr-out"></output></span><input type="range" id="opt-r-lr" min="0" max="1000" value="500"></label>
+          <label class="ctrl"><span>η (Adam) <output id="opt-r-alr-out"></output></span><input type="range" id="opt-r-alr" min="0" max="1000" value="500"></label>
+          <label class="ctrl"><span>기울기 잡음 σ (미니배치) <output id="opt-r-noise-out"></output></span><input type="range" id="opt-r-noise" min="0" max="3" step="0.05" value="0"></label>
+          <div class="btn-row"><button class="btn primary" id="opt-r-play">▶ 경주</button><button class="btn" id="opt-r-reset">처음으로</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">단계</span><span class="v" id="opt-r-k">0</span></div>
+        <div class="stat"><span class="k">f — GD</span><span class="v" id="opt-r-f0">—</span></div>
+        <div class="stat"><span class="k">f — 모멘텀</span><span class="v" id="opt-r-f1">—</span></div>
+        <div class="stat"><span class="k">f — Adam</span><span class="v" id="opt-r-f2">—</span></div>
+      </div>
+      <div class="sim-note">'시작' 점을 끌거나 빈 곳을 클릭해 출발점을 바꿉니다. 해볼 것: ① '좁은 협곡'에서 같은 η로 GD와 모멘텀을 비교 — GD는 아직 골짜기 중간인데 모멘텀은 바닥에 도착합니다. ② '안장점'(y=0 출발)에서 잡음 σ를 0 → 0.5로: 잡음이 없으면 GD는 고개에 멈추지만 잡음이 있으면 굴러 내려갑니다. ③ '여러 골짜기'에서 σ를 1 이상으로 올리고 여러 번 '처음으로'를 눌러 보세요 — 얕은 골짜기를 탈출하는 경우가 생깁니다. 모델: 잡음은 기울기 각 성분에 더한 정규분포 \(\sigma\,\mathcal N(0,1)\)(실제 미니배치 잡음의 크기·상관 구조는 문제마다 다름). 모멘텀은 위 식(β = 0.9), Adam은 기본 하이퍼파라미터.</div>
+    </div>
+
+    <div class="table-wrap"><table>
+      <thead><tr><th>방법</th><th>갱신에 쓰는 것</th><th class="num">매개변수당 추가 메모리</th><th>잘하는 것 / 약점</th></tr></thead>
+      <tbody>
+        <tr><td>(S)GD</td><td>현재 기울기</td><td class="num">0</td><td>단순·예측 가능 / 큰 κ에서 느림, 학습률에 민감</td></tr>
+        <tr><td>모멘텀</td><td>기울기의 지수 평균(속도)</td><td class="num">1개</td><td>협곡 가속, 지그재그 상쇄 / 바닥을 지나쳤다 돌아오는 오버슈트</td></tr>
+        <tr><td>Adam</td><td>기울기 평균 + 제곱 평균</td><td class="num">2개</td><td>성분별 보폭 자동 조정, 대형 신경망의 사실상 표준 / 메모리 2배, 바닥 근처 미세 진동</td></tr>
+      </tbody>
+    </table></div>
+    <p>메모리 열이 대형 모델에서는 결정적입니다. 매개변수 1,000억 개를 32비트로 학습하면 가중치 400 GB에 Adam 상태 800 GB가 더 붙습니다. 대규모 학습 시스템이 옵티마이저 상태를 여러 GPU에 쪼개 저장하는 이유입니다(<a href="https://aibook.euiyun.com/">AIBook</a>).</p>
+  </section>
+
+  <!-- =============================================================== 5 -->
+  <section id="convexity">
+    <h2>볼록하면 쉽다</h2>
+    <div class="problem"><strong>찾은 답이 정말 최선인가</strong>
+      <p>경사 하강이 멈췄습니다. 기울기는 0입니다. 하지만 첫 시뮬레이터의 '여러 골짜기'에서 봤듯이, 다른 곳에서 출발했다면 더 낮은 바닥이 있었을지도 모릅니다. 바닥이 하나뿐이라고 <b>보증</b>받을 방법은 없을까요?</p>
+    </div>
+    <p>함수 그래프 위 아무 두 점을 직선(현)으로 이었을 때, 그 현이 항상 그래프보다 위에 있으면 그 함수를 <span class="term">볼록</span><span class="en">(Convex)</span>하다고 합니다. 식으로는</p>
+    <div class="formula">$$f\big(t\mathbf a+(1-t)\mathbf b\big) \;\le\; t f(\mathbf a)+(1-t)f(\mathbf b), \qquad 0\le t\le 1$$
+      <div class="where">두 번 미분 가능하면 "헤세 행렬이 모든 곳에서 양의 준정부호(모든 고유값 ≥ 0)"와 같다. 1차원이면 \(f''\ge 0\) — 그래프가 어디서나 위로 휘어 있다.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 270" role="img" aria-label="볼록 함수와 볼록하지 않은 함수의 현 비교">
+        <polyline class="s-line" style="stroke-width:2.5" points="35,80.0 43,94.6 51,108.5 59,121.6 67,134.0 75,145.6 83,156.5 91,166.6 99,176.0 107,184.6 115,192.5 123,199.6 131,206.0 139,211.6 147,216.5 155,220.6 163,224.0 171,226.6 179,228.5 187,229.6 195,230.0 203,229.6 211,228.5 219,226.6 227,224.0 235,220.6 243,216.5 251,211.6 259,206.0 267,199.6 275,192.5 283,184.6 291,176.0 299,166.6 307,156.5 315,145.6 323,134.0 331,121.6 339,108.5 347,94.6 355,80.0"/>
+        <line x1="83" y1="156.5" x2="275" y2="192.5" class="s-acc"/>
+        <circle cx="83" cy="156.5" r="4" class="f-acc"/><circle cx="275" cy="192.5" r="4" class="f-acc"/>
+        <circle cx="195" cy="230" r="6" style="fill:var(--ok)"/>
+        <text x="195" y="252" class="t-dim" text-anchor="middle">유일한 바닥 = 전역 최소</text>
+        <text x="195" y="34" class="t" text-anchor="middle" style="font-weight:700">볼록: 현이 항상 그래프 위</text>
+        <polyline class="s-line" style="stroke-width:2.5" points="417.5,140.0 425.0,163.5 432.5,182.7 440.0,198.1 447.5,210.0 455.0,218.8 462.5,224.8 470.0,228.5 477.5,230.0 485.0,229.7 492.5,228.0 500.0,224.9 507.5,220.9 515.0,216.2 522.5,210.9 530.0,205.2 537.5,199.4 545.0,193.6 552.5,187.9 560.0,182.6 567.5,177.6 575.0,173.1 582.5,169.1 590.0,165.8 597.5,163.2 605.0,161.2 612.5,160.0 620.0,159.4 627.5,159.5 635.0,160.3 642.5,161.6 650.0,163.4 657.5,165.5 665.0,168.0 672.5,170.6 680.0,173.2 687.5,175.7 695.0,177.8 702.5,179.3 710.0,180.2 717.5,180.0 725.0,178.5 732.5,175.6 740.0,170.9 747.5,164.1 755.0,154.8 762.5,142.8 770.0,127.7 777.5,109.2 785.0,86.7 792.5,60.0"/>
+        <line x1="492.5" y1="228" x2="725" y2="178.5" style="stroke:var(--accent-2);stroke-width:2"/>
+        <circle cx="492.5" cy="228" r="4" style="fill:var(--accent-2)"/><circle cx="725" cy="178.5" r="4" style="fill:var(--accent-2)"/>
+        <text x="620" y="215" class="t-dim" text-anchor="middle">현이 그래프 아래로</text>
+        <circle cx="478" cy="230" r="6" style="fill:var(--ok)"/>
+        <text x="478" y="252" class="t-dim" text-anchor="middle">전역 최소</text>
+        <circle cx="713" cy="180.2" r="6" style="fill:var(--warn)"/>
+        <text x="745" y="214" class="t-dim" text-anchor="middle">국소 최소(함정)</text>
+        <text x="605" y="34" class="t" text-anchor="middle" style="font-weight:700">비볼록: 골짜기가 여럿</text>
+      </svg>
+      <figcaption><b>그림 9-3.</b> 볼록 함수(왼쪽)는 어느 두 점을 이어도 현이 그래프 위에 있다. 볼록하지 않은 함수(오른쪽)는 현이 그래프 아래로 내려가는 구간이 있고, 기울기 0인 점이 국소 최소일 수 있다.</figcaption>
+    </figure>
+    <p>볼록 함수의 결정적인 성질은 이것입니다. <b>국소 최소는 곧 전역 최소다.</b> 증명은 한 줄입니다. 국소 최소 \(\mathbf a\)보다 낮은 점 \(\mathbf b\)가 있다면, \(\mathbf a\)에서 \(\mathbf b\)로 가는 현 위의 점들은 볼록성 때문에 \(f(\mathbf a)\)보다 낮아야 하고, 그 점들은 \(\mathbf a\)에 얼마든지 가까이 있으므로 \(\mathbf a\)가 국소 최소라는 데 모순입니다. 그래서 볼록 문제에서는</p>
+    <ul>
+      <li>어디서 출발하든 경사 하강은 같은 최솟값에 도달하고(학습률만 적당하면),</li>
+      <li>"기울기 = 0"이 곧 최적이라는 <b>증명서</b>가 되며,</li>
+      <li>내점법 같은 알고리즘으로 수백만 변수 문제도 다항 시간 안에 신뢰성 있게 풀 수 있습니다.</li>
+    </ul>
+    <p>그래서 공학자는 문제를 볼록하게 <b>만들려고</b> 애씁니다. 최소제곱(다음 절), 선형계획(마지막 절), 포트폴리오 분산 최소화, 많은 신호 복원 문제가 볼록입니다. 첫 시뮬레이터에서 '둥근 그릇'이나 '협곡'을 고르고 '공 24개 뿌리기'를 눌러 보면 모든 공이 한 바닥에 모입니다. '여러 골짜기'와 대비해 보세요.</p>
+    <div class="callout"><strong>그런데 신경망은 볼록이 아니다</strong> 신경망 손실 지형은 매우 비볼록이고 안장점이 넘쳐난다. 그런데도 SGD 계열이 실용적으로 좋은 해를 찾는 이유는 아직 완전히 규명되지 않았다. 고차원에서는 "모든 방향으로 올라가는" 진짜 국소 최소보다 어떤 방향으론 내려갈 수 있는 안장점이 훨씬 흔하다는 관찰, 과매개변수화된 모델에서는 좋은 최소들이 넓게 연결돼 있다는 관찰 등이 부분적인 설명으로 연구되고 있다.</div>
+  </section>
+
+  <!-- =============================================================== 6 -->
+  <section id="least-squares">
+    <h2>측정점에 직선 맞추기: 최소제곱</h2>
+    <div class="problem"><strong>센서 교정 곡선</strong>
+      <p>온도 센서를 교정합니다. 기준 온도 \(x_i\) 몇 개에서 센서 출력 \(y_i\)를 쟀더니 점들이 대략 직선 위에 있지만 잡음 때문에 정확히 한 직선에 놓이지는 않습니다. 점이 직선 정의에 필요한 두 개보다 많으니 방정식 \(y_i=mx_i+b\)는 해가 없습니다(과결정계). "가장 잘 맞는" 직선은 무엇이고, 어떻게 구할까요?</p>
+    </div>
+    <p>"잘 맞는다"를 숫자로 정해야 최적화 문제가 됩니다. 각 점의 세로 오차 <span class="term">잔차</span><span class="en">(Residual)</span> \(r_i=y_i-(mx_i+b)\)를 모두 제곱해 더한 값을 최소화하는 것이 <span class="term">최소제곱법</span><span class="en">(Least Squares)</span>입니다. 1805년 르장드르가 처음 출판했고, 가우스는 1795년부터 썼다고 주장하며 1801년 소행성 세레스의 궤도 예측에 사용한 것으로 유명합니다.</p>
+    <div class="formula">$$S(m,b) = \sum_{i=1}^{n} \big(y_i - m x_i - b\big)^2$$
+      <div class="where">기하적으로는 각 잔차를 한 변으로 하는 <b>정사각형 넓이의 합</b>이다. 아래 시뮬레이터에서 그 정사각형들이 보인다.</div>
+    </div>
+    <p>왜 제곱일까요? 첫째, 부호를 없앱니다. 둘째, \(S\)가 \(m,b\)에 대한 <b>볼록 이차 함수</b>(위로 열린 그릇)라서 바닥이 유일하고 미분이 선형 방정식이 됩니다. 셋째, 잡음이 정규분포라면 최소제곱 해가 최대가능도 추정과 같습니다(<a href="probability.html">7장</a>). 기울기를 0으로 놓으면</p>
+    <div class="formula">$$\frac{\partial S}{\partial m}=0,\ \frac{\partial S}{\partial b}=0 \;\Longrightarrow\; \begin{pmatrix}\sum x_i^2 & \sum x_i\\ \sum x_i & n\end{pmatrix}\begin{pmatrix}m\\ b\end{pmatrix}=\begin{pmatrix}\sum x_iy_i\\ \sum y_i\end{pmatrix} \quad\Big(A^{\mathsf T}A\,\boldsymbol\beta = A^{\mathsf T}\mathbf y\Big)$$
+      <div class="where">이것이 <b>정규방정식</b>(normal equations)이다. \(A\)는 \([x_i\ \ 1]\)을 행으로 쌓은 \(n\times2\) 행렬. 반복 없이 2×2 연립방정식 한 번으로 답이 나온다. 기하적으로는 \(\mathbf y\)를 \(A\)의 열공간에 수직 정사영한 것 — 잔차 벡터가 열공간에 수직(\(A^{\mathsf T}\mathbf r=0\))이 되는 점이다.</div>
+    </div>
+
+    <div class="sim" id="sim-opt-lsq">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>잔차 제곱의 넓이를 최소로</h3></div>
+      <div class="split">
+        <div><canvas id="cv-opt-lsq-a"></canvas><span class="cap">데이터와 직선 (점을 끄세요)</span></div>
+        <div><canvas id="cv-opt-lsq-b"></canvas><span class="cap">손실 지형 S(m, b)</span></div>
+      </div>
+      <div class="opt-legend"><span><i class="l-fit"></i>최적 직선</span><span><i class="l-man"></i>내 직선(오른쪽 점)</span><span><i class="l-sq"></i>잔차²</span></div>
+      <div class="sim-controls">
+        <div class="ctrl"><span>오차 척도</span><div class="seg" id="opt-q-loss"><button data-value="l2" class="on">제곱합 (L2)</button><button data-value="l1">절댓값합 (L1)</button></div></div>
+        <label class="check"><input type="checkbox" id="opt-q-out"> 이상치 하나 추가</label>
+        <label class="check"><input type="checkbox" id="opt-q-sq" checked> 잔차 정사각형 보기</label>
+        <div class="btn-row"><button class="btn primary" id="opt-q-gd">▶ 내 직선을 경사 하강으로</button><button class="btn" id="opt-q-reset">점 초기화</button></div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">최적 m, b</span><span class="v" id="opt-q-mb">—</span></div>
+        <div class="stat"><span class="k">최적 손실</span><span class="v" id="opt-q-s">—</span></div>
+        <div class="stat"><span class="k">내 직선 손실</span><span class="v" id="opt-q-sm">—</span></div>
+        <div class="stat"><span class="k">헤세 행렬 κ</span><span class="v" id="opt-q-k">—</span></div>
+      </div>
+      <div class="sim-note">왼쪽의 점을 끌면 최적 직선과 오른쪽 손실 지형이 실시간으로 바뀝니다. 오른쪽 지형의 주황 점(내 직선의 m, b)을 끌어 손으로 맞춰 본 뒤, 경사 하강 버튼으로 바닥까지 굴려 보세요. 해볼 것: ① '이상치 추가'를 켜고 그 점을 멀리 끌어 보면 제곱 넓이가 폭발적으로 커지면서 L2 직선이 끌려갑니다. L1로 바꾸면 거의 꿈쩍하지 않습니다. ② 손실 지형이 가늘고 비스듬한 타원(κ가 큼)이라 경사 하강이 지그재그하는 것을 보세요 — x가 0에서 멀리 있기 때문입니다. 모델: 세로 오차만 고려(x는 정확하다고 가정). L1 해는 반복 재가중 최소제곱(IRLS)으로 근사.</div>
+    </div>
+
+    <p>시뮬레이터의 두 가지 관찰이 실무 교훈입니다. 첫째, 제곱은 큰 잔차를 크게 벌주므로 <b>이상치 하나가 직선 전체를 끌고 갑니다</b>. 잔차가 3배면 넓이는 9배입니다. 측정 데이터에 튀는 값이 섞일 수 있으면 L1(절댓값)이나 후버 손실처럼 큰 잔차를 덜 벌주는 <span class="term">로버스트 회귀</span><span class="en">(Robust Regression)</span>를 씁니다. 대가는 미분이 매끄럽지 않고 닫힌 해가 없다는 것입니다. 둘째, x 값들이 원점에서 멀리 떨어져 있으면 기울기 m과 절편 b가 강하게 얽혀 손실 지형이 비스듬한 협곡이 됩니다. x에서 평균을 빼 두면(중심화) \(\sum x_i=0\)이 되어 정규방정식 행렬이 대각 행렬이 되고, 협곡이 축에 나란해집니다 — 앞 절의 조건수 이야기 그대로입니다.</p>
+    <div class="callout deep"><strong>직선만이 아니다</strong> 모델이 매개변수에 대해 선형이기만 하면(\(y\approx\sum_j\beta_j\phi_j(x)\)) 같은 정규방정식이 된다. 다항식 맞춤, 카메라 색 보정 행렬(CCM) 추정, 렌즈 왜곡 계수 추정, FIR 필터 설계가 모두 최소제곱이다. 실제 계산에서는 \(A^{\mathsf T}A\)의 조건수가 \(A\)의 조건수의 제곱이 되어 수치 오차가 커지므로, \(A^{\mathsf T}A\)를 직접 만들지 않고 QR 분해나 SVD로 푼다(<a href="numerics.html">10장</a>).</div>
+  </section>
+
+  <!-- =============================================================== 7 -->
+  <section id="lagrange">
+    <h2>예산이 있을 때: 라그랑주 승수</h2>
+    <div class="problem"><strong>전력 예산 나누기</strong>
+      <p>칩 하나에 쓸 수 있는 전력이 \(c\) 와트로 정해져 있습니다. 이 전력을 CPU 블록(\(x\))과 GPU 블록(\(y\))에 나눠 주는데, 각 블록의 성능은 전력을 늘릴수록 오르지만 점점 덜 오릅니다(수확 체감). 총성능 \(f(x,y)\)를 최대로 하는 배분은? 그리고 예산을 1와트 더 받으면 성능이 얼마나 오를까요?</p>
+    </div>
+    <p>제약 \(g(x,y)=x+y=c\)가 없다면 그냥 전력을 무한히 주면 됩니다. 제약 때문에 우리는 평면 전체가 아니라 <b>제약 곡선 위에서만</b> 움직일 수 있습니다. 곡선을 따라 걷는 사람을 상상합시다. 그 위치에서 \(f\)의 기울기 \(\nabla f\)가 곡선 방향 성분을 조금이라도 가지면, 그쪽으로 걸어서 \(f\)를 더 키울 수 있습니다. 더 이상 나아질 수 없는 점은 \(\nabla f\)에 <b>곡선 방향 성분이 전혀 없는</b> 점, 즉 \(\nabla f\)가 곡선에 수직인 점입니다. 그런데 곡선 \(g=c\)에 수직인 벡터는 \(\nabla g\)입니다(그것도 등고선이니까요!). 그래서 최적점에서는</p>
+    <div class="formula">$$\nabla f = \lambda\,\nabla g, \qquad g(x,y)=c$$
+      <div class="where">\(\lambda\): <b>라그랑주 승수</b>(Lagrange multiplier). 미지수 3개(\(x,y,\lambda\))에 식 3개. 같은 말로, \(f\)의 등고선이 제약 곡선에 <b>접하는</b> 점이다. 라그랑주가 『해석 역학』(1788)에서 역학의 구속 조건을 다루며 체계화했다.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 290" role="img" aria-label="원 제약 위에서 선형 함수의 최대: 등고선이 원에 접하는 점">
+        <line x1="210" y1="10" x2="470" y2="270" class="s-line" opacity="0.45" stroke-dasharray="4 4"/>
+        <line x1="296.6" y1="10" x2="556.6" y2="270" class="s-line" opacity="0.45" stroke-dasharray="4 4"/>
+        <line x1="341.1" y1="10" x2="601.1" y2="270" class="s-line" opacity="0.45" stroke-dasharray="4 4"/>
+        <line x1="401.4" y1="10" x2="661.4" y2="270" class="s-line" style="stroke-width:2"/>
+        <line x1="460" y1="10" x2="720" y2="270" class="s-line" opacity="0.45" stroke-dasharray="4 4"/>
+        <circle cx="400" cy="150" r="100" style="fill:none;stroke:var(--accent-2);stroke-width:3"/>
+        <text x="300" y="270" class="t" style="fill:var(--accent-2);font-weight:700">제약 g = c</text>
+        <text x="690" y="250" class="t-dim">f 증가 →</text>
+        <!-- A -->
+        <line x1="498.5" y1="167.4" x2="550" y2="176.5" style="stroke:var(--accent-2);stroke-width:2.5"/>
+        <polygon points="552.7,177 541,180 543,170" style="fill:var(--accent-2)"/>
+        <line x1="498.5" y1="167.4" x2="531.2" y2="134.7" class="s-acc" style="stroke-width:2.5"/>
+        <polygon points="537.4,128.5 534.6,140.4 525.5,131.3" class="f-acc"/>
+        <circle cx="498.5" cy="167.4" r="5" style="fill:var(--text-dim)"/>
+        <text x="560" y="212" class="t-dim">A: 각도 있음 → 위로 더 갈 수 있음</text>
+        <!-- B -->
+        <line x1="350" y1="63.4" x2="324.7" y2="19.6" style="stroke:var(--accent-2);stroke-width:2.5"/>
+        <polygon points="322.5,15.8 320,27.5 330,22" style="fill:var(--accent-2)"/>
+        <line x1="350" y1="63.4" x2="382.7" y2="30.7" class="s-acc" style="stroke-width:2.5"/>
+        <polygon points="388.9,24.5 386.1,36.4 377,27.3" class="f-acc"/>
+        <circle cx="350" cy="63.4" r="5" style="fill:var(--text-dim)"/>
+        <text x="326" y="82" class="t-dim" text-anchor="end">B: 오른쪽으로 더 갈 수 있음</text>
+        <!-- T -->
+        <line x1="470.7" y1="79.3" x2="521" y2="29" style="stroke:var(--accent-2);stroke-width:5;opacity:.55"/>
+        <line x1="470.7" y1="79.3" x2="502" y2="48" class="s-acc" style="stroke-width:2.5"/>
+        <polygon points="506.1,43.9 503.3,55.8 494.2,46.7" class="f-acc"/>
+        <circle cx="470.7" cy="79.3" r="7" style="fill:var(--ok)"/>
+        <text x="540" y="40" class="t" style="font-weight:700">최적: ∇f ∥ ∇g (접점)</text>
+        <text x="60" y="40" class="t-acc">∇f (파랑)</text>
+        <text x="60" y="60" class="t" style="fill:var(--accent-2);font-weight:700">∇g (주황)</text>
+      </svg>
+      <figcaption><b>그림 9-4.</b> 원 모양 제약 위에서 선형 함수 \(f\)(등고선은 평행 직선)를 최대화. A와 B에서는 \(\nabla f\)(파랑)와 \(\nabla g\)(주황, 원에 수직)가 각을 이루므로 원을 따라 더 나아질 여지가 있다. 최적점에서는 두 기울기가 평행하고, \(f\)의 등고선(실선)이 원에 접한다.</figcaption>
+    </figure>
+    <p>여기까지는 "최적점의 조건"입니다. 라그랑주 승수의 진짜 선물은 \(\lambda\) 자체의 의미입니다. 예산 \(c\)를 조금 늘리면 최적값 \(f^*(c)\)가 얼마나 늘어날까요? 답은</p>
+    <div class="formula">$$\frac{d f^*}{d c} = \lambda$$
+      <div class="where">\(\lambda\)는 <b>제약의 가격</b>, 경제학 용어로 <b>그림자 가격</b>(shadow price)이다. "예산 1단위를 더 얻으면 목적이 λ만큼 좋아진다." λ가 크면 그 제약이 병목이다. λ = 0이면 그 제약은 사실상 걸리지 않는다(예산을 다 쓰지 않아도 최적).</div>
+    </div>
+    <p>이유는 짧습니다. 최적점에서 \(\nabla f=\lambda\nabla g\)이므로, 예산이 \(dc\)만큼 늘어 최적점이 \(d\mathbf p\)만큼 움직이면 \(df = \nabla f\cdot d\mathbf p = \lambda\,\nabla g\cdot d\mathbf p = \lambda\,dg = \lambda\,dc\)입니다. 아래 시뮬레이터에서 직접 확인해 봅시다. 성능 모델은 \(f=a\sqrt{x}+b\sqrt{y}\)(가상의 수확 체감 모델)입니다.</p>
+
+    <div class="sim" id="sim-opt-lagrange">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>제약 곡선 위의 최적점과 그림자 가격</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-opt-lag"></canvas>
+          <div class="opt-legend"><span><i class="l-gf"></i>∇f</span><span><i class="l-gg"></i>λ∇g (제약 x+y=c)</span><span><i class="l-con"></i>f 등고선</span></div>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>전력 예산 c (W) <output id="opt-g-c-out"></output></span><input type="range" id="opt-g-c" min="1" max="7.5" step="0.1" value="5"></label>
+          <label class="ctrl"><span>GPU 효율 b (a = 1) <output id="opt-g-b-out"></output></span><input type="range" id="opt-g-b" min="0.3" max="3" step="0.05" value="1.6"></label>
+          <label class="check"><input type="checkbox" id="opt-g-free" > 예산 미만도 허용 (x+y ≤ c 영역 표시)</label>
+          <div class="btn-row"><button class="btn primary" id="opt-g-opt">최적점으로</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">배분 (x, y)</span><span class="v" id="opt-g-xy">—</span></div>
+        <div class="stat"><span class="k">성능 f / 최대 f*</span><span class="v" id="opt-g-f">—</span></div>
+        <div class="stat"><span class="k">∇f와 ∇g 사이 각</span><span class="v" id="opt-g-ang">—</span></div>
+        <div class="stat"><span class="k">λ (최적점)</span><span class="v" id="opt-g-lam">—</span></div>
+        <div class="stat"><span class="k">Δf*/Δc (수치)</span><span class="v" id="opt-g-df">—</span></div>
+      </div>
+      <div class="sim-note">주황 직선(예산을 다 쓰는 배분) 위의 점을 끌어 보세요. 해볼 것: ① 점을 움직이며 '∇f와 ∇g 사이 각'이 0°가 되는 곳에서 f가 최대인지 확인. 그 점에서 점선 등고선이 예산선에 접합니다. ② 예산 c를 올리면 λ가 줄어듭니다 — 수확 체감이라 예산 1 W의 가치가 떨어집니다. 'Δf*/Δc'(최적값을 c±0.01에서 다시 풀어 차분)와 λ가 같은지 비교. ③ b를 키우면 최적 배분이 GPU 쪽으로 옮겨 가며 비율 \(y^*/x^*=b^2/a^2\)을 따릅니다. 모델: \(f=a\sqrt x+b\sqrt y\), \(g=x+y\); 이 모델의 해는 \(x^*=ca^2/(a^2+b^2)\), \(f^*=\sqrt{c(a^2+b^2)}\), \(\lambda=\sqrt{a^2+b^2}/(2\sqrt c)\). 단위는 임의.</div>
+    </div>
+    <div class="callout deep"><strong>부등식 제약과 KKT 조건</strong> 실제 예산은 "\(x+y\le c\)"처럼 부등식이다. 최적점이 경계 안쪽이면 제약은 무의미하고(\(\lambda=0\)), 경계 위에 있으면 위와 같다(\(\lambda\ge0\)). 이 두 경우를 한 번에 쓴 것이 카루시–쿤–터커(KKT) 조건 \(\nabla f=\sum_i\lambda_i\nabla g_i,\ \lambda_i\ge0,\ \lambda_i\,(g_i-c_i)=0\)이다. 마지막 식(상보성)은 "가격이 붙은 제약은 꽉 차 있고, 여유가 있는 제약은 가격이 0"이라는 뜻이다. 신경망의 가중치 감쇠, SVM의 서포트 벡터, 전력망의 송전 혼잡 가격 모두 이 언어로 쓴다.</div>
+  </section>
+
+  <!-- =============================================================== 8 -->
+  <section id="linear-programming">
+    <h2>선형계획: 최적은 꼭짓점에 있다</h2>
+    <div class="problem"><strong>생산 계획</strong>
+      <p>공장에서 제품 A(\(x\)개)와 B(\(y\)개)를 만듭니다. 기계 시간은 \(2x+y\le100\), 원자재는 \(x+y\le60\), 조립 인력은 \(x+3y\le120\)으로 제한됩니다. 개당 이익이 A 30만 원, B 40만 원이면 무엇을 몇 개 만들어야 할까요? 이익이 바뀌면 계획은 어떻게 바뀔까요?</p>
+    </div>
+    <p>목적과 제약이 모두 1차식인 최적화를 <span class="term">선형계획</span><span class="en">(Linear Programming, LP)</span>이라 합니다. 1939년 칸토로비치가 생산 계획 문제로 정식화했고, 1947년 단치그<span class="en">(Dantzig)</span>가 <b>심플렉스법</b>을 내놓은 뒤 물류·생산·통신망·전력 계통 운용의 일상 도구가 되었습니다.</p>
+    <p>기하적으로 보면 답이 바로 보입니다. 제약들은 평면을 반평면으로 자르고, 그 교집합인 <span class="term">가능 영역</span><span class="en">(Feasible Region)</span>은 볼록 다각형입니다. 목적 \(p_Ax+p_By\)의 등고선은 평행한 직선들이고, 기울기 \((p_A,p_B)\)는 어디서나 같은 방향입니다. 그 방향으로 직선을 밀어 가다가 다각형을 마지막으로 스치는 곳 — 그것은 반드시 <b>꼭짓점</b>입니다(등고선이 한 변과 평행하면 그 변 전체가 최적).</p>
+
+    <div class="sim" id="sim-opt-lp">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>생산 계획: 이익 직선을 밀어 꼭짓점 찾기</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-opt-lp"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>A 개당 이익 (만 원) <output id="opt-p-a-out"></output></span><input type="range" id="opt-p-a" min="0" max="80" step="1" value="30"></label>
+          <label class="ctrl"><span>B 개당 이익 (만 원) <output id="opt-p-b-out"></output></span><input type="range" id="opt-p-b" min="0" max="80" step="1" value="40"></label>
+          <label class="check"><input type="checkbox" id="opt-p-iso" checked> 등이익선 보기</label>
+          <div class="btn-row"><button class="btn primary" id="opt-p-simplex">▶ 심플렉스: 꼭짓점 따라 오르기</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">최적 계획 (A, B)</span><span class="v" id="opt-p-xy">—</span></div>
+        <div class="stat"><span class="k">최대 이익</span><span class="v" id="opt-p-z">—</span></div>
+        <div class="stat"><span class="k">꽉 찬(활성) 제약</span><span class="v" id="opt-p-act">—</span></div>
+        <div class="stat"><span class="k">현재 계획 이익</span><span class="v" id="opt-p-cur">—</span></div>
+      </div>
+      <div class="sim-note">가능 영역 안의 '계획' 점을 끌어 이익을 확인하세요(영역 밖으로는 나갈 수 없습니다). 해볼 것: ① p<sub>A</sub>를 0에서 80까지 천천히 올리면 최적점이 (0,40) → (30,30) → (40,20) → (50,0)으로 <b>점프</b>합니다. 연속적으로 미끄러지지 않습니다. ② p<sub>A</sub> = p<sub>B</sub>로 두면 등이익선이 원자재 제약(x+y=60)과 평행해져 그 변 전체가 최적. ③ 심플렉스 버튼: 원점에서 출발해 이웃 꼭짓점 중 이익이 오르는 쪽으로만 옮겨 갑니다. 모델: 개수를 연속량으로 취급(정수 조건 없음). 정수 조건이 붙으면 정수계획(훨씬 어려움)이 된다.</div>
+    </div>
+    <p>심플렉스법은 바로 이 그림을 고차원에서 수행합니다. 변수가 수천 개면 가능 영역은 수천 차원의 다면체이고 꼭짓점 수는 천문학적이지만, 심플렉스는 이웃 꼭짓점 중 목적이 나아지는 쪽으로만 옮겨 가므로 실제 문제에서는 대개 꼭짓점의 극히 일부만 방문합니다. 그리고 각 제약에도 라그랑주 승수(그림자 가격)가 있습니다. 이 예에서 원자재 제약의 그림자 가격은 "원자재 1단위를 더 사면 이익이 얼마나 늘어나나"이고, 그 값보다 싸게 원자재를 살 수 있다면 사는 것이 이득입니다. LP 솔버가 최적해와 함께 이 값(쌍대 변수)을 함께 보고하는 이유입니다.</p>
+  </section>
+
+  <!-- =============================================================== uses -->
+  <section id="uses">
+    <h2>이 도구가 쓰이는 곳</h2>
+    <p>"무엇을 최소화하는가"(목적 함수)와 "무엇을 지켜야 하는가"(제약)를 적고 나면, 공학의 많은 설계 문제가 같은 도구 상자로 들어옵니다.</p>
+    <div class="uses">
+      <a href="https://aibook.euiyun.com/"><small>AIBOOK</small>신경망 학습<br><span>역전파로 구한 기울기 + SGD·Adam, 학습률 스케줄, 정규화로 조건수 낮추기</span></a>
+      <a href="https://lithobook.euiyun.com/"><small>LITHOBOOK</small>OPC · 광원–마스크 최적화<br><span>웨이퍼 패턴 오차를 목적 함수로, 마스크 모양과 조명을 매개변수로 하는 대규모 역문제</span></a>
+      <a href="https://opticsbook.euiyun.com/"><small>OPTICSBOOK</small>렌즈 설계<br><span>곡률·두께·간격을 손잡이로 수차의 가중 제곱합을 최소화(감쇠 최소제곱)</span></a>
+      <a href="https://designbook.euiyun.com/"><small>DESIGNBOOK</small>배치 · 배선<br><span>배선 길이·혼잡도를 최소화하는 셀 배치, 타이밍 제약 아래 게이트 크기 결정</span></a>
+      <a href="https://stockbook.euiyun.com/"><small>STOCKBOOK</small>포트폴리오 최적화<br><span>기대 수익 제약 아래 분산 최소화 — 볼록 이차계획과 라그랑주 승수</span></a>
+      <a href="https://yieldbook.euiyun.com/"><small>YIELDBOOK</small>공정 창 · 수율 최적화<br><span>측정 데이터에 반응 표면을 최소제곱으로 맞추고 수율이 최대인 공정 조건 찾기</span></a>
+      <a href="https://sensorbook.euiyun.com/"><small>SENSORBOOK</small>센서 교정<br><span>암전류·게인·비선형 보정 계수를 최소제곱으로 추정</span></a>
+      <a href="https://colorbook.euiyun.com/"><small>COLORBOOK</small>색 보정 행렬<br><span>색표 측정값과 목표 색의 오차를 최소화하는 3×3 행렬</span></a>
+      <a href="https://networkbook.euiyun.com/"><small>NETWORKBOOK</small>라우팅 · 대역 배분<br><span>링크 용량 제약 아래 흐름 최적화 — 선형계획과 그림자 가격</span></a>
+    </div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>핵심 정리</h2>
+    <ol>
+      <li><b>경사 하강</b> \(\boldsymbol\theta\leftarrow\boldsymbol\theta-\eta\nabla f\)는 지형 전체를 몰라도 현재 위치의 기울기만으로 내려간다. 기울기 계산이 값싸면(역전파) 수십억 변수에도 쓸 수 있다.</li>
+      <li>\(\nabla f\)는 가장 가파른 오르막이고 <b>등고선에 수직</b>이다. 길쭉한 지형에서는 \(-\nabla f\)가 목적지를 가리키지 않는다.</li>
+      <li>이차 지형에서 한 걸음의 수렴비는 \(1-\eta\lambda\). 발산하지 않으려면 \(\eta<2/\lambda_{\max}\), 수렴 걸음 수는 <b>조건수</b> \(\kappa=\lambda_{\max}/\lambda_{\min}\)에 비례한다. 정규화·중심화는 κ를 줄이는 일이다.</li>
+      <li><b>모멘텀</b>은 지그재그를 상쇄하고 골짜기 방향으로 가속해 걸음 수를 \(\sqrt\kappa\) 수준으로 줄인다. <b>Adam</b>은 성분별 보폭을 기울기 크기로 정규화한다. 미니배치 잡음은 안장점·얕은 골짜기 탈출을 돕기도 한다.</li>
+      <li><b>볼록</b> 함수에서는 국소 최소가 전역 최소다. 최소제곱·선형계획이 "쉬운" 이유이며, 공학자는 문제를 볼록하게 만들려고 애쓴다.</li>
+      <li><b>최소제곱</b>은 잔차 제곱(정사각형 넓이)의 합을 최소화하고, 정규방정식 \(A^{\mathsf T}A\boldsymbol\beta=A^{\mathsf T}\mathbf y\)로 한 번에 풀린다. 큰 잔차를 크게 벌주므로 이상치에 약하다.</li>
+      <li>제약 \(g=c\) 아래 최적점에서는 \(\nabla f=\lambda\nabla g\)(등고선이 제약에 접함). <b>λ = df*/dc</b>는 제약의 가격(그림자 가격)이다. 선형계획의 최적은 가능 영역(볼록 다각형)의 꼭짓점에 있다.</li>
+    </ol>
+  </section>
+
+  <section class="quiz-sec" id="quiz">
+    <h2>확인 퀴즈</h2>
+    <div class="quiz">
+      <div class="quiz-q"><p>1. \(f(x)=2x^2\)(곡률 \(a=4\))에 경사 하강을 쓴다. 다음 중 발산하는 학습률은?</p><div class="opts">
+        <button class="opt">η = 0.1</button><button class="opt">η = 0.25</button><button class="opt">η = 0.45</button><button class="opt" data-correct>η = 0.6</button>
+      </div><div class="quiz-exp">한 걸음 배율이 \(r=1-\eta a=1-4\eta\)이다. η = 0.6이면 r = −1.4로 |r| &gt; 1이라 발산한다. 한계는 2/a = 0.5. η = 0.25는 r = 0으로 한 걸음에 도착하고, η = 0.45는 r = −0.8로 진동하며 수렴한다.</div></div>
+
+      <div class="quiz-q"><p>2. 지도 위 한 점에서 \(\nabla f\)와 그 점을 지나는 등고선의 관계는?</p><div class="opts">
+        <button class="opt">등고선의 접선 방향과 같다</button><button class="opt" data-correct>등고선에 수직이다</button><button class="opt">항상 최소점을 가리킨다</button><button class="opt">등고선과 45°를 이룬다</button>
+      </div><div class="quiz-exp">등고선 방향으로 움직이면 높이가 변하지 않으므로 \(\nabla f\cdot\mathbf d=0\), 즉 \(\nabla f\)는 등고선에 수직이다. 최소점을 가리키는 것은 등고선이 원일 때뿐이다.</div></div>
+
+      <div class="quiz-q"><p>3. 조건수 κ = 1000인 이차 지형에서 경사 하강이 느린 이유로 가장 알맞은 것은?</p><div class="opts">
+        <button class="opt">기울기 계산이 부정확해서</button><button class="opt" data-correct>가파른 방향 때문에 η를 작게 잡아야 하고, 그 η로는 완만한 방향이 거의 움직이지 않아서</button><button class="opt">국소 최소가 많아서</button><button class="opt">최소점이 존재하지 않아서</button>
+      </div><div class="quiz-exp">η &lt; 2/λ<sub>max</sub>로 묶이면 완만한 방향의 걸음당 감소는 약 \(1-2/\kappa\)에 불과하다. 이차 함수는 볼록이라 국소 최소 문제는 없다. 처방은 모멘텀, 성분별 스케일링(Adam), 변수 정규화.</div></div>
+
+      <div class="quiz-q"><p>4. 볼록 함수에 대한 설명으로 옳은 것은?</p><div class="opts">
+        <button class="opt">항상 최솟값이 정확히 하나 존재한다</button><button class="opt">경사 하강이 학습률과 무관하게 수렴한다</button><button class="opt" data-correct>기울기가 0인 점(국소 최소)은 전역 최소다</button><button class="opt">2차 미분이 어디서나 0이다</button>
+      </div><div class="quiz-exp">볼록이면 국소 최소 = 전역 최소다. 하지만 최솟값이 없을 수도 있고(예: \(e^x\)), 최소점이 여러 개(평평한 바닥)일 수도 있으며, 학습률이 너무 크면 볼록 함수에서도 발산한다.</div></div>
+
+      <div class="quiz-q"><p>5. 전력 예산 c 아래 성능을 최대화한 결과 라그랑주 승수가 λ = 3 (성능/W)이었다. 이 값의 의미는?</p><div class="opts">
+        <button class="opt">최적 배분에서 성능이 3이다</button><button class="opt" data-correct>예산을 1 W 늘리면 최대 성능이 약 3만큼 늘어난다</button><button class="opt">예산 제약이 걸려 있지 않다</button><button class="opt">CPU에 GPU의 3배 전력을 줘야 한다</button>
+      </div><div class="quiz-exp">\(df^*/dc=\lambda\) — 제약의 그림자 가격이다. λ = 0이었다면 제약이 걸려 있지 않다는 뜻이다. 이 값으로 "예산을 늘리는 데 드는 비용이 그만한 가치가 있나"를 판단한다.</div></div>
+
+      <div class="quiz-q"><p>6. 측정점 여섯 개에 최소제곱 직선을 맞췄는데 한 점만 크게 튀는 이상치였다. 무슨 일이 생기며, 대책은?</p><div class="opts">
+        <button class="opt">제곱합은 이상치를 무시하므로 영향이 없다</button><button class="opt" data-correct>제곱이 큰 잔차를 크게 벌주므로 직선이 이상치 쪽으로 끌려간다 — L1·후버 같은 로버스트 손실을 쓴다</button><button class="opt">정규방정식의 해가 존재하지 않게 된다</button><button class="opt">손실 지형이 비볼록이 된다</button>
+      </div><div class="quiz-exp">잔차가 k배면 제곱 넓이는 k²배라 이상치 하나가 합을 지배한다. 해는 여전히 유일하게 존재하고 문제도 볼록이지만, 답이 대표성을 잃는다. 절댓값합(L1)은 큰 잔차를 선형으로만 벌주므로 덜 끌려간다.</div></div>
+    </div>
+  </section>
+</main>
+<script>
+/* ===================================================================== 공통: 지형과 등고선 */
+const OPT = (function () {
+  const _c = document.createElement("canvas").getContext("2d");
+  function rgbOf(css) {
+    _c.fillStyle = "#000"; _c.fillStyle = css; const s = _c.fillStyle;
+    if (s[0] === "#") return [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
+    const m = s.match(/[\d.]+/g); return m ? m.slice(0, 3).map(Number) : [255, 255, 255];
+  }
+  // 마칭 스퀘어: 변 번호 T0 R1 B2 L3
+  const MS = { 1: [[3, 2]], 2: [[2, 1]], 3: [[3, 1]], 4: [[0, 1]], 5: [[0, 1], [3, 2]], 6: [[0, 2]], 7: [[3, 0]], 8: [[3, 0]], 9: [[0, 2]], 10: [[3, 0], [2, 1]], 11: [[0, 1]], 12: [[3, 1]], 13: [[2, 1]], 14: [[3, 2]] };
+  function march(vals, nx, ny, cell, lv, out) {
+    for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+      const a = vals[j * nx + i], b = vals[j * nx + i + 1], c = vals[(j + 1) * nx + i + 1], d = vals[(j + 1) * nx + i];
+      const idx = (a > lv ? 8 : 0) | (b > lv ? 4 : 0) | (c > lv ? 2 : 0) | (d > lv ? 1 : 0);
+      if (idx === 0 || idx === 15) continue;
+      const e = (k) => {
+        if (k === 0) return [(i + (lv - a) / (b - a)) * cell, j * cell];
+        if (k === 1) return [(i + 1) * cell, (j + (lv - b) / (c - b)) * cell];
+        if (k === 2) return [(i + (lv - d) / (c - d)) * cell, (j + 1) * cell];
+        return [i * cell, (j + (lv - a) / (d - a)) * cell];
+      };
+      for (const [p, q] of MS[idx]) { const A = e(p), B = e(q); out.push(A[0], A[1], B[0], B[1]); }
+    }
+  }
+  const cache = new Map();
+  /** 평면 P 위에 f의 색 지도와 등고선을 그린다. o: {key, levels:n | [values], alpha, cell, contourAlpha, transform} */
+  function land(P, f, o = {}) {
+    const cell = o.cell || 4, nx = Math.ceil(P.w / cell) + 1, ny = Math.ceil(P.h / cell) + 1;
+    const key = o.key ? [o.key, P.w, P.h, P.x0.toFixed(4), P.x1.toFixed(4), P.y0.toFixed(4), P.y1.toFixed(4), MB.isDark()].join("|") : null;
+    let F = key ? cache.get(key) : null;
+    if (!F) {
+      const vals = new Float64Array(nx * ny);
+      for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const v = f(P.ix(i * cell), P.iy(j * cell)); vals[j * nx + i] = isFinite(v) ? v : 1e300; }
+      const sorted = Float64Array.from(vals).sort(), n = sorted.length;
+      const rank = (v) => { let lo = 0, hi = n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (sorted[m] < v) lo = m + 1; else hi = m; } return lo / (n - 1); };
+      const bg = rgbOf(P.P.bg), al = o.alpha != null ? o.alpha : (MB.isDark() ? 0.5 : 0.55);
+      const cv = document.createElement("canvas"); cv.width = nx; cv.height = ny;
+      const ictx = cv.getContext("2d"), im = ictx.createImageData(nx, ny);
+      for (let k = 0; k < nx * ny; k++) {
+        const t = rank(vals[k]), c = MB.colormap(t, "viridis");
+        im.data[k * 4] = bg[0] + (c[0] - bg[0]) * al; im.data[k * 4 + 1] = bg[1] + (c[1] - bg[1]) * al; im.data[k * 4 + 2] = bg[2] + (c[2] - bg[2]) * al; im.data[k * 4 + 3] = 255;
+      }
+      ictx.putImageData(im, 0, 0);
+      const levels = Array.isArray(o.levels) ? o.levels : Array.from({ length: o.levels || 14 }, (_, k) => sorted[Math.floor(((k + 1) / ((o.levels || 14) + 1)) ** 1.6 * (n - 1))]);
+      const segs = [];
+      levels.forEach((lv) => march(vals, nx, ny, cell, lv, segs));
+      F = { cv, segs, vals, nx, ny, cell };
+      if (key) { if (cache.size > 40) cache.clear(); cache.set(key, F); }
+    }
+    const ctx = P.ctx;
+    ctx.save(); ctx.imageSmoothingEnabled = true; ctx.drawImage(F.cv, 0, 0, F.nx, F.ny, -cell / 2, -cell / 2, F.nx * cell, F.ny * cell); ctx.restore();
+    ctx.save(); ctx.strokeStyle = P.P.text; ctx.globalAlpha = o.contourAlpha != null ? o.contourAlpha : 0.22; ctx.lineWidth = 1; ctx.beginPath();
+    const s = F.segs; for (let k = 0; k < s.length; k += 4) { ctx.moveTo(s[k], s[k + 1]); ctx.lineTo(s[k + 2], s[k + 3]); }
+    ctx.stroke(); ctx.restore();
+    return F;
+  }
+  /** 특정 높이 lv의 등고선 하나 (캐시 없이) */
+  function contour(P, f, lv, o = {}) {
+    const cell = o.cell || 5, nx = Math.ceil(P.w / cell) + 1, ny = Math.ceil(P.h / cell) + 1, vals = new Float64Array(nx * ny);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const v = f(P.ix(i * cell), P.iy(j * cell)); vals[j * nx + i] = isFinite(v) ? v : -1e300; }
+    const segs = []; march(vals, nx, ny, cell, lv, segs);
+    const ctx = P.ctx; ctx.save(); ctx.strokeStyle = o.color || P.P.text; ctx.lineWidth = o.width || 1.5; ctx.setLineDash(o.dash || []); ctx.globalAlpha = o.alpha != null ? o.alpha : 1; ctx.beginPath();
+    for (let k = 0; k < segs.length; k += 4) { ctx.moveTo(segs[k], segs[k + 1]); ctx.lineTo(segs[k + 2], segs[k + 3]); }
+    ctx.stroke(); ctx.restore();
+  }
+  function grad(f, x, y) { const h = 1e-5 * (1 + Math.abs(x) + Math.abs(y)); return [(f(x + h, y) - f(x - h, y)) / (2 * h), (f(x, y + h) - f(x, y - h)) / (2 * h)]; }
+  function hessMinEig(f, x, y) {
+    const h = 1e-3 * (1 + Math.abs(x) + Math.abs(y)), f0 = f(x, y);
+    const fxx = (f(x + h, y) - 2 * f0 + f(x - h, y)) / (h * h), fyy = (f(x, y + h) - 2 * f0 + f(x, y - h)) / (h * h);
+    const fxy = (f(x + h, y + h) - f(x + h, y - h) - f(x - h, y + h) + f(x - h, y - h)) / (4 * h * h);
+    const m = (fxx + fyy) / 2, d = Math.sqrt(((fxx - fyy) / 2) ** 2 + fxy * fxy); return m - d;
+  }
+  /** 경로 그리기 (픽셀 좌표 잘라내기) */
+  function path(P, pts, o = {}) {
+    if (!pts.length) return;
+    const ctx = P.ctx, cl = (v) => MB.clamp(v, -5000, 5000);
+    ctx.save(); ctx.strokeStyle = o.color; ctx.lineWidth = o.width || 2; ctx.globalAlpha = o.alpha != null ? o.alpha : 1; ctx.lineJoin = "round"; ctx.beginPath();
+    pts.forEach(([x, y], i) => { const px = cl(P.X(x)), py = cl(P.Y(y)); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+    ctx.stroke();
+    if (o.dots) { ctx.fillStyle = o.color; const every = Math.max(1, Math.floor(pts.length / 400)); pts.forEach(([x, y], i) => { if (i % every) return; ctx.beginPath(); ctx.arc(cl(P.X(x)), cl(P.Y(y)), o.dots, 0, 7); ctx.fill(); }); }
+    ctx.restore();
+  }
+  function ball(P, x, y, color, r = 7) {
+    if (!isFinite(x) || !isFinite(y)) return;
+    const ctx = P.ctx, px = MB.clamp(P.X(x), -50, P.w + 50), py = MB.clamp(P.Y(y), -50, P.h + 50);
+    ctx.save(); ctx.fillStyle = color; ctx.strokeStyle = P.P.bg; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(px, py, r, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+  /** −∇f 화살표 장 */
+  function field(P, f, color) {
+    const sp = 40, L = 15;
+    for (let py = sp / 2; py < P.h; py += sp) for (let px = sp / 2; px < P.w; px += sp) {
+      const x = P.ix(px), y = P.iy(py), [gx, gy] = grad(f, x, y), g = Math.hypot(gx, gy); if (g < 1e-9) continue;
+      const ux = -gx / g, uy = -gy / g, len = L * (0.45 + 0.55 * Math.tanh(g / 2)) / P.unit;
+      P.arrow(x - ux * len / 2, y - uy * len / 2, x + ux * len / 2, y + uy * len / 2, { color, width: 1.4, head: 6, alpha: 0.75 });
+    }
+  }
+  // 지형 모음
+  const gs = (dx, dy, s) => Math.exp(-(dx * dx + dy * dy) / (2 * s * s));
+  const rot = (th, l1, l2) => { const c = Math.cos(th), s = Math.sin(th); return (x, y) => { const u = c * x + s * y, v = -s * x + c * y; return 0.5 * (l1 * u * u + l2 * v * v); }; };
+  const LAND = {
+    bowl: { f: (x, y) => x * x + y * y, x: [-3, 3], cy: 0, start: [-2.4, 1.3], lr: 0.1, rlr: 0.05, alr: 0.08 },
+    valley: { f: rot(0.45, 1, 10), x: [-3, 3], cy: 0, start: [-2.5, 0.2], lr: 0.15, rlr: 0.02, alr: 0.05 },
+    canyon: { f: rot(0.45, 0.2, 20), x: [-3, 3], cy: 0, start: [-2.6, -0.2], lr: 0.09, rlr: 0.05, alr: 0.05 },
+    multi: { f: (x, y) => 0.12 * (x * x + y * y) - 1.5 * gs(x - 1.3, y + 0.4, 0.6) - 1.0 * gs(x + 1.4, y - 0.6, 0.55) - 0.7 * gs(x + 0.1, y - 1.35, 0.38), x: [-3, 3], cy: 0, start: [-0.55, 1.6], lr: 0.2, rlr: 0.05, alr: 0.03 },
+    rosen: { f: (x, y) => (1 - x) ** 2 + 20 * (y - x * x) ** 2, x: [-2, 2], cy: 1, start: [-1.5, 1.9], lr: 0.004, rlr: 0.002, alr: 0.03 },
+    saddle: { f: (x, y) => 0.5 * x * x - 0.5 * y * y + y ** 4 / 8, x: [-3, 3], cy: 0, start: [-2.6, 0], lr: 0.1, rlr: 0.05, alr: 0.05 },
+  };
+  const lrSlider = { lo: -4, hi: Math.log10(2) };
+  const toLr = (v) => 10 ** (lrSlider.lo + (lrSlider.hi - lrSlider.lo) * v / 1000);
+  const fromLr = (lr) => Math.round(((Math.log10(lr) - lrSlider.lo) / (lrSlider.hi - lrSlider.lo)) * 1000);
+  const fmtLr = (lr) => (lr >= 0.1 ? lr.toFixed(2) : lr >= 0.01 ? lr.toFixed(3) : lr.toPrecision(2));
+  const fmtF = (v) => (!isFinite(v) ? "∞" : Math.abs(v) >= 1e4 ? v.toExponential(2) : Math.abs(v) < 1e-3 && v !== 0 ? v.toExponential(1) : v.toFixed(4));
+  return { rgbOf, land, contour, grad, hessMinEig, path, ball, field, LAND, toLr, fromLr, fmtLr, fmtF };
+})();
+
+/* ===================================================================== 1. 손실 지형 위의 경사 하강 */
+(function () {
+  const L = OPT.LAND;
+  let key = "valley", land = L.valley, path = [], swarm = [], lr = land.lr, status = "—", fieldOn = false, running = false, acc = 0, speed = 1, swarmMsg = "";
+  const opts = {
+    x: land.x, cy: land.cy, aspect: 0.74, grid: false, axes: false,
+    points: [{ x: land.start[0], y: land.start[1], label: "시작" }],
+    draw(P, api) {
+      const pal = P.P;
+      OPT.land(P, land.f, { key: "d-" + key });
+      if (fieldOn) OPT.field(P, land.f, pal.text);
+      swarm.forEach((s) => { OPT.path(P, s.pts, { color: pal.accent2, width: 1.2, alpha: 0.55 }); OPT.ball(P, s.end[0], s.end[1], s.ok ? pal.ok : pal.bad, 4.5); });
+      OPT.path(P, path, { color: pal.accent2, width: 2.2, dots: 2.4 });
+      const c = path[path.length - 1];
+      if (c) OPT.ball(P, c[0], c[1], pal.accent2, 7);
+      api.points[0].color = pal.accent;
+    },
+    onDrag() { reset(); },
+    onPointer(x, y, t) { if (t !== "down") return; pl.points[0].x = x; pl.points[0].y = y; reset(); pl.redraw(); },
+  };
+  const pl = MB.plane("#cv-opt-descent", opts);
+  const lrGet = MB.range("opt-d-lr", (v) => OPT.fmtLr(OPT.toLr(v)), (v) => { lr = OPT.toLr(v); reset(); pl.redraw(); });
+  function reset() { const s = pl.points[0]; path = [[s.x, s.y]]; status = "대기"; swarm = []; swarmMsg = ""; acc = 0; update(); }
+  function stepOnce() {
+    const [x, y] = path[path.length - 1];
+    if (status.startsWith("발산") || status.startsWith("수렴") || status.startsWith("멈춤")) return false;
+    const [gx, gy] = OPT.grad(land.f, x, y), nx = x - lr * gx, ny = y - lr * gy;
+    path.push([nx, ny]);
+    const g2 = OPT.grad(land.f, nx, ny), gn = Math.hypot(g2[0], g2[1]);
+    if (!isFinite(nx) || !isFinite(ny) || Math.hypot(nx, ny) > 1e4) { status = "발산 — η가 너무 큼"; return false; }
+    if (gn < 1e-5) { status = OPT.hessMinEig(land.f, nx, ny) < -1e-3 ? "멈춤 — 안장점(최소 아님)" : "수렴 — 바닥 도착"; return false; }
+    if (path.length > 20000) { status = "멈춤 — 단계 한도"; return false; }
+    // 지그재그 판정
+    const n = path.length;
+    if (n > 6) { let neg = 0; for (let k = n - 5; k < n - 1; k++) { const a = [path[k][0] - path[k - 1][0], path[k][1] - path[k - 1][1]], b = [path[k + 1][0] - path[k][0], path[k + 1][1] - path[k][1]]; if (a[0] * b[0] + a[1] * b[1] < 0) neg++; } status = neg >= 3 ? "진행 중 · 지그재그" : "진행 중"; }
+    else status = "진행 중";
+    return true;
+  }
+  function update() {
+    const c = path[path.length - 1], f = land.f(c[0], c[1]), g = OPT.grad(land.f, c[0], c[1]);
+    MB.stat("opt-d-k", String(path.length - 1));
+    MB.stat("opt-d-f", OPT.fmtF(f));
+    MB.stat("opt-d-g", OPT.fmtF(Math.hypot(g[0], g[1])));
+    MB.stat("opt-d-st", swarmMsg || status);
+  }
+  const playBtn = document.getElementById("opt-d-play");
+  function setRun(v) { running = v; playBtn.textContent = v ? "■ 멈춤" : "▶ 굴리기"; if (v) loop.start(); else loop.stop(); }
+  const loop = MB.loop(document.getElementById("sim-opt-descent"), (dt) => {
+    if (!running) return;
+    acc += dt * 8 * speed; let n = 0, go = true;
+    while (acc >= 1 && go) { acc -= 1; go = stepOnce(); n++; }
+    if (!go) setRun(false);
+    if (n) { update(); pl.redraw(); }
+  });
+  loop.stop();
+  playBtn.addEventListener("click", () => { swarmMsg = ""; if (!running && !stepOnce()) { update(); pl.redraw(); return; } setRun(!running); update(); pl.redraw(); });
+  document.getElementById("opt-d-step").addEventListener("click", () => { swarmMsg = ""; stepOnce(); update(); pl.redraw(); });
+  document.getElementById("opt-d-reset").addEventListener("click", () => { setRun(false); reset(); pl.redraw(); });
+  MB.seg("opt-d-speed", (v) => { speed = +v; });
+  MB.check("opt-d-field", (v) => { fieldOn = v; pl.redraw(); });
+  let seed = 1;
+  document.getElementById("opt-d-swarm").addEventListener("click", () => {
+    setRun(false);
+    const P = pl.P, rng = MB.rng(seed++), ends = [];
+    swarm = [];
+    for (let b = 0; b < 24; b++) {
+      let x = MB.lerp(P.x0, P.x1, 0.05 + 0.9 * rng()), y = MB.lerp(P.y0, P.y1, 0.05 + 0.9 * rng());
+      const pts = [[x, y]]; let ok = true;
+      for (let k = 0; k < 6000; k++) {
+        const [gx, gy] = OPT.grad(land.f, x, y); x -= lr * gx; y -= lr * gy;
+        if (!isFinite(x) || Math.hypot(x, y) > 1e4) { ok = false; break; }
+        if (k < 300 || k % 10 === 0) pts.push([x, y]);
+        if (Math.hypot(gx, gy) < 1e-5) break;
+      }
+      swarm.push({ pts, end: [x, y], ok });
+      if (ok) ends.push([x, y]);
+    }
+    const cl = [];
+    ends.forEach((e) => { if (!cl.some((c) => Math.hypot(c[0] - e[0], c[1] - e[1]) < 0.15)) cl.push(e); });
+    const bad = 24 - ends.length;
+    swarmMsg = bad === 24 ? "24개 모두 발산" : `도착한 바닥 ${cl.length}곳` + (bad ? ` · 발산 ${bad}` : "");
+    update(); pl.redraw();
+  });
+  document.getElementById("opt-d-land").addEventListener("change", (e) => {
+    key = e.target.value; land = L[key]; setRun(false);
+    opts.cy = land.cy; pl.view({ x: land.x, y: null });
+    const P = pl.P;
+    pl.points[0].x = land.start[0]; pl.points[0].y = MB.clamp(land.start[1], P.y0 + 0.05, P.y1 - 0.05);
+    lrGet.set(OPT.fromLr(land.lr), false); lr = land.lr;
+    reset(); pl.redraw();
+  });
+  lrGet.set(OPT.fromLr(lr), false);
+  reset(); pl.redraw();
+})();
+
+/* ===================================================================== 2. 1차원 학습률 */
+(function () {
+  let eta = 0.3, a = 2, x0 = 2.4;
+  const f = (x) => (a / 2) * x * x;
+  const seq = () => { const xs = [x0]; for (let k = 0; k < 30; k++) xs.push(xs[k] * (1 - eta * a)); return xs; };
+  const pl = MB.plane("#cv-opt-lr-a", {
+    x: [-3.2, 3.2], y: [-0.8, 7], aspect: 0.75, gridStep: 1,
+    points: [{ x: x0, y: 0, constrain(p) { p.x = MB.clamp(p.x, -3, 3); if (Math.abs(p.x) < 0.2) p.x = 0.2 * Math.sign(p.x || 1); p.y = f(p.x); } }],
+    draw(P, api) {
+      const pal = P.P;
+      api.points[0].y = f(api.points[0].x); api.points[0].color = pal.accent;
+      P.curve(f, { color: pal.dim, width: 2 });
+      const xs = seq(), ctx = P.ctx;
+      for (let k = 0; k < xs.length - 1; k++) {
+        const xa = xs[k], xb = xs[k + 1]; if (Math.abs(xa) > 50) break;
+        ctx.save(); ctx.globalAlpha = Math.max(0.15, 1 - k / 14);
+        P.line(xa, f(xa), xb, f(xb), { color: pal.accent2, width: 1.8 });
+        ctx.restore();
+      }
+      xs.forEach((x, k) => { if (Math.abs(x) > 50 || k > 14) return; P.dot(x, f(x), { r: k === 0 ? 0 : 4, color: pal.accent2, alpha: Math.max(0.2, 1 - k / 14) }); });
+    },
+    onDrag(p) { x0 = p.x; render(); },
+  });
+  const cvB = MB.canvas("#cv-opt-lr-b", (ctx, w, h) => {
+    const pal = MB.palette(), xs = seq();
+    const data = xs.map((x, k) => [k, Math.max(1e-8, Math.abs(x))]);
+    MB.chart(ctx, { x: 46, y: 34, w: w - 60, h: h - 70 }, { x: [0, 30], y: [1e-8, 1e4], logY: true, xLabel: "단계 k",
+      series: [{ data, color: pal.accent2, width: 2 }], hlines: [{ y: Math.abs(x0), color: pal.faint, label: "|x₀|" }],
+      points: data.filter((d) => d[0] <= 30 && d[1] < 1e4 && d[1] > 1e-8).map((d) => ({ x: d[0], y: d[1], r: 2.5, color: pal.accent2 })) });
+  }, { aspect: 0.75, maxHeight: 360 });
+  function render() {
+    const r = 1 - eta * a, xs = seq();
+    MB.stat("opt-l-r", r.toFixed(2));
+    MB.stat("opt-l-lim", (2 / a).toFixed(2));
+    MB.stat("opt-l-10", OPT.fmtF(Math.abs(r) ** 10));
+    const st = Math.abs(r) > 1 + 1e-9 ? '<span class="badge bad">발산</span>' : Math.abs(Math.abs(r) - 1) < 1e-9 ? '<span class="badge warn">경계(제자리 진동)</span>' : Math.abs(r) < 0.005 ? '<span class="badge ok">한 걸음에 도착</span>' : r < 0 ? '<span class="badge warn">진동하며 수렴</span>' : '<span class="badge ok">단조 수렴</span>';
+    MB.stat("opt-l-st", st);
+    pl.redraw(); cvB.redraw();
+  }
+  const etaGet = MB.range("opt-l-eta", (v) => v.toFixed(2), (v) => { eta = v; render(); });
+  MB.range("opt-l-a", (v) => v.toFixed(1), (v) => { a = v; pl.points[0].y = f(pl.points[0].x); render(); });
+  eta = etaGet();
+  const preset = MB.seg("opt-l-preset", (v) => {
+    const t = { slow: 0.15, best: 1, osc: 1.7, div: 2.15 }[v];
+    etaGet.set(MB.clamp(Math.round((t / a) * 100) / 100, 0.02, 1.3));
+  });
+  preset.set("best", true);
+  render();
+})();
+
+/* ===================================================================== 3. GD vs 모멘텀 vs Adam */
+(function () {
+  const L = OPT.LAND;
+  let key = "valley", land = L.valley, lr = land.rlr, alr = land.alr, sigma = 0, running = false, acc = 0, k = 0;
+  let runs = [];
+  const opts = {
+    x: land.x, cy: land.cy, aspect: 0.66, grid: false, axes: false,
+    points: [{ x: land.start[0], y: land.start[1], label: "시작" }],
+    draw(P, api) {
+      const pal = P.P, cols = [pal.accent, pal.accent2, pal.ok];
+      OPT.land(P, land.f, { key: "r-" + key });
+      runs.forEach((r, i) => OPT.path(P, r.pts, { color: cols[i], width: 2, alpha: 0.9 }));
+      runs.forEach((r, i) => OPT.ball(P, r.x, r.y, cols[i], 6));
+      api.points[0].color = pal.text;
+    },
+    onDrag() { reset(); },
+    onPointer(x, y, t) { if (t !== "down") return; pl.points[0].x = x; pl.points[0].y = y; reset(); pl.redraw(); },
+  };
+  const pl = MB.plane("#cv-opt-race", opts);
+  function reset() {
+    const s = pl.points[0]; k = 0; acc = 0;
+    runs = [0, 1, 2].map(() => ({ x: s.x, y: s.y, vx: 0, vy: 0, mx: 0, my: 0, sx: 0, sy: 0, pts: [[s.x, s.y]], dead: false }));
+    update();
+  }
+  function step() {
+    k++;
+    runs.forEach((r, i) => {
+      if (r.dead) return;
+      let [gx, gy] = OPT.grad(land.f, r.x, r.y);
+      if (sigma > 0) { gx += sigma * MB.randn(); gy += sigma * MB.randn(); }
+      if (i === 0) { r.x -= lr * gx; r.y -= lr * gy; }
+      else if (i === 1) { r.vx = 0.9 * r.vx + gx; r.vy = 0.9 * r.vy + gy; r.x -= lr * r.vx; r.y -= lr * r.vy; }
+      else {
+        r.mx = 0.9 * r.mx + 0.1 * gx; r.my = 0.9 * r.my + 0.1 * gy; r.sx = 0.999 * r.sx + 0.001 * gx * gx; r.sy = 0.999 * r.sy + 0.001 * gy * gy;
+        const b1 = 1 - 0.9 ** k, b2 = 1 - 0.999 ** k;
+        r.x -= alr * (r.mx / b1) / (Math.sqrt(r.sx / b2) + 1e-8); r.y -= alr * (r.my / b1) / (Math.sqrt(r.sy / b2) + 1e-8);
+      }
+      if (!isFinite(r.x) || !isFinite(r.y) || Math.hypot(r.x, r.y) > 1e4) { r.dead = true; return; }
+      if (r.pts.length < 6000) r.pts.push([r.x, r.y]);
+    });
+    if (k > 20000) setRun(false);
+  }
+  function update() {
+    MB.stat("opt-r-k", String(k));
+    runs.forEach((r, i) => MB.stat("opt-r-f" + i, r.dead ? '<span class="badge bad">발산</span>' : OPT.fmtF(land.f(r.x, r.y))));
+  }
+  const btn = document.getElementById("opt-r-play");
+  function setRun(v) { running = v; btn.textContent = v ? "■ 멈춤" : "▶ 경주"; if (v) loop.start(); else loop.stop(); }
+  const loop = MB.loop(document.getElementById("sim-opt-race"), (dt) => {
+    if (!running) return;
+    acc += dt * (key === "rosen" ? 240 : 30); let n = 0;
+    while (acc >= 1 && n < 400) { acc -= 1; step(); n++; }
+    if (n) { update(); pl.redraw(); }
+  });
+  loop.stop();
+  btn.addEventListener("click", () => setRun(!running));
+  document.getElementById("opt-r-reset").addEventListener("click", () => { reset(); pl.redraw(); });
+  const lrG = MB.range("opt-r-lr", (v) => OPT.fmtLr(OPT.toLr(v)), (v) => { lr = OPT.toLr(v); reset(); pl.redraw(); });
+  const alrG = MB.range("opt-r-alr", (v) => OPT.fmtLr(OPT.toLr(v)), (v) => { alr = OPT.toLr(v); reset(); pl.redraw(); });
+  MB.range("opt-r-noise", (v) => v.toFixed(2), (v) => { sigma = v; });
+  document.getElementById("opt-r-land").addEventListener("change", (e) => {
+    key = e.target.value; land = L[key];
+    opts.cy = land.cy; pl.view({ x: land.x, y: null });
+    const P = pl.P; pl.points[0].x = land.start[0]; pl.points[0].y = MB.clamp(land.start[1], P.y0 + 0.05, P.y1 - 0.05);
+    lr = land.rlr; alr = land.alr; lrG.set(OPT.fromLr(lr), false); alrG.set(OPT.fromLr(alr), false);
+    reset(); pl.redraw();
+  });
+  lrG.set(OPT.fromLr(lr), false); alrG.set(OPT.fromLr(alr), false);
+  reset(); pl.redraw();
+})();
+
+/* ===================================================================== 4. 최소제곱 */
+(function () {
+  const BASE = [[0.8, 2.34], [1.9, 1.65], [3, 3.85], [4.1, 3.06], [5.3, 4.52], [6.2, 3.81], [7.4, 6.07], [8.7, 5.69]];
+  const OUT = { x: 8.2, y: 0.8 };
+  let loss = "l2", showSq = true, useOut = false, fit = { m: 0, b: 0 }, man = { m: 0.2, b: 4.5 }, gdOn = false, gdPath = [];
+  const pts = () => pa ? pa.points.filter((p) => !p.hidden) : BASE.map(([x, y]) => ({ x, y }));
+  const lossOf = (P, m, b) => { let s = 0; for (const p of P) { const r = p.y - m * p.x - b; s += loss === "l2" ? r * r : Math.abs(r); } return s; };
+  function solveL2(P, w) {
+    let a = 0, bq = 0, c = 0, d = 0, e = 0;
+    P.forEach((p, i) => { const wi = w ? w[i] : 1; a += wi * p.x * p.x; bq += wi * p.x; c += wi; d += wi * p.x * p.y; e += wi * p.y; });
+    const det = a * c - bq * bq; if (Math.abs(det) < 1e-12) return { m: 0, b: e / c };
+    return { m: (d * c - bq * e) / det, b: (a * e - bq * d) / det };
+  }
+  function solve(P) {
+    let s = solveL2(P);
+    if (loss === "l1") for (let it = 0; it < 80; it++) { const w = P.map((p) => 1 / Math.max(1e-4, Math.abs(p.y - s.m * p.x - s.b))); s = solveL2(P, w); }
+    return s;
+  }
+  let pa = null, pb = null;
+  pa = MB.plane("#cv-opt-lsq-a", {
+    x: [-0.4, 10.4], cy: 4.1, aspect: 0.82, gridStep: 1, maxHeight: 440,
+    points: BASE.map(([x, y]) => ({ x, y })).concat([{ x: OUT.x, y: OUT.y, hidden: true }]),
+    draw(P, api) {
+      const pal = P.P, Ps = api.points.filter((p) => !p.hidden), ctx = P.ctx;
+      if (showSq) Ps.forEach((p) => {
+        const r = p.y - (fit.m * p.x + fit.b); if (Math.abs(r) < 1e-6) return;
+        const s = Math.abs(r), dir = p.x + s > P.x1 ? -1 : 1;
+        if (loss === "l2") P.poly([[p.x, p.y], [p.x + dir * s, p.y], [p.x + dir * s, p.y - r], [p.x, p.y - r]], { color: pal.accent2, fill: MB.color("accent-2-soft"), width: 1 });
+      });
+      Ps.forEach((p) => P.line(p.x, p.y, p.x, fit.m * p.x + fit.b, { color: pal.accent2, width: 1.5 }));
+      P.line(P.x0, man.m * P.x0 + man.b, P.x1, man.m * P.x1 + man.b, { color: pal.warn, width: 2, dash: [6, 5] });
+      P.line(P.x0, fit.m * P.x0 + fit.b, P.x1, fit.m * P.x1 + fit.b, { color: pal.accent, width: 2.6 });
+      api.points.forEach((p, i) => { p.color = i === BASE.length ? pal.bad : pal.text; p.r = 6; });
+    },
+    onDrag() { refit(); },
+  });
+  const viewB = { x: [-0.6, 1.8], y: [-4, 7] };
+  pb = MB.plane("#cv-opt-lsq-b", {
+    x: viewB.x, y: viewB.y, aspect: 0.82, maxHeight: 440, grid: false, axes: false,
+    points: [{ x: man.m, y: man.b, label: "내 직선" }],
+    draw(P, api) {
+      const pal = P.P, Ps = pts();
+      OPT.land(P, (m, b) => lossOf(Ps, m, b), { key: null, levels: 12, cell: 5 });
+      P.line(P.x0, 0, P.x1, 0, { color: pal.axis, width: 1 }); P.line(0, P.y0, 0, P.y1, { color: pal.axis, width: 1 });
+      [-0.5, 0.5, 1, 1.5].forEach((m) => P.text(String(m), m, 0, { color: pal.faint, size: 10, align: "center", dy: 9 }));
+      [-4, -2, 2, 4, 6].forEach((b) => P.text(String(b), 0, b, { color: pal.faint, size: 10, align: "right", dx: -4 }));
+      P.text("기울기 m →", P.x1 - 0.03, P.y0 + 0.4, { color: pal.dim, align: "right", size: 12 });
+      P.text("↕ 절편 b", 0.04, P.y0 + 0.9, { color: pal.dim, size: 12 });
+      if (gdPath.length) OPT.path(P, gdPath, { color: pal.warn, width: 1.6, dots: 2 });
+      OPT.ball(P, fit.m, fit.b, pal.accent, 6);
+      P.text("최소", fit.m, fit.b, { color: pal.accent, dx: 9, dy: 12, bold: true, size: 12 });
+      api.points[0].color = pal.warn; api.points[0].x = man.m; api.points[0].y = man.b;
+    },
+    onDrag(p) { man.m = p.x; man.b = p.y; gdPath = []; gdOn = false; readout(); pa.redraw(); },
+  });
+  function readout() {
+    const Ps = pts();
+    MB.stat("opt-q-mb", `${fit.m.toFixed(3)}, ${fit.b.toFixed(2)}`);
+    MB.stat("opt-q-s", lossOf(Ps, fit.m, fit.b).toFixed(2) + (loss === "l2" ? " (Σr²)" : " (Σ|r|)"));
+    MB.stat("opt-q-sm", lossOf(Ps, man.m, man.b).toFixed(2));
+    let a = 0, bq = 0, n = Ps.length; Ps.forEach((p) => { a += p.x * p.x; bq += p.x; });
+    const tr = a + n, det = a * n - bq * bq, disc = Math.sqrt(Math.max(0, tr * tr / 4 - det)), l1 = tr / 2 + disc, l2 = tr / 2 - disc;
+    MB.stat("opt-q-k", l2 > 1e-9 ? Math.round(l1 / l2).toLocaleString() : "∞");
+  }
+  const refit = MB.throttle(() => { fit = solve(pts()); readout(); pa.redraw(); pb.redraw(); });
+  MB.seg("opt-q-loss", (v) => { loss = v; gdPath = []; gdOn = false; refit(); });
+  MB.check("opt-q-sq", (v) => { showSq = v; pa.redraw(); });
+  MB.check("opt-q-out", (v) => { useOut = v; pa.points[BASE.length].hidden = !v; if (v) { pa.points[BASE.length].x = OUT.x; pa.points[BASE.length].y = OUT.y; } refit(); });
+  document.getElementById("opt-q-reset").addEventListener("click", () => { BASE.forEach(([x, y], i) => { pa.points[i].x = x; pa.points[i].y = y; }); pa.points[BASE.length].x = OUT.x; pa.points[BASE.length].y = OUT.y; gdPath = []; refit(); });
+  // 경사 하강 애니메이션 (m, b)
+  const gdBtn = document.getElementById("opt-q-gd");
+  const loop = MB.loop(document.getElementById("sim-opt-lsq"), () => {
+    if (!gdOn) return;
+    const Ps = pts();
+    let a = 0, bq = 0, n = Ps.length; Ps.forEach((p) => { a += p.x * p.x; bq += p.x; });
+    const lmax = 2 * ((a + n) / 2 + Math.sqrt(((a - n) / 2) ** 2 + bq * bq));
+    const eta = loss === "l2" ? 1.8 / lmax : 0.004;
+    for (let s = 0; s < 3; s++) {
+      let gm = 0, gb = 0;
+      Ps.forEach((p) => { const r = p.y - man.m * p.x - man.b, d = loss === "l2" ? -2 * r : -Math.sign(r); gm += d * p.x; gb += d; });
+      man.m -= eta * gm; man.b -= eta * gb; gdPath.push([man.m, man.b]);
+    }
+    if (gdPath.length > 1500 || Math.hypot(man.m - fit.m, (man.b - fit.b) / 5) < 2e-3) { gdOn = false; gdBtn.textContent = "▶ 내 직선을 경사 하강으로"; loop.stop(); }
+    readout(); pa.redraw(); pb.redraw();
+  });
+  loop.stop();
+  gdBtn.addEventListener("click", () => {
+    gdOn = !gdOn; gdBtn.textContent = gdOn ? "■ 멈춤" : "▶ 내 직선을 경사 하강으로";
+    if (gdOn) { gdPath = [[man.m, man.b]]; loop.start(); } else loop.stop();
+  });
+  fit = solve(pts()); readout(); pa.redraw(); pb.redraw();
+})();
+
+/* ===================================================================== 5. 라그랑주 승수 */
+(function () {
+  const A = 1;
+  let c = 5, B = 1.6, t = 0.72, showRegion = false;
+  const f = (x, y) => (x < 0 || y < 0 ? NaN : A * Math.sqrt(x) + B * Math.sqrt(y));
+  const opt = (cc) => { const x = cc * A * A / (A * A + B * B); return { x, y: cc - x, f: Math.sqrt(cc * (A * A + B * B)), lam: Math.sqrt(A * A + B * B) / (2 * Math.sqrt(cc)) }; };
+  const opts = {
+    x: [-0.7, 8.3], cy: 3.6, aspect: 0.86, maxHeight: 640, gridStep: 1,
+    points: [{ x: 0, y: 0, constrain(p) { const tt = MB.clamp((p.x - p.y + c) / 2, 0.03 * c, 0.97 * c); p.x = tt; p.y = c - tt; t = tt / c; } }],
+    draw(P, api) {
+      const pal = P.P, ctx = P.ctx, o = opt(c);
+      const fz = (x, y) => (x <= 0 || y <= 0 ? -1 : f(x, y));
+      if (showRegion) P.poly([[0, 0], [c, 0], [0, c]], { fill: MB.color("accent-2-soft"), stroke: false });
+      [0.35, 0.55, 0.75, 1.25, 1.5].forEach((s) => OPT.contour(P, fz, o.f * s, { color: pal.dim, width: 1, alpha: 0.5 }));
+      OPT.contour(P, fz, o.f, { color: pal.ok, width: 2 });
+      P.line(c, 0, 0, c, { color: pal.accent2, width: 3 });
+      P.text("x + y = c", c * 0.15, c * 0.85, { color: pal.accent2, dx: 10, dy: -4, bold: true, size: 12 });
+      P.text("CPU 전력 x →", P.x1 - 0.1, 0.3, { color: pal.dim, align: "right", size: 12 });
+      P.text("GPU 전력 y", 0.12, P.y1 - 0.3, { color: pal.dim, size: 12 });
+      const p = api.points[0]; p.x = t * c; p.y = c - p.x; p.color = pal.text;
+      const fp = f(p.x, p.y);
+      OPT.contour(P, fz, fp, { color: pal.text, width: 1.4, dash: [5, 4], alpha: 0.8 });
+      OPT.ball(P, o.x, o.y, pal.ok, 5);
+      const gx = A / (2 * Math.sqrt(p.x)), gy = B / (2 * Math.sqrt(p.y)), S = 2.2 / Math.max(0.35, Math.hypot(gx, gy));
+      const lamHere = (gx + gy) / 2;
+      P.arrow(p.x, p.y, p.x + lamHere * S, p.y + lamHere * S, { color: pal.accent2, width: 5, alpha: 0.45, head: 13 });
+      P.arrow(p.x, p.y, p.x + gx * S, p.y + gy * S, { color: pal.accent, width: 2.6, label: "∇f" });
+      readout(p, gx, gy, fp);
+    },
+  };
+  const pl = MB.plane("#cv-opt-lag", opts);
+  function readout(p, gx, gy, fp) {
+    const o = opt(c), ang = Math.abs(Math.atan2(gy, gx) - Math.PI / 4) * 180 / Math.PI;
+    const h = 0.01, df = (opt(c + h).f - opt(c - h).f) / (2 * h);
+    MB.stat("opt-g-xy", `${p.x.toFixed(2)}, ${p.y.toFixed(2)}`);
+    MB.stat("opt-g-f", `${fp.toFixed(3)} <small style="color:var(--text-faint)">/ ${o.f.toFixed(3)}</small>`);
+    MB.stat("opt-g-ang", ang < 0.5 ? `<span class="badge ok">${ang.toFixed(1)}° 평행</span>` : ang.toFixed(1) + "°");
+    MB.stat("opt-g-lam", o.lam.toFixed(4));
+    MB.stat("opt-g-df", df.toFixed(4));
+  }
+  MB.range("opt-g-c", (v) => v.toFixed(1) + " W", (v) => { c = v; pl.redraw(); });
+  MB.range("opt-g-b", (v) => v.toFixed(2), (v) => { B = v; pl.redraw(); });
+  MB.check("opt-g-free", (v) => { showRegion = v; pl.redraw(); });
+  document.getElementById("opt-g-opt").addEventListener("click", () => { t = opt(c).x / c; pl.redraw(); });
+  pl.redraw();
+})();
+
+/* ===================================================================== 6. 선형계획 */
+(function () {
+  const CON = [ // a x + b y <= r
+    { a: 2, b: 1, r: 100, name: "기계" },
+    { a: 1, b: 1, r: 60, name: "원자재" },
+    { a: 1, b: 3, r: 120, name: "조립" },
+  ];
+  const VERT = [[0, 0], [50, 0], [40, 20], [30, 30], [0, 40]]; // 반시계 순서
+  let pA = 30, pB = 40, iso = true, simplexPath = [], simplexIdx = -1;
+  const z = (v) => pA * v[0] + pB * v[1];
+  const feasible = (x, y) => x >= -1e-9 && y >= -1e-9 && CON.every((c) => c.a * x + c.b * y <= c.r + 1e-9);
+  const best = () => { let bi = 0; VERT.forEach((v, i) => { if (z(v) > z(VERT[bi]) + 1e-9) bi = i; }); return bi; };
+  const pl = MB.plane("#cv-opt-lp", {
+    x: [-7, 67], cy: 21, aspect: 0.66, gridStep: 10,
+    points: [{ x: 15, y: 12, label: "계획", constrain(p) {
+      p.x = Math.max(0, p.x); p.y = Math.max(0, p.y);
+      for (let it = 0; it < 6; it++) CON.forEach((c) => { const s = c.a * p.x + c.b * p.y - c.r; if (s > 0) { const n2 = c.a * c.a + c.b * c.b; p.x -= c.a * s / n2; p.y -= c.b * s / n2; } p.x = Math.max(0, p.x); p.y = Math.max(0, p.y); });
+    } }],
+    draw(P, api) {
+      const pal = P.P, bi = best(), bv = VERT[bi];
+      P.poly(VERT, { fill: MB.color("accent-soft"), color: pal.accent, width: 1.5 });
+      CON.forEach((c, i) => {
+        const ends = [[0, c.r / c.b], [c.r / c.a, 0]];
+        P.line(ends[0][0], ends[0][1], ends[1][0], ends[1][1], { color: pal.dim, width: 1.2, dash: [5, 4] });
+        const lx = [47, 20, 8][i], ly = (c.r - c.a * lx) / c.b;
+        P.text(P.w < 460 ? c.name : `${c.name} ${c.a === 1 ? "" : c.a}x+${c.b === 1 ? "" : c.b}y≤${c.r}`, lx, ly, { color: pal.dim, size: 11, dx: 6, dy: i === 2 ? -8 : 0 });
+      });
+      const zmax = z(bv), g = Math.hypot(pA, pB);
+      if (iso && g > 1e-9) {
+        const drawIso = (val, o) => { // pA x + pB y = val
+          if (pB > 1e-9) P.line(-10, (val + 10 * pA) / pB, 80, (val - 80 * pA) / pB, o); else P.line(val / pA, -10, val / pA, 60, o);
+        };
+        for (let s = 0.2; s < 1; s += 0.2) drawIso(zmax * s, { color: pal.faint, width: 1, dash: [3, 4] });
+        drawIso(zmax, { color: pal.accent2, width: 2.4 });
+        const ux = pA / g, uy = pB / g;
+        P.arrow(bv[0], bv[1], bv[0] + ux * 9, bv[1] + uy * 9, { color: pal.accent2, width: 2.2, label: "이익↑" });
+      }
+      VERT.forEach((v, i) => {
+        const on = i === bi;
+        P.dot(v[0], v[1], { r: on ? 7 : 4.5, color: on ? pal.ok : pal.accent });
+        P.text(`${z(v).toLocaleString()}`, v[0], v[1], { color: on ? pal.ok : pal.dim, size: 11, bold: on, dx: 7, dy: -10 });
+      });
+      if (simplexPath.length > 1) {
+        for (let k = 0; k < Math.min(simplexIdx, simplexPath.length - 1); k++) { const a = VERT[simplexPath[k]], b = VERT[simplexPath[k + 1]]; P.arrow(a[0], a[1], b[0], b[1], { color: pal.warn, width: 3.5, head: 12 }); }
+      }
+      if (simplexIdx >= 0) { const v = VERT[simplexPath[Math.min(simplexIdx, simplexPath.length - 1)]]; OPT.ball(P, v[0], v[1], pal.warn, 9); }
+      api.points[0].color = pal.text;
+      P.text("A 생산량 x →", P.x1 - 1, 2.2, { color: pal.dim, align: "right", size: 12 });
+      P.text("B 생산량 y", 1.5, P.y1 - 2, { color: pal.dim, size: 12 });
+      readout(bi, api.points[0]);
+    },
+    onDrag() {},
+  });
+  function readout(bi, p) {
+    const v = VERT[bi];
+    const tie = VERT.filter((u) => Math.abs(z(u) - z(v)) < 1e-9).length > 1;
+    MB.stat("opt-p-xy", `(${v[0]}, ${v[1]})` + (tie ? ' <span class="badge warn">변 전체 최적</span>' : ""));
+    MB.stat("opt-p-z", z(v).toLocaleString() + " 만 원");
+    const act = CON.filter((c) => Math.abs(c.a * v[0] + c.b * v[1] - c.r) < 1e-9).map((c) => c.name);
+    if (v[0] === 0) act.push("x≥0"); if (v[1] === 0) act.push("y≥0");
+    MB.stat("opt-p-act", act.join(", ") || "없음");
+    MB.stat("opt-p-cur", Math.round(pA * p.x + pB * p.y).toLocaleString() + " 만 원");
+  }
+  const rerun = () => { simplexPath = []; simplexIdx = -1; pl.redraw(); };
+  MB.range("opt-p-a", (v) => String(v), (v) => { pA = v; rerun(); });
+  MB.range("opt-p-b", (v) => String(v), (v) => { pB = v; rerun(); });
+  MB.check("opt-p-iso", (v) => { iso = v; pl.redraw(); });
+  let timer = 0;
+  document.getElementById("opt-p-simplex").addEventListener("click", () => {
+    clearInterval(timer);
+    // 원점에서 이웃 꼭짓점 중 가장 많이 오르는 쪽으로
+    simplexPath = [0]; let cur = 0;
+    for (let it = 0; it < 6; it++) {
+      const nb = [(cur + 1) % VERT.length, (cur + VERT.length - 1) % VERT.length];
+      let nx = -1; nb.forEach((j) => { if (z(VERT[j]) > z(VERT[cur]) + 1e-9 && (nx < 0 || z(VERT[j]) > z(VERT[nx]))) nx = j; });
+      if (nx < 0) break; simplexPath.push(nx); cur = nx;
+    }
+    simplexIdx = 0; pl.redraw();
+    timer = setInterval(() => { simplexIdx++; pl.redraw(); if (simplexIdx >= simplexPath.length - 1) clearInterval(timer); }, 700);
+  });
+  pl.redraw();
+})();
+</script>
+</body>
+</html>

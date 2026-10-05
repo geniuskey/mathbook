@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<title>도구 지도 · 용어집 · 종합 퀴즈 · MathBook</title>
+<meta name="description" content="시리즈의 다른 책에서 어떤 수학이 쓰이는지 책별 도구 지도로 찾고, MathBook에 나온 공학 수학 용어를 검색하고, 전 범위 종합 퀴즈로 실력을 점검한다.">
+<link rel="canonical" href="https://mathbook.euiyun.com/chapters/glossary.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="MathBook">
+<meta property="og:title" content="도구 지도 · 용어집 · 종합 퀴즈 · MathBook">
+<meta property="og:description" content="시리즈의 다른 책에서 어떤 수학이 쓰이는지 책별 도구 지도로 찾고, MathBook에 나온 공학 수학 용어를 검색하고, 전 범위 종합 퀴즈로 실력을 점검한다.">
+<meta property="og:url" content="https://mathbook.euiyun.com/chapters/glossary.html">
+<meta property="og:image" content="https://mathbook.euiyun.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"도구 지도 · 용어집 · 종합 퀴즈","name":"도구 지도 · 용어집 · 종합 퀴즈 · MathBook","url":"https://mathbook.euiyun.com/chapters/glossary.html","mainEntityOfPage":"https://mathbook.euiyun.com/chapters/glossary.html","inLanguage":"ko","isAccessibleForFree":true,"learningResourceType":"interactive textbook chapter","position":13,"image":"https://mathbook.euiyun.com/og.png","dateModified":"2026-10-05","isPartOf":{"@type":"Book","@id":"https://mathbook.euiyun.com/#book","name":"MathBook — 문제에서 출발하는 수학 교과서","url":"https://mathbook.euiyun.com/"},"publisher":{"@type":"Organization","name":"MathBook","url":"https://mathbook.euiyun.com/"},"description":"시리즈의 다른 책에서 어떤 수학이 쓰이는지 책별 도구 지도로 찾고, MathBook에 나온 공학 수학 용어를 검색하고, 전 범위 종합 퀴즈로 실력을 점검한다."},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"MathBook","item":"https://mathbook.euiyun.com/"},{"@type":"ListItem","position":2,"name":"13 도구 지도 · 용어집 · 종합 퀴즈","item":"https://mathbook.euiyun.com/chapters/glossary.html"}]}]}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<script src="../js/common.js"></script>
+<style>
+  .gl-filter { display: flex; flex-wrap: wrap; gap: 6px; margin: -8px 0 16px; }
+  .gl-filter button { font: inherit; font-size: 12.5px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+  .gl-filter button.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); font-weight: 700; }
+  .gl-count { font-size: 13px; color: var(--text-faint); margin-bottom: 10px; }
+  .score { position: sticky; top: calc(var(--nav-h) + 8px); z-index: 5; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 12px; background: var(--bg-elev); border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 16px; font-family: var(--mono); font-size: 14px; }
+  .score .bar { flex: 1; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+  .score .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .3s; }
+  .quiz-q .ch { font-size: 12px; font-weight: 400; color: var(--text-faint); margin-left: 6px; }
+  .map-books { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); padding: 14px 18px; background: var(--canvas-bg); }
+  .map-books button { font: inherit; font-size: 13px; padding: 7px 8px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); cursor: pointer; text-align: left; line-height: 1.3; }
+  .map-books button small { display: block; font-size: 11px; color: var(--text-faint); }
+  .map-books button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+  .map-out { padding: 6px 18px 16px; display: grid; gap: 8px; background: var(--canvas-bg); }
+  .map-row { display: grid; grid-template-columns: 200px 1fr; gap: 10px; align-items: start; padding: 10px 12px; border-radius: 10px; background: var(--bg-elev); border: 1px solid var(--border); font-size: 14.5px; }
+  .map-row a.chip { font-family: var(--mono); font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 700; justify-self: start; line-height: 1.5; }
+  .map-row span { color: var(--text-dim); }
+  .map-row span b { color: var(--text); }
+  .map-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 4px 2px 2px; }
+  .map-head b { font-size: 17px; }
+  .map-head a { font-size: 13px; }
+  .heat { display: grid; grid-template-columns: 110px repeat(12, minmax(0, 1fr)); gap: 2px; font-size: 11px; min-width: 520px; }
+  .heat div { padding: 4px 2px; text-align: center; border-radius: 3px; }
+  .heat .h { font-family: var(--mono); color: var(--text-dim); }
+  .heat .b { text-align: left; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 4px; }
+  .heat .c1 { background: var(--accent-soft); }
+  .heat .c2 { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+  .heat .c0 { background: var(--surface); }
+  @media (max-width: 520px) { .map-row { grid-template-columns: 1fr; gap: 6px; } }
+</style>
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3d6151a0abc94ede89285d462527fa80"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</head>
+<body data-chapter="glossary">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">Chapter 13</div>
+    <h1>도구 지도 · 용어집 · 종합 퀴즈</h1>
+    <p class="lead">MathBook은 시리즈의 다른 책들이 딛고 선 공통 기반 층입니다. 다른 책을 읽다가 "이 수식은 어디서 왔지?"라는 질문이 생겼다면, 아래 <b>도구 지도</b>에서 그 책을 골라 보세요. 필요한 장으로 바로 안내합니다. 이어서 용어를 검색하고, 전 범위 종합 퀴즈로 마무리합니다.</p>
+    <ul class="objectives">
+      <li>시리즈의 각 책이 어떤 수학 도구를 어디에 쓰는지 한눈에 본다</li>
+      <li>공학 수학 용어를 검색하고 해당 장으로 돌아간다</li>
+      <li>열두 장 전체를 문제 → 도구의 관점으로 다시 점검한다</li>
+    </ul>
+  </header>
+
+  <section id="tool-map">
+    <h2>도구 지도: 다른 책에서 오셨나요?</h2>
+    <p>책을 고르면 그 책에서 만나는 공학 문제와, 그 문제를 푸는 MathBook의 장이 나옵니다. 각 줄의 장 번호를 누르면 해당 장으로 갑니다. 반대로 각 장의 끝에 있는 <b>"이 도구가 쓰이는 곳"</b> 절은 이 지도를 거꾸로 따라가는 길입니다.</p>
+    <div class="sim" id="sim-gl-map">
+      <div class="sim-head"><span class="sim-tag">MAP</span><h3>책별 수학 도구 지도</h3></div>
+      <div class="map-books" id="map-books"></div>
+      <div class="map-out" id="map-out"></div>
+      <div class="sim-note">해볼 것: SensorBook과 LithoBook을 차례로 골라 보세요. 둘 다 5장(푸리에)과 7장(확률)에 기대지만 쓰는 이유가 다릅니다. · 지도는 각 책의 핵심 주제를 기준으로 정리한 안내이며, 책마다 더 많은 수학이 쓰입니다.</div>
+    </div>
+
+    <h3>한눈에 보는 의존도</h3>
+    <p>가로는 MathBook의 장, 세로는 시리즈의 책입니다. 진한 칸일수록 그 책의 핵심 내용이 해당 장의 도구에 직접 기댑니다.</p>
+    <figure class="diagram" style="padding:14px">
+      <div class="table-wrap" style="border:0;margin:0"><div class="heat" id="heat"></div></div>
+      <figcaption><b>그림 13-1.</b> 책 × 장 의존도 지도. 진한 칸 = 핵심 도구, 옅은 칸 = 보조 도구. 5장(푸리에)과 7장(확률·통계)이 가장 많은 책을 받치고 있습니다.</figcaption>
+    </figure>
+  </section>
+
+  <section id="glossary-terms">
+    <h2>용어집</h2>
+    <input class="gl-search" id="gl-q" type="search" placeholder="용어 검색 (예: 고유값, 페이저, 엔트로피, aliasing)" aria-label="용어 검색">
+    <div class="gl-filter" id="gl-f"></div>
+    <div class="gl-count" id="gl-n"></div>
+    <div class="gl-list" id="gl-list"></div>
+  </section>
+
+  <section class="quiz-sec" id="quiz">
+    <h2>종합 퀴즈</h2>
+    <p>각 문제는 "어떤 공학 문제에 어떤 도구를 꺼내야 하는가"를 묻습니다. 틀린 문제는 괄호 안의 장으로 돌아가 시뮬레이터를 다시 만져 보세요.</p>
+    <div class="score"><span id="sc-t">0 / 0</span><span class="bar"><i id="sc-b"></i></span><button class="btn" id="sc-r">다시 풀기</button></div>
+    <div class="quiz" id="final"></div>
+  </section>
+</main>
+
+<script>
+/* ------------------------------------------------ 도구 지도 */
+(function () {
+  const chs = {}; MB.CHAPTERS.forEach((c) => (chs[c.slug] = c));
+  // [id, 이름, 부제, url, [[장 slug, 무게(2 핵심/1 보조), 설명]...]]
+  const BOOKS = [
+    ["music", "MusicBook", "음악", "https://musicbook.euiyun.com/", [
+      ["fourier", 2, "<b>배음과 음색</b> — 주기 신호 = 정수배 사인파의 합(푸리에 급수), 스펙트럼과 FFT 창"],
+      ["sampling", 2, "<b>디지털 오디오</b> — 44.1 kHz와 나이퀴스트, 에일리어싱, 양자화와 디더"],
+      ["complex", 1, "<b>위상과 맥놀이</b> — 같은 주파수의 사인파 합 = 페이저의 합"],
+      ["ode", 1, "<b>현과 관의 진동</b> — 감쇠 진동자, 공진, 파동 방정식"],
+      ["symmetry", 1, "<b>음계와 화음</b> — 12음을 원 위의 집합으로: 회전(전조)과 대칭 음계"]]],
+    ["sensor", "SensorBook", "이미지 센서", "https://sensorbook.euiyun.com/", [
+      ["probability", 2, "<b>샷 노이즈·읽기 잡음</b> — 포아송 분포, SNR = √N, 노이즈 합성"],
+      ["fourier", 2, "<b>MTF</b> — 픽셀 개구·광학계의 공간 주파수 응답"],
+      ["sampling", 2, "<b>픽셀 = 표본점</b> — 모아레, 베이어 위색, 광학 저역통과 필터"],
+      ["linalg", 1, "<b>색 보정 행렬(CCM)</b> — 센서 RGB → 표준 색 공간, 노이즈 증폭"],
+      ["numerics", 1, "<b>픽셀 광학 시뮬레이션</b> — FDTD·RCWA로 마이크로렌즈·컬러 필터 해석"],
+      ["complex", 1, "<b>반사 방지막</b> — 박막 간섭을 페이저 합으로"]]],
+    ["optics", "OpticsBook", "광학", "https://opticsbook.euiyun.com/", [
+      ["fourier", 2, "<b>푸리에 광학</b> — 렌즈는 푸리에 변환기, PSF·OTF·MTF, 회절 한계"],
+      ["complex", 2, "<b>파동과 간섭</b> — 복소 진폭, 박막 코팅, 편광"],
+      ["geometry", 2, "<b>수차</b> — 구면 수차, 왜곡, 비구면 렌즈"],
+      ["numerics", 1, "<b>전자기 수치 해석</b> — FDTD의 Yee 격자, 안정 조건"],
+      ["optimization", 1, "<b>렌즈 설계</b> — 수차를 손실 함수로 한 최적화"]]],
+    ["camera", "CameraBook", "카메라", "https://camerabook.euiyun.com/", [
+      ["probability", 1, "<b>ISO와 잡음</b> — 빛이 적으면 왜 자글자글한가"],
+      ["fourier", 1, "<b>선예도·회절</b> — 조리개를 너무 조이면 왜 흐려지나"],
+      ["geometry", 1, "<b>원근과 왜곡</b> — 광각 왜곡, 보정 격자"],
+      ["linalg", 1, "<b>색</b> — 화이트 밸런스와 색 변환 행렬"]]],
+    ["color", "ColorBook", "색채공학", "https://colorbook.euiyun.com/", [
+      ["linalg", 2, "<b>색 공간 변환</b> — RGB ↔ XYZ ↔ LMS는 3×3 행렬, 메타머리즘 = 영공간"],
+      ["optimization", 1, "<b>색 보정 행렬 맞춤</b> — 패치 오차의 최소제곱"],
+      ["geometry", 1, "<b>색 공간의 왜곡</b> — 균등 색 공간과 거리"]]],
+    ["display", "DisplayBook", "디스플레이", "https://displaybook.euiyun.com/", [
+      ["sampling", 2, "<b>서브픽셀과 모아레</b> — 공간 표본화와 렌더링"],
+      ["linalg", 1, "<b>색역 변환</b> — 원색 행렬"],
+      ["complex", 1, "<b>광학 박막</b> — 반사 방지, 편광판"]]],
+    ["analog", "AnalogBook", "아날로그 회로", "https://analogbook.euiyun.com/", [
+      ["complex", 2, "<b>임피던스와 주파수 응답</b> — jω, 보드 선도, 극점"],
+      ["ode", 2, "<b>RC·RLC 과도 응답</b> — 1·2차 미분방정식, 감쇠비, 안정성"],
+      ["sampling", 1, "<b>ADC/DAC</b> — 표본화, 양자화 잡음 6.02N + 1.76 dB"],
+      ["probability", 1, "<b>잡음</b> — 열잡음, 오프셋 산포와 정합"]]],
+    ["device", "DeviceBook", "소자 물리", "https://devicebook.euiyun.com/", [
+      ["symmetry", 2, "<b>결정 구조</b> — 다이아몬드 격자, 밀러 지수, 역격자"],
+      ["ode", 1, "<b>확산·연속 방정식</b> — 캐리어 농도의 시간 변화"],
+      ["probability", 1, "<b>통계 역학</b> — 페르미–디랙 분포"]]],
+    ["process", "ProcessBook", "공정", "https://processbook.euiyun.com/", [
+      ["ode", 2, "<b>도펀트 확산·열처리</b> — 확산 방정식(열 방정식과 같은 식)"],
+      ["probability", 2, "<b>공정 산포</b> — 중심극한정리, Cp·Cpk, 관리도"],
+      ["symmetry", 1, "<b>웨이퍼 결정 방향</b> — (100)·(111), 노치"]]],
+    ["litho", "LithoBook", "노광", "https://lithobook.euiyun.com/", [
+      ["fourier", 2, "<b>결상 = 푸리에 광학</b> — 마스크 스펙트럼, 동공 필터, 해상 한계"],
+      ["optimization", 2, "<b>OPC·광원-마스크 최적화</b> — 목표 패턴과의 오차 최소화"],
+      ["sampling", 1, "<b>격자와 피치</b> — 공간 주파수, 모아레 정렬 마크"],
+      ["probability", 1, "<b>확률적 결함</b> — EUV 광자 샷 노이즈와 선폭 거칠기"]]],
+    ["etch", "EtchBook", "식각", "https://etchbook.euiyun.com/", [
+      ["symmetry", 2, "<b>이방성 습식 식각</b> — 결정면별 속도 차이, 54.74° V홈"],
+      ["ode", 1, "<b>식각 속도 모델</b> — 반응·확산의 변화율 방정식"]]],
+    ["yield", "YieldBook", "수율", "https://yieldbook.euiyun.com/", [
+      ["probability", 2, "<b>수율 모델</b> — 결함 포아송 Y = e^(−A·D₀), 군집 모델"],
+      ["optimization", 1, "<b>공정 창 최적화</b> — 제약 아래 수율 최대화"],
+      ["linalg", 1, "<b>웨이퍼 맵 패턴</b> — 주성분 분석(PCA)과 SVD"]]],
+    ["test", "TestBook", "테스트", "https://testbook.euiyun.com/", [
+      ["probability", 2, "<b>불량 판정</b> — 베이즈, 위양성·위음성, 가드밴드"],
+      ["information", 1, "<b>압축·BIST</b> — 시그니처, 패리티"]]],
+    ["tcad", "TCADBook", "TCAD", "https://tcadbook.euiyun.com/", [
+      ["numerics", 2, "<b>소자·공정 시뮬레이션</b> — 유한 차분/요소, 안정성, 수렴"],
+      ["ode", 2, "<b>확산·포아송 방정식</b> — 편미분방정식의 이산화"],
+      ["linalg", 1, "<b>거대 선형 연립방정식</b> — 조건수, 반복 해법"]]],
+    ["memory", "MemoryBook", "메모리", "https://memorybook.euiyun.com/", [
+      ["information", 2, "<b>ECC</b> — DRAM의 해밍 계열 부호, NAND의 BCH·LDPC"],
+      ["probability", 1, "<b>보존·교란 오류</b> — 비트 오류율의 분포"]]],
+    ["packaging", "PackagingBook", "패키징", "https://packagingbook.euiyun.com/", [
+      ["ode", 2, "<b>열 설계</b> — 열저항·열용량 = RC 회로, 열확산"],
+      ["linalg", 1, "<b>휨·응력</b> — 강성 행렬과 진동 모드"]]],
+    ["computer", "ComputerBook", "컴퓨터", "https://computerbook.euiyun.com/", [
+      ["numerics", 2, "<b>부동소수점</b> — IEEE 754, 0.1 + 0.2, 반올림 오차"],
+      ["information", 2, "<b>비트와 부호</b> — 엔트로피, 압축, 패리티"]]],
+    ["network", "NetworkBook", "네트워크", "https://networkbook.euiyun.com/", [
+      ["information", 2, "<b>채널 용량과 오류 정정</b> — 섀넌 한계, CRC, 재전송"],
+      ["fourier", 1, "<b>변조와 대역폭</b> — OFDM, 스펙트럼"],
+      ["probability", 1, "<b>대기열과 손실</b> — 포아송 도착"]]],
+    ["phone", "PhoneBook", "스마트폰", "https://phonebook.euiyun.com/", [
+      ["complex", 2, "<b>무선 변조</b> — IQ 신호와 QAM 성상도는 복소수 그 자체"],
+      ["fourier", 2, "<b>OFDM</b> — LTE·5G·Wi-Fi는 FFT로 부반송파를 만든다"],
+      ["information", 1, "<b>채널 부호</b> — LDPC, 폴라 부호"],
+      ["geometry", 1, "<b>카메라 보정·AR</b> — 호모그래피, 왜곡 보정"]]],
+    ["ai", "AIBook", "AI", "https://aibook.euiyun.com/", [
+      ["optimization", 2, "<b>학습</b> — 경사 하강법, 모멘텀, Adam, 학습률"],
+      ["linalg", 2, "<b>신경망 = 행렬 곱</b> — 임베딩, 어텐션, SVD·저랭크"],
+      ["information", 2, "<b>손실 함수</b> — 교차 엔트로피, KL 발산"],
+      ["probability", 1, "<b>확률 모델</b> — 소프트맥스, 베이즈 추론"],
+      ["numerics", 1, "<b>저정밀 연산</b> — bf16, fp8의 반올림"]]],
+    ["car", "CarBook", "자동차", "https://carbook.euiyun.com/", [
+      ["ode", 2, "<b>서스펜션</b> — 스프링–질량–감쇠기, 감쇠비"],
+      ["geometry", 1, "<b>ADAS 카메라</b> — 원근 투영, 차선의 소실점, 왜곡 보정"],
+      ["linalg", 1, "<b>진동 모드</b> — 차체 고유 진동"]]],
+    ["ship", "ShipBook", "선박", "https://shipbook.euiyun.com/", [
+      ["ode", 2, "<b>횡요(롤링)</b> — 복원력과 감쇠를 가진 진동자, 공진"],
+      ["fourier", 1, "<b>파랑 스펙트럼</b> — 바다 = 주파수의 합"]]],
+    ["body", "BodyBook", "몸", "https://bodybook.euiyun.com/", [
+      ["ode", 2, "<b>약물 농도·항상성</b> — 1차 감쇠와 되먹임"],
+      ["fourier", 1, "<b>의료 영상</b> — MRI k-공간, CT"],
+      ["probability", 1, "<b>진단 검사</b> — 민감도·특이도·사전확률"]]],
+    ["stock", "StockBook", "주식", "https://stockbook.euiyun.com/", [
+      ["probability", 2, "<b>수익률 분포</b> — 정규 근사와 두꺼운 꼬리, 분산"],
+      ["optimization", 2, "<b>포트폴리오</b> — 위험 제약 아래 수익 최대화(라그랑주)"],
+      ["limits", 1, "<b>복리</b> — e와 연속 복리"]]],
+    ["money", "MoneyBook", "돈", "https://moneybook.euiyun.com/", [
+      ["limits", 2, "<b>복리와 할인</b> — (1 + r/n)^n → e^r, 등비급수"],
+      ["probability", 1, "<b>위험</b> — 기댓값과 분산"]]],
+  ];
+  const ORDER = MB.CHAPTERS.filter((c) => c.slug !== "glossary");
+  const booksEl = document.getElementById("map-books"), out = document.getElementById("map-out");
+  booksEl.innerHTML = BOOKS.map((b, i) => `<button data-i="${i}"${i === 1 ? ' class="on"' : ""}>${b[1]}<small>${b[2]}</small></button>`).join("");
+  function show(i) {
+    const b = BOOKS[i];
+    booksEl.querySelectorAll("button").forEach((x, k) => x.classList.toggle("on", k === i));
+    const rows = b[4].slice().sort((p, q) => q[1] - p[1] || chs[p[0]].num.localeCompare(chs[q[0]].num));
+    out.innerHTML = `<div class="map-head"><b>${b[1]} · ${b[2]}</b><a href="${b[3]}">${b[3].replace("https://", "").replace(/\/$/, "")} ↗</a></div>` +
+      rows.map(([s, w, d]) => `<div class="map-row"><a class="chip" href="${s}.html">${chs[s].num} ${w === 2 ? "★ " : ""}${chs[s].title}</a><span>${d}</span></div>`).join("");
+  }
+  booksEl.addEventListener("click", (e) => { const t = e.target.closest("button"); if (t) show(+t.dataset.i); });
+  show(1);
+  // 의존도 히트맵
+  const heat = document.getElementById("heat");
+  let html = `<div class="h"></div>` + ORDER.map((c) => `<div class="h" title="${c.title}">${c.num}</div>`).join("");
+  BOOKS.forEach((b) => {
+    html += `<div class="b">${b[1]}</div>` + ORDER.map((c) => { const r = b[4].find((x) => x[0] === c.slug); return `<div class="c${r ? r[1] : 0}" title="${b[1]} × ${c.title}"></div>`; }).join("");
+  });
+  html += `<div class="b" style="color:var(--text-dim)">합계(★)</div>` + ORDER.map((c) => `<div class="h">${BOOKS.filter((b) => b[4].some((x) => x[0] === c.slug && x[1] === 2)).length}</div>`).join("");
+  heat.innerHTML = html;
+})();
+
+/* ------------------------------------------------ 용어집 */
+(function () {
+  const chs = {}; MB.CHAPTERS.forEach((c) => (chs[c.slug] = c));
+  const T = [
+    // 01 극한
+    ["극한", "Limit", "입력을 어떤 값에 한없이 가깝게 할 때 출력이 다가가는 값. ε–δ 정의는 '출력 공차 ε를 요구하면 입력 공차 δ를 보장한다'는 계약이다.", "limits"],
+    ["급수", "Series", "수열의 항을 무한히 더한 것. 부분합이 수렴하면 그 극한을 급수의 값으로 정한다.", "limits"],
+    ["등비급수", "Geometric Series", "a + ar + ar² + … = a/(1−r) (|r| < 1). 제논의 역설, 복리, 다중 반사가 모두 이 꼴이다.", "limits"],
+    ["조화급수", "Harmonic Series", "1 + 1/2 + 1/3 + …. 항은 0으로 가지만 합은 발산한다(로그처럼 느리게).", "limits"],
+    ["테일러 급수", "Taylor Series", "한 점에서의 도함수들로 함수를 다항식으로 전개한 것. 계산기·라이브러리의 sin, exp 근사의 출발점.", "limits"],
+    ["수렴 반경", "Radius of Convergence", "멱급수가 수렴하는 구간의 반지름. ln(1+x)의 테일러 급수는 |x| ≤ 1 밖에서 쓸 수 없다.", "limits"],
+    ["자연상수 e", "Euler's Number", "(1+1/n)^n의 극한 ≈ 2.71828. e^x는 자기 자신이 도함수인 지수 함수라서 성장·감쇠에 나타난다.", "limits"],
+    ["리만 합", "Riemann Sum", "구간을 잘게 나눈 직사각형 넓이의 합. 나눔을 무한히 잘게 한 극한이 적분이다.", "limits"],
+    // 02 복소수
+    ["허수 단위", "Imaginary Unit", "i² = −1인 수. 기하적으로는 복소평면에서 90° 회전. 전기공학에서는 전류 i와 구별하려고 j로 쓴다.", "complex"],
+    ["오일러 공식", "Euler's Formula", "e^{iθ} = cos θ + i sin θ. 지수 함수와 회전(삼각함수)을 잇는 다리.", "complex"],
+    ["페이저", "Phasor", "같은 주파수 사인파를 크기와 위상을 가진 복소수(회전 화살표의 스냅샷)로 나타낸 것. 미분이 jω 곱셈이 된다.", "complex"],
+    ["임피던스", "Impedance", "교류에서 전압/전류의 복소 비 Z = R + jX. 저항 R, 코일 jωL, 커패시터 1/(jωC).", "complex"],
+    ["역률", "Power Factor", "유효전력/피상전력 = cos φ. 전압과 전류의 위상차가 클수록 송전 손실 대비 쓸모 있는 전력이 줄어든다.", "complex"],
+    ["박막 간섭", "Thin-film Interference", "얇은 막의 위·아래 면에서 반사된 빛이 위상차를 갖고 더해지는 현상. 반사 방지 코팅은 이를 상쇄 간섭으로 설계한다.", "complex"],
+    // 03 선형대수
+    ["선형 변환", "Linear Transformation", "원점을 고정하고 격자선을 평행·등간격으로 유지하는 변환. 행렬로 완전히 표현된다.", "linalg"],
+    ["행렬식", "Determinant", "변환이 넓이(부피)를 몇 배로 바꾸는가. 0이면 공간이 낮은 차원으로 찌그러져 역변환이 없다. 음수면 방향이 뒤집힌다.", "linalg"],
+    ["고유벡터·고유값", "Eigenvector / Eigenvalue", "변환해도 방향이 바뀌지 않는 벡터와 그 늘어나는 배율. 구조물의 공진 모드와 고유 진동수가 바로 이것이다.", "linalg"],
+    ["특이값 분해", "SVD", "모든 행렬 = 회전 · 축 방향 늘이기 · 회전(UΣVᵀ). 큰 특이값만 남기면 최적의 저랭크 근사(이미지 압축).", "linalg"],
+    ["색 보정 행렬", "Color Correction Matrix (CCM)", "센서 RGB를 표준 색 공간으로 바꾸는 3×3 행렬. 비대각 원소가 크면 색은 진해지고 잡음도 증폭된다.", "linalg"],
+    ["랭크", "Rank", "변환 결과가 차지하는 차원 수 = 0이 아닌 특이값의 개수.", "linalg"],
+    // 04 미분방정식
+    ["미분방정식", "Differential Equation", "양 자체가 아니라 그 변화율 사이의 관계로 시스템을 기술한 식.", "ode"],
+    ["시정수", "Time Constant", "1차 시스템 dy/dt = −y/τ의 τ. τ 후 변화량의 63%, 5τ 후 99% 이상 도달.", "ode"],
+    ["기울기장", "Direction Field", "평면의 각 점에 미분방정식이 주는 기울기를 화살표로 그린 그림. 해곡선은 화살표를 따라 흐른다.", "ode"],
+    ["감쇠비", "Damping Ratio", "2차 시스템의 ζ. ζ < 1 진동(부족감쇠), ζ = 1 임계감쇠, ζ > 1 과감쇠.", "ode"],
+    ["공진", "Resonance", "외력의 주파수가 시스템의 고유 진동수에 가까울 때 응답이 크게 커지는 현상. 크기는 감쇠가 정한다(Q).", "ode"],
+    ["SIR 모델", "SIR Model", "감수성(S)–감염(I)–회복(R) 세 집단의 연립 미분방정식. 집단면역 임계는 1 − 1/R₀.", "ode"],
+    ["열 방정식", "Heat Equation", "∂T/∂t = α∂²T/∂x². 온도는 '이웃 평균과의 차이'만큼 변한다. 도펀트 확산과 같은 식.", "ode"],
+    ["룽게–쿠타법", "Runge–Kutta Method", "한 단계 안에서 기울기를 여러 번 재어 평균하는 수치 적분법. RK4의 전역 오차는 h⁴에 비례.", "ode"],
+    // 05 푸리에
+    ["푸리에 급수", "Fourier Series", "주기 함수를 기본 주파수의 정수배 사인·코사인(또는 e^{inωt})의 합으로 나타낸 것.", "fourier"],
+    ["푸리에 변환", "Fourier Transform", "신호를 모든 주파수 성분의 크기와 위상으로 바꾸는 변환. 신호를 각 주파수로 '감아' 질량중심을 재는 것과 같다.", "fourier"],
+    ["FFT", "Fast Fourier Transform", "N점 이산 푸리에 변환을 N log N 연산으로 계산하는 알고리즘.", "fourier"],
+    ["깁스 현상", "Gibbs Phenomenon", "불연속점 근처에서 유한 항 푸리에 합이 약 9% 넘치는 현상. 항을 늘려도 사라지지 않고 좁아질 뿐이다.", "fourier"],
+    ["합성곱 정리", "Convolution Theorem", "시간(공간) 영역의 합성곱 = 주파수 영역의 곱셈. 필터와 블러를 주파수로 이해하게 해 준다.", "fourier"],
+    ["점 퍼짐 함수", "PSF", "한 점이 결상계를 거쳐 퍼진 모양. 원형 조리개의 PSF는 에어리 패턴이며, |동공의 푸리에 변환|²이다.", "fourier"],
+    ["MTF", "Modulation Transfer Function", "공간 주파수별 명암비 전달률. OTF의 크기이며, 동공 함수의 자기상관이다.", "fourier"],
+    ["DCT", "Discrete Cosine Transform", "코사인만 쓰는 푸리에 계열 변환. JPEG는 8×8 블록 DCT 계수를 양자화해 압축한다.", "fourier"],
+    ["k-공간", "k-space", "MRI가 측정하는 공간 주파수 영역. 중심은 명암(저주파), 가장자리는 윤곽(고주파)을 담는다.", "fourier"],
+    // 06 샘플링
+    ["표본화 정리", "Nyquist–Shannon Sampling Theorem", "최고 주파수의 2배보다 빠르게 표본화하면 대역 제한 신호를 완벽히 복원할 수 있다.", "sampling"],
+    ["나이퀴스트 주파수", "Nyquist Frequency", "표본화 주파수의 절반 fs/2. 이보다 높은 성분은 낮은 주파수로 접혀 들어온다.", "sampling"],
+    ["에일리어싱", "Aliasing", "표본화가 너무 성겨 높은 주파수가 낮은 주파수로 둔갑하는 현상. 수레바퀴 효과, 모아레가 그 예.", "sampling"],
+    ["모아레", "Moiré", "고운 무늬와 표본화 격자(또는 두 격자)의 공간 주파수 차이가 만드는 굵은 줄무늬. 2D 에일리어싱.", "sampling"],
+    ["안티에일리어싱 필터", "Anti-aliasing Filter", "표본화 전에 나이퀴스트 이상의 성분을 걸러 내는 저역통과 필터. 카메라의 OLPF.", "sampling"],
+    ["sinc 보간", "Sinc Interpolation", "표본마다 sinc 함수를 놓고 더해 연속 신호를 재구성하는 이상적인 복원.", "sampling"],
+    ["양자화", "Quantization", "진폭을 유한 개의 단계로 반올림하는 것. 이상적 N비트의 SNR ≈ 6.02N + 1.76 dB.", "sampling"],
+    ["디더", "Dither", "양자화 전에 작은 잡음을 일부러 더해 오차를 신호와 무관한 잡음으로 바꾸는 기법.", "sampling"],
+    // 07 확률
+    ["포아송 분포", "Poisson Distribution", "독립적으로 드물게 일어나는 사건의 개수 분포. 평균 = 분산 = λ. 광자 수, 결함 수.", "probability"],
+    ["샷 노이즈", "Shot Noise", "입자(광자·전자)의 이산성 때문에 생기는 잡음. 표준편차 √N, 그래서 SNR = √N.", "probability"],
+    ["중심극한정리", "Central Limit Theorem", "독립적인 작은 요인을 많이 더하면 원래 분포와 무관하게 합은 정규분포에 가까워진다.", "probability"],
+    ["정규분포", "Normal Distribution", "평균 μ, 표준편차 σ의 종 모양 분포. ±1σ 68.3%, ±2σ 95.4%, ±3σ 99.73%.", "probability"],
+    ["공정능력지수", "Cp / Cpk", "규격 폭을 공정 산포(6σ)와 비교한 지수. Cpk는 평균의 치우침까지 반영한다.", "probability"],
+    ["베이즈 정리", "Bayes' Theorem", "P(A|B) = P(B|A)P(A)/P(B). 사전확률이 낮으면 정확한 검사의 양성 판정도 대부분 위양성일 수 있다.", "probability"],
+    ["위양성", "False Positive", "실제로는 정상인데 불량(양성)으로 판정되는 경우.", "probability"],
+    ["포아송 수율 모델", "Poisson Yield Model", "결함이 무작위로 떨어지면 다이 수율 Y = e^(−A·D₀). 다이가 클수록 수율은 지수적으로 떨어진다.", "probability"],
+    // 08 정보
+    ["정보량", "Self-information", "확률 p인 사건의 놀라움 −log₂ p 비트. 드문 사건일수록 크다.", "information"],
+    ["엔트로피", "Entropy", "평균 놀라움 H = −Σ p log₂ p. 무손실 압축으로 줄일 수 있는 평균 비트 수의 하한.", "information"],
+    ["허프만 부호", "Huffman Code", "자주 나오는 기호에 짧은 부호를 주는 최적 접두 부호. 평균 길이는 H와 H+1 사이.", "information"],
+    ["채널 용량", "Channel Capacity", "잡음 채널로 오류 없이 보낼 수 있는 최대 전송률. 가우스 채널은 C = B log₂(1 + SNR).", "information"],
+    ["해밍 부호", "Hamming Code", "(7,4) 해밍 부호는 4비트에 패리티 3비트를 붙여 1비트 오류의 위치를 찾아 고친다.", "information"],
+    ["신드롬", "Syndrome", "수신어에 패리티 검사를 적용한 결과. 0이면 오류 없음, 아니면 오류 위치를 가리킨다.", "information"],
+    ["리드–솔로몬 부호", "Reed–Solomon Code", "데이터를 유한체 위 다항식의 값으로 보내, 일부 기호가 지워져도 보간으로 복원하는 부호. QR 코드, CD, 위성 통신.", "information"],
+    ["교차 엔트로피", "Cross-entropy", "참 분포 p를 모델 q로 부호화할 때의 평균 비트 수. 분류 신경망의 손실 함수.", "information"],
+    // 09 최적화
+    ["경사 하강법", "Gradient Descent", "기울기(∇f)의 반대 방향으로 조금씩 움직여 함수의 최솟값을 찾는 방법.", "optimization"],
+    ["학습률", "Learning Rate", "경사 하강 한 걸음의 크기. 너무 크면 진동·발산, 너무 작으면 느리다.", "optimization"],
+    ["조건수", "Condition Number", "가장 가파른 방향과 가장 완만한 방향의 곡률 비. 크면 경사 하강이 지그재그로 느려지고, 연립방정식은 오차에 민감해진다.", "optimization"],
+    ["모멘텀", "Momentum", "이전 걸음의 속도를 일부 이어받는 경사 하강. 무거운 공처럼 협곡의 지그재그를 줄인다.", "optimization"],
+    ["볼록 함수", "Convex Function", "어느 두 점을 이은 선분도 그래프 위에 있는 함수. 국소 최소가 곧 전역 최소다.", "optimization"],
+    ["최소제곱법", "Least Squares", "잔차 제곱합을 최소화하는 맞춤. 정규방정식 AᵀAx = Aᵀb로 풀린다.", "optimization"],
+    ["라그랑주 승수", "Lagrange Multiplier", "제약 g = c 아래 최적점에서 ∇f = λ∇g. λ는 제약을 한 단위 풀 때 목적 함수가 늘어나는 양(그림자 가격).", "optimization"],
+    ["안장점", "Saddle Point", "한 방향으로는 최소, 다른 방향으로는 최대인 기울기 0인 점.", "optimization"],
+    // 10 수치 해석
+    ["부동소수점", "Floating Point", "부호·지수·가수로 수를 표현하는 형식(IEEE 754). 표현 가능한 수의 간격은 크기에 비례한다.", "numerics"],
+    ["기계 엡실론", "Machine Epsilon", "1과 그다음 표현 가능한 수의 차. double은 2⁻⁵² ≈ 2.22×10⁻¹⁶.", "numerics"],
+    ["상쇄 오차", "Catastrophic Cancellation", "거의 같은 두 수를 빼서 유효 자릿수가 사라지는 현상. 식을 바꿔 쓰면 피할 수 있다.", "numerics"],
+    ["유한 차분", "Finite Difference", "도함수를 이웃 격자점 값의 차이로 근사하는 방법. 중심 차분의 오차는 h²에 비례.", "numerics"],
+    ["CFL 조건", "Courant–Friedrichs–Lewy Condition", "명시적 시간 전진에서 한 단계에 정보가 한 격자 칸 이상 이동하면 안 된다는 안정 조건(c·Δt/Δx ≤ 1).", "numerics"],
+    ["FDTD", "Finite-Difference Time-Domain", "맥스웰 방정식을 Yee 격자에서 전기장과 자기장을 반 칸씩 엇갈려 번갈아 갱신하며 푸는 방법.", "numerics"],
+    ["RCWA", "Rigorous Coupled-Wave Analysis", "주기 구조의 유전율과 장을 푸리에 고조파로 전개해 층별 고유값 문제로 푸는 방법. 격자·픽셀 배열 해석에 쓴다.", "numerics"],
+    // 11 기하
+    ["위상 불변량", "Topological Invariant", "찢거나 붙이지 않고 연속적으로 변형해도 변하지 않는 성질(구멍의 개수, 오일러 특성수).", "geometry"],
+    ["오일러 특성수", "Euler Characteristic", "χ = V − E + F. 볼록 다면체는 2, 구멍이 g개인 곡면은 2 − 2g.", "geometry"],
+    ["곡률", "Curvature", "곡선이 휘는 정도 = 접촉원 반지름의 역수 1/R.", "geometry"],
+    ["가우스 곡률", "Gaussian Curvature", "곡면의 두 주곡률의 곱. 0이 아니면 찢거나 늘이지 않고 평면에 펼 수 없다(빼어난 정리).", "geometry"],
+    ["지도 투영", "Map Projection", "구면을 평면으로 옮기는 방법. 메르카토르는 각도를, 등적 투영은 넓이를 보존하지만 둘 다는 불가능.", "geometry"],
+    ["호모그래피", "Homography", "평면을 다른 평면으로 옮기는 사영 변환. 3×3 행렬(자유도 8)로, 4점 대응이면 결정된다.", "geometry"],
+    ["소실점", "Vanishing Point", "원근 투영에서 평행선들이 모이는 점.", "geometry"],
+    ["구면 수차", "Spherical Aberration", "구면 렌즈에서 가장자리 광선이 중심 광선보다 앞에 초점을 맺는 현상. 비구면으로 보정한다.", "geometry"],
+    ["왜곡 수차", "Distortion", "배율이 상의 높이에 따라 달라 직선이 휘는 수차. 배럴형·핀쿠션형.", "geometry"],
+    // 12 대칭
+    ["군", "Group", "닫혀 있고, 결합법칙이 성립하며, 항등원과 역원이 있는 연산의 모임. 대칭 조작들은 늘 군을 이룬다.", "symmetry"],
+    ["이면체군", "Dihedral Group", "정n각형의 대칭군 Dₙ(원소 2n개: 회전 n + 뒤집기 n). 일반적으로 비가환.", "symmetry"],
+    ["치환의 홀짝성", "Parity of a Permutation", "치환을 맞바꾸기의 곱으로 쓸 때 개수의 홀짝. 15 퍼즐에서 14–15만 바꾼 상태는 홀수라 풀 수 없다.", "symmetry"],
+    ["교환자", "Commutator", "[A, B] = ABA⁻¹B⁻¹. A와 B가 거의 교환되면 조금만 바꾸는 조작이 된다(루빅스 큐브 공략의 핵심).", "symmetry"],
+    ["벽지군", "Wallpaper Group", "평면 반복 무늬의 대칭군. 정확히 17가지가 있다.", "symmetry"],
+    ["결정학적 제약 정리", "Crystallographic Restriction", "격자와 공존할 수 있는 회전 대칭은 1, 2, 3, 4, 6회뿐이다.", "symmetry"],
+    ["밀러 지수", "Miller Indices", "결정면을 축 절편의 역수로 나타낸 (hkl). 실리콘 (100)과 (111) 면 사이 각은 54.74°.", "symmetry"],
+    ["준결정", "Quasicrystal", "주기는 없지만 질서가 있어 5회 같은 '금지된' 회전 대칭을 보이는 고체.", "symmetry"],
+    ["뇌터 정리", "Noether's Theorem", "연속 대칭마다 보존량이 있다. 시간 이동 대칭 → 에너지 보존, 공간 이동 → 운동량 보존.", "symmetry"],
+  ];
+  const list = document.getElementById("gl-list"), qEl = document.getElementById("gl-q"), fEl = document.getElementById("gl-f"), nEl = document.getElementById("gl-n");
+  let filt = "all";
+  const used = MB.CHAPTERS.map((c) => c.slug).filter((s) => T.some((t) => t[3] === s));
+  fEl.innerHTML = `<button data-c="all" class="on">전체</button>` + used.map((s) => `<button data-c="${s}">${chs[s].num} ${chs[s].title}</button>`).join("");
+  fEl.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { filt = b.dataset.c; fEl.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); render(); }));
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  function render() {
+    const q = qEl.value.trim().toLowerCase();
+    const rows = T.filter((t) => (filt === "all" || t[3] === filt) && (!q || (t[0] + " " + t[1] + " " + t[2]).toLowerCase().includes(q)));
+    nEl.textContent = `${rows.length}개 / 전체 ${T.length}개`;
+    list.innerHTML = rows.map((t) => `<div class="gl-item"><h4>${esc(t[0])}<span class="en">${esc(t[1])}</span></h4><p>${esc(t[2])}</p><a class="ch" href="${t[3]}.html">${chs[t[3]].num} · ${chs[t[3]].title} →</a></div>`).join("") || `<p style="color:var(--text-dim)">찾는 용어가 없습니다. 다른 표현(영어 등)으로 검색해 보세요.</p>`;
+  }
+  qEl.addEventListener("input", render);
+  render();
+})();
+
+/* ------------------------------------------------ 종합 퀴즈 */
+(function () {
+  const chs = {}; MB.CHAPTERS.forEach((c) => (chs[c.slug] = c));
+  // [질문, [보기...], 정답 인덱스, 해설, 장]
+  const Q = [
+    ["계산기가 sin 0.5를 계산할 수 있는 근본 이유는?", ["sin 값 표를 무한히 저장해 두었기 때문", "sin을 다항식(급수)으로 근사하고, 몇 항이면 오차가 충분히 작은지 보장할 수 있기 때문", "sin은 원래 덧셈만으로 정의되기 때문", "하드웨어에 아날로그 회로가 있기 때문"], 1, "덧셈·곱셈만 하는 기계는 다항식을 계산할 수 있습니다. 테일러 급수(와 구간 축소)는 '몇 항에서 잘라도 오차가 얼마 이하'라는 보장을 줍니다.", "limits"],
+    ["교류 회로 해석에 복소수 페이저를 쓰면 무엇이 쉬워지나?", ["저항값이 작아진다", "미분이 jω 곱셈이 되어 미분방정식이 대수 방정식이 된다", "주파수가 사라져 직류처럼 된다", "전력 손실이 0이 된다"], 1, "사인파 e^{jωt}를 미분하면 jω가 곱해질 뿐입니다. 그래서 코일·커패시터도 저항처럼 '복소 임피던스'로 옴의 법칙에 넣을 수 있습니다.", "complex"],
+    ["2×2 행렬의 행렬식이 0이라는 것은 기하적으로?", ["공간이 회전만 한다", "평면 전체가 한 직선(또는 점)으로 찌그러진다", "넓이가 두 배가 된다", "모든 벡터가 고유벡터다"], 1, "행렬식은 넓이 배율입니다. 0이면 넓이가 사라지므로 2차원이 1차원 이하로 눌리고, 정보가 사라져 역변환이 없습니다.", "linalg"],
+    ["카메라 CCM의 비대각 원소를 크게 키우면(채도를 강하게 보정하면) 생기는 부작용은?", ["화이트 밸런스가 반드시 깨진다", "각 채널의 잡음이 증폭된다", "해상도가 떨어진다", "아무 영향이 없다"], 1, "출력 채널은 입력 채널의 가중합이므로, 계수의 제곱합(행 벡터 노름)이 커질수록 독립 잡음이 증폭됩니다. 색 정확도와 잡음은 트레이드오프입니다.", "linalg"],
+    ["RC 회로 충전, 뜨거운 칩의 냉각, 체내 약물 농도가 같은 곡선을 그리는 이유는?", ["우연의 일치", "모두 '변화율이 현재 차이에 비례'하는 1차 미분방정식이기 때문", "모두 전기 현상이기 때문", "모두 사인파이기 때문"], 1, "dy/dt = −(y − y∞)/τ. 남은 차이에 비례해 줄어드는 시스템은 모두 지수 곡선을 그리며, τ만 다릅니다.", "ode"],
+    ["MRI가 직접 측정하는 것은?", ["몸속 단면의 사진", "영상의 공간 주파수 성분(k-공간)", "조직의 온도", "X선 흡수량"], 1, "기울기 자기장이 위치를 주파수와 위상으로 바꾸므로, 수신 신호는 영상의 푸리에 변환 값입니다. 역푸리에 변환으로 영상을 얻습니다.", "fourier"],
+    ["조리개를 너무 조이면(F값이 아주 크면) 사진이 오히려 흐려지는 이유는?", ["렌즈 수차가 커져서", "동공이 작아지면 그 푸리에 변환인 PSF가 넓어지는 회절 때문", "셔터가 느려져서", "센서 잡음 때문"], 1, "PSF = |동공의 푸리에 변환|². 작은 구멍의 변환은 넓게 퍼집니다(불확정성). 회절 한계 차단 주파수는 1/(λN)입니다.", "fourier"],
+    ["48 kHz로 표본화한 오디오에 30 kHz 사인파가 섞여 들어오면 어떤 주파수로 들리나?", ["30 kHz", "18 kHz", "24 kHz", "들리지 않는다"], 1, "나이퀴스트 24 kHz를 넘는 성분은 접혀 |30 − 48| = 18 kHz로 나타납니다. 그래서 표본화 전에 안티에일리어싱 필터가 필요합니다.", "sampling"],
+    ["픽셀에 평균 100개의 광자가 들어올 때 샷 노이즈만 고려한 SNR은?", ["100", "10", "50", "1"], 1, "포아송 분포는 분산 = 평균이므로 표준편차는 √100 = 10, SNR = 100/10 = 10(20 dB)입니다.", "probability"],
+    ["불량률 0.1%, 민감도 99%, 위양성률 1%인 검사에서 '불량' 판정이 나왔을 때 실제 불량일 확률은 대략?", ["99%", "약 9%", "50%", "1%"], 1, "1만 개 중 진짜 불량 10개 → 9.9개 검출, 정상 9,990개 중 약 99.9개 오검출. 9.9/(9.9+99.9) ≈ 9%. 사전확률이 낮으면 양성의 대부분이 위양성입니다.", "probability"],
+    ["(7,4) 해밍 부호가 할 수 있는 것은?", ["어떤 오류든 모두 고친다", "1비트 오류의 위치를 찾아 고친다", "데이터를 압축한다", "오류를 막아 비트가 안 뒤집히게 한다"], 1, "패리티 3비트의 신드롬이 7개 위치 중 하나(또는 오류 없음)를 가리킵니다. 2비트 오류는 잘못 고칠 수 있습니다.", "information"],
+    ["경사 하강법에서 학습률이 너무 크면?", ["항상 더 빨리 최솟값에 도달한다", "골짜기를 넘나들며 진동하거나 발산한다", "국소 최소에 절대 빠지지 않는다", "기울기가 0이 된다"], 1, "한 걸음이 골짜기 폭보다 크면 반대편 벽으로 튀어 오릅니다. 곡률(조건수)과 학습률의 관계가 수렴을 정합니다.", "optimization"],
+    ["라그랑주 승수 λ의 경제적 의미는?", ["목적 함수의 최솟값", "제약을 한 단위 풀어 줄 때 최적값이 늘어나는 양(그림자 가격)", "제약 조건의 개수", "학습률"], 1, "최적값을 c로 미분하면 λ입니다. 예산·전력·면적 제약이 얼마나 '비싼지'를 알려 줍니다.", "optimization"],
+    ["컴퓨터에서 0.1 + 0.2 == 0.3이 거짓인 이유는?", ["CPU 버그", "0.1, 0.2, 0.3 모두 2진수로 끝나지 않아 가장 가까운 double로 반올림되고, 그 오차가 맞지 않기 때문", "자바스크립트만의 문제", "덧셈 순서 때문"], 1, "0.1 = 0.000110011…₂ (무한 반복). IEEE 754 double로 반올림된 값들의 합은 0.30000000000000004가 됩니다. 언어와 무관합니다.", "numerics"],
+    ["명시적 유한 차분으로 파동 방정식을 풀 때 시간 간격을 키우다 보면 해가 폭발한다. 이를 설명하는 조건은?", ["나이퀴스트 조건", "CFL 조건 c·Δt/Δx ≤ 1", "중심극한정리", "오일러 공식"], 1, "한 시간 단계에 파동이 격자 한 칸보다 멀리 가면 수치 해법이 정보를 따라잡지 못해 불안정해집니다.", "numerics"],
+    ["완벽하게 정확한(모든 거리·각도·넓이를 보존하는) 평면 세계지도가 불가능한 이유는?", ["지구가 완전한 구가 아니라서", "구면의 가우스 곡률이 0이 아니라서", "인쇄 기술의 한계", "지도 축척 때문"], 1, "가우스의 빼어난 정리: 곡률은 늘이거나 찢지 않는 한 보존됩니다. 곡률이 있는 구면은 평면(곡률 0)과 등거리일 수 없습니다.", "geometry"],
+    ["문서 스캔 앱이 비스듬히 찍은 종이를 반듯하게 펴려면 최소 몇 개의 점 대응이 필요한가?", ["2", "3", "4", "8"], 2, "호모그래피는 3×3 행렬이지만 배율이 자유라 자유도 8. 점 하나가 식 2개를 주므로 4점이면 결정됩니다.", "geometry"],
+    ["정오각형 타일로는 평면을 빈틈없이 채울 수 없고, 결정에도 5회 회전 대칭이 없다. 그 이유는?", ["오각형은 만들기 어렵다", "격자와 공존하는 회전 대칭은 1, 2, 3, 4, 6회뿐이다(결정학적 제약)", "5는 소수라서", "사실 가능하다"], 1, "격자를 회전시킨 행렬의 대각합 2cos(2π/n)이 정수여야 하므로 n ∈ {1, 2, 3, 4, 6}. 5회 대칭은 주기 없는 준결정에서만 나타납니다.", "symmetry"],
+  ];
+  const box = document.getElementById("final");
+  let score = 0, done = 0;
+  const upd = () => { MB.stat("sc-t", `${score} / ${done} · 전체 ${Q.length}`); document.getElementById("sc-b").style.width = (done / Q.length) * 100 + "%"; };
+  function build() {
+    score = 0; done = 0;
+    box.innerHTML = Q.map(([q, opts, a, exp, ch], i) =>
+      `<div class="quiz-q" data-i="${i}"><p>${i + 1}. ${q}<a class="ch" href="${ch}.html">(${chs[ch].num}장)</a></p><div class="opts">${opts.map((o, k) => `<button class="opt"${k === a ? " data-correct" : ""}>${o}</button>`).join("")}</div><div class="quiz-exp">${exp}</div></div>`).join("");
+    box.querySelectorAll(".quiz-q").forEach((qq) => {
+      const opts = [...qq.querySelectorAll("button.opt")];
+      opts.forEach((b) => b.addEventListener("click", () => {
+        if (qq.classList.contains("done")) return;
+        opts.forEach((o) => { o.disabled = true; if (o.hasAttribute("data-correct")) o.classList.add("right"); });
+        if (!b.hasAttribute("data-correct")) b.classList.add("wrong"); else score++;
+        qq.classList.add("done"); done++; upd();
+      }));
+    });
+    upd();
+  }
+  document.getElementById("sc-r").addEventListener("click", build);
+  build();
+})();
+</script>
+</body>
+</html>

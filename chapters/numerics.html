@@ -1,0 +1,1157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<title>컴퓨터는 어떻게 틀리는가 · MathBook</title>
+<meta name="description" content="패트리어트 미사일의 0.34초 오차에서 시작해 부동소수점, 상쇄 오차, 수치 미분의 U자 곡선, CFL 안정성, FDTD·RCWA, 조건수까지 직접 만지며 익힌다.">
+<link rel="canonical" href="https://mathbook.euiyun.com/chapters/numerics.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="MathBook">
+<meta property="og:title" content="컴퓨터는 어떻게 틀리는가 · MathBook">
+<meta property="og:description" content="패트리어트 미사일의 0.34초 오차에서 시작해 부동소수점, 상쇄 오차, 수치 미분의 U자 곡선, CFL 안정성, FDTD·RCWA, 조건수까지 직접 만지며 익힌다.">
+<meta property="og:url" content="https://mathbook.euiyun.com/chapters/numerics.html">
+<meta property="og:image" content="https://mathbook.euiyun.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"컴퓨터는 어떻게 틀리는가","name":"컴퓨터는 어떻게 틀리는가 · MathBook","url":"https://mathbook.euiyun.com/chapters/numerics.html","mainEntityOfPage":"https://mathbook.euiyun.com/chapters/numerics.html","inLanguage":"ko","isAccessibleForFree":true,"learningResourceType":"interactive textbook chapter","position":10,"image":"https://mathbook.euiyun.com/og.png","dateModified":"2026-10-05","isPartOf":{"@type":"Book","@id":"https://mathbook.euiyun.com/#book","name":"MathBook — 문제에서 출발하는 수학 교과서","url":"https://mathbook.euiyun.com/"},"publisher":{"@type":"Organization","name":"MathBook","url":"https://mathbook.euiyun.com/"},"description":"패트리어트 미사일의 0.34초 오차에서 시작해 부동소수점, 상쇄 오차, 수치 미분의 U자 곡선, CFL 안정성, FDTD·RCWA, 조건수까지 직접 만지며 익힌다."},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"MathBook","item":"https://mathbook.euiyun.com/"},{"@type":"ListItem","position":2,"name":"10 컴퓨터는 어떻게 틀리는가","item":"https://mathbook.euiyun.com/chapters/numerics.html"}]}]}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<script src="../js/common.js"></script>
+<style>
+  .num-in { width: 100%; font: 600 15px var(--mono); padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+  .num-in:focus { outline: none; border-color: var(--accent); }
+  .num-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .num-presets .btn { padding: 5px 10px; font-size: 13px; }
+  .bits { display: flex; flex-wrap: wrap; gap: 2px; font: 600 12px var(--mono); padding: 12px 14px 4px; }
+  .bits span { display: inline-block; width: 13px; text-align: center; padding: 3px 0; border-radius: 3px; }
+  .bits .b-s { background: color-mix(in srgb, var(--bad) 22%, transparent); }
+  .bits .b-e { background: color-mix(in srgb, var(--ok) 22%, transparent); }
+  .bits .b-f { background: var(--accent-soft); }
+  .bits .gap { width: 6px; background: none; }
+  .bit-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-dim); padding: 0 14px 10px; }
+  .bit-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .dec-box { font: 13px/1.6 var(--mono); word-break: break-all; padding: 10px 14px; border-top: 1px solid var(--border); color: var(--text-dim); }
+  .dec-box b { color: var(--text); font-weight: 600; }
+  .dec-box .hl { color: var(--accent-2); }
+</style>
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3d6151a0abc94ede89285d462527fa80"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</head>
+<body data-chapter="numerics">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">Chapter 10</div>
+    <h1>컴퓨터는 어떻게 틀리는가</h1>
+    <p class="lead">컴퓨터는 계산을 틀리지 않는다고들 합니다. 실제로는 거의 모든 계산에서 조금씩 틀리고, 그 '조금'이 어떤 조건에서 커지는지 아는 사람이 시뮬레이터를 믿을 만하게 만듭니다. 이 장은 숫자가 비트로 저장되는 방식에서 출발해 뺄셈 한 번이 유효숫자를 날리는 과정, 미분을 차분으로 바꿀 때 생기는 두 종류의 오차, 시간 간격을 조금만 크게 잡아도 시뮬레이션이 폭발하는 이유를 차례로 봅니다. 끝에서는 같은 원리가 이미지 센서 픽셀을 설계하는 전자기 시뮬레이터 FDTD와 RCWA, 그리고 연립방정식의 조건수로 이어지는 것을 확인합니다.</p>
+    <ul class="objectives">
+      <li>IEEE 754 배정밀도가 수를 부호·지수·가수로 저장하는 방식을 알고, 0.1 + 0.2 ≠ 0.3의 이유를 비트 수준에서 설명한다.</li>
+      <li>부동소수점 간격이 크기에 비례한다는 것(상대 정밀도 일정)과 기계 엡실론의 의미, AI에서 쓰는 bf16·fp8의 절충을 안다.</li>
+      <li>상쇄 오차를 알아보고 1 − cos x, 근의 공식을 안정적인 형태로 바꿔 쓴다.</li>
+      <li>수치 미분에서 절단 오차와 반올림 오차의 줄다리기(U자 곡선)와 최적 간격 √ε, ∛ε을 설명한다.</li>
+      <li>유한 차분으로 파동 방정식을 풀고 CFL 조건을 직접 깨 본다. FDTD의 Yee 격자, RCWA의 푸리에 전개 개념을 안다.</li>
+      <li>조건수가 입력 오차를 얼마나 키우는지 기하적으로 이해한다.</li>
+    </ul>
+    <div class="origin">
+      <div class="o-head"><small>이 수식이 없었다면</small><b>1991년 다란의 패트리어트 미사일</b></div>
+      <div class="o-body"><p>1991년 2월 25일 걸프전, 사우디아라비아 다란에 배치된 패트리어트 포대가 날아오는 스커드 미사일을 요격하지 못했고, 미사일은 미군 막사에 떨어져 28명이 숨졌습니다. 미국 회계감사원(GAO)의 1992년 보고서가 짚은 원인은 계산 오차였습니다. 시스템 시계는 시간을 0.1초 단위로 세는데, 0.1은 2진수로 끝나지 않는 소수입니다. 24비트 레지스터에 잘려 들어간 0.1은 진짜보다 약 0.000000095초 작았고, 포대가 약 100시간 연속 가동되는 동안 이 오차가 360만 번 쌓여 약 0.34초가 되었습니다. 초속 1.6 km가 넘는 스커드에게 0.34초는 수백 m입니다. 레이더가 다음에 표적을 찾아야 할 '추적 창'이 엉뚱한 곳으로 옮겨 갔고, 시스템은 표적이 없다고 판단했습니다.</p>
+        <p>수치 오차는 교과서 연습 문제가 아닙니다. 이 장의 도구는 '얼마나 틀릴 수 있는가'를 계산하는 수학입니다.</p>
+        <div class="o-chain"><span>0.1초 시계</span><i>→</i><span>2진 무한소수</span><i>→</i><span>잘림 오차 누적</span><i>→</i><span class="tool">오차 해석·부동소수점 모델</span><i>→</i><span>믿을 수 있는 시뮬레이션</span></div></div>
+    </div>
+  </header>
+
+  <!-- =============================================================== 1 -->
+  <section id="floating-point">
+    <h2>0.1 + 0.2 ≠ 0.3: 수는 비트로 저장된다</h2>
+    <div class="problem"><strong>계산기가 틀린 답을 낸다</strong>
+      <p>브라우저 콘솔(F12)에 <code>0.1 + 0.2 === 0.3</code>을 입력하면 <code>false</code>가 나옵니다. <code>0.1 + 0.2</code>의 값은 <code>0.30000000000000004</code>입니다. 파이썬, C, 엑셀도 같습니다. 버그가 아니라 설계입니다. 왜 이렇게 설계했을까요?</p></div>
+    <p>10진수에서 1/3 = 0.333…이 끝나지 않듯, 2진수에서는 분모에 2 말고 다른 소인수(예: 5)가 있는 분수가 끝나지 않습니다. 0.1 = 1/10 = 1/(2·5)이므로 2진수로 쓰면 무한 반복 소수입니다.</p>
+    <div class="formula">$$0.1_{10} = 0.0\,0011\,0011\,0011\,0011\ldots_2 = \sum_{k=1}^{\infty}\left(2^{-4k}+2^{-4k-1}\right)$$
+      <div class="where">'0011'이 영원히 반복된다. 유한한 비트에 담으려면 어디선가 잘라야(또는 반올림해야) 하고, 그 순간 저장값은 0.1이 아니다.</div>
+    </div>
+    <p>컴퓨터의 실수형은 대부분 <span class="term">IEEE 754 부동소수점</span><span class="en">(Floating-point)</span>입니다. 과학적 표기법 \(6.02\times10^{23}\)의 2진 버전으로, 64비트 배정밀도<span class="en">(double, binary64)</span>는 부호 1비트, 지수 11비트, 가수 52비트로 나뉩니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 190" role="img" aria-label="IEEE 754 배정밀도 비트 배치">
+        <rect x="40" y="40" width="22" height="44" rx="4" fill="var(--bad)" opacity="0.25" stroke="var(--bad)"/>
+        <rect x="62" y="40" width="176" height="44" rx="4" fill="var(--ok)" opacity="0.22" stroke="var(--ok)"/>
+        <rect x="238" y="40" width="522" height="44" rx="4" class="f-acc-soft"/>
+        <text x="51" y="67" class="t" text-anchor="middle">s</text>
+        <text x="150" y="67" class="t" text-anchor="middle">지수 e (11비트)</text>
+        <text x="499" y="67" class="t" text-anchor="middle">가수 f (52비트) — 소수점 아래 2진 자리</text>
+        <text x="40" y="30" class="t-mono">63</text><text x="62" y="30" class="t-mono">62</text><text x="226" y="30" class="t-mono">52</text><text x="238" y="30" class="t-mono">51</text><text x="752" y="30" class="t-mono">0</text>
+        <text x="400" y="125" class="t" text-anchor="middle">값 = (−1)ˢ × 1.f₂ × 2^(e − 1023)</text>
+        <text x="400" y="152" class="t-dim" text-anchor="middle">맨 앞의 1은 저장하지 않는다(숨은 비트) → 실제 유효숫자는 53비트 ≈ 십진 15.95자리</text>
+        <text x="400" y="176" class="t-dim" text-anchor="middle">e = 0은 0과 비정규수(subnormal), e = 2047은 ∞와 NaN에 예약</text>
+      </svg>
+      <figcaption><b>그림 10-1.</b> IEEE 754 배정밀도(binary64)의 비트 배치. 지수는 1023을 더한 '편향(bias)' 형태로 저장한다. 0.1은 \(1.6\times2^{-4}\)이므로 e = 1019, 가수에는 0.6을 2진으로 52자리까지 쓴 값이 반올림되어 들어간다.</figcaption>
+    </figure>
+    <p>아래 시뮬레이터에 아무 수나 넣어 보세요. 입력한 10진수가 아니라 <b>실제로 메모리에 들어간 값</b>을 정확한 10진수로 풀어 보여 줍니다. 2진 유한소수는 언제나 10진 유한소수로 정확히 쓸 수 있으므로(2⁻ᵏ = 5ᵏ/10ᵏ) 이 값은 근사가 아니라 완전한 전개입니다.</p>
+
+    <div class="sim" id="sim-num-bits">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>배정밀도 해부기: 저장된 값은 정확히 얼마인가</h3></div>
+      <div class="sim-body">
+        <div class="sim-controls">
+          <label class="ctrl"><span>수 또는 식 (숫자, + − * / ( ) 와 e 표기)</span><input class="num-in" id="num-bits-in" value="0.1" autocomplete="off" spellcheck="false"></label>
+          <div class="ctrl"><span>예시</span>
+            <div class="num-presets" id="num-bits-presets">
+              <button class="btn" data-v="0.1">0.1</button><button class="btn" data-v="0.1+0.2">0.1+0.2</button><button class="btn" data-v="0.3">0.3</button><button class="btn" data-v="1/3">1/3</button><button class="btn" data-v="0.5">0.5</button><button class="btn" data-v="9007199254740993">2⁵³+1</button><button class="btn" data-v="16777217">2²⁴+1</button><button class="btn" data-v="1e-310">1e−310</button><button class="btn" data-v="1/0">1/0</button>
+            </div>
+          </div>
+          <div class="btn-row"><button class="btn" id="num-bits-down">◀ 바로 아래 수</button><button class="btn" id="num-bits-up">바로 위 수 ▶</button></div>
+        </div>
+      </div>
+      <div class="bits" id="num-bits-row"></div>
+      <div class="bit-legend"><span><i style="background:color-mix(in srgb,var(--bad) 40%,transparent)"></i>부호</span><span><i style="background:color-mix(in srgb,var(--ok) 40%,transparent)"></i>지수 11비트</span><span><i style="background:var(--accent-soft);outline:1px solid var(--accent)"></i>가수 52비트</span><span id="num-bits-form"></span></div>
+      <div class="dec-box" id="num-bits-dec"></div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">입력과의 오차</span><span class="v" id="num-bits-err">—</span></div>
+        <div class="stat"><span class="k">이웃 간격 (ULP)</span><span class="v" id="num-bits-ulp">—</span></div>
+        <div class="stat"><span class="k">float32로 저장하면</span><span class="v" id="num-bits-f32">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① 0.1, 0.2, 0.3을 차례로 넣고 각 저장값이 참값보다 큰지 작은지 본다. 0.1과 0.2는 모두 위로 반올림되어 합이 0.3의 저장값(아래로 반올림)과 한 칸 어긋난다. ② 2⁵³+1을 넣으면 입력과 다른 수(2⁵³)가 저장된다. 정수도 2⁵³을 넘으면 끊긴다. ③ 1e−310은 지수 칸이 모두 0인 비정규수다. 모델: 입력 식은 브라우저의 JavaScript(배정밀도)로 계산한다. '입력과의 오차'는 입력 문자열을 BigInt 유리수로 다시 읽어 저장값과 비교한 값이며, 식(연산이 있는 입력)일 때는 각 단계 반올림이 누적된 결과다.</div>
+    </div>
+
+    <p>0.1과 0.2는 각각 저장될 때 참값보다 살짝 크게 반올림되고, 둘을 더한 뒤 결과를 다시 53비트로 반올림하면 0.3의 저장값보다 <b>정확히 한 칸 위</b>에 떨어집니다. 그래서 같지 않습니다. 이 '한 칸'의 크기를 단위로 쓰는데, 이것이 <span class="term">ULP</span><span class="en">(Unit in the Last Place)</span>입니다.</p>
+    <div class="callout tip"><strong>실무 규칙</strong> 부동소수점끼리 <code>==</code>로 비교하지 않는다. <code>|a − b| ≤ tol·max(|a|,|b|)</code>처럼 상대 허용오차로 비교한다. 돈처럼 10진 단위가 정확해야 하는 값은 정수(원, 센트 단위)나 10진 소수형(Decimal)으로 다룬다.</div>
+  </section>
+
+  <!-- =============================================================== 2 -->
+  <section id="float-spacing">
+    <h2>부동소수점 수직선: 간격은 크기에 비례한다</h2>
+    <div class="problem"><strong>1.0과 10억에 같은 정밀도가 필요할까</strong>
+      <p>센서 신호는 nV에서 V까지, 거리는 nm에서 km까지 쓰입니다. 고정소수점(소수점 위치 고정)이라면 작은 수는 유효숫자가 거의 없고 큰 수는 넘칩니다. 필요한 것은 '절대 오차'가 아니라 '상대 오차'가 일정한 수 체계입니다.</p></div>
+    <p>부동소수점은 지수가 같은 구간 \([2^k, 2^{k+1})\)(한 '옥타브', 이진 구간<span class="en">(binade)</span>) 안에 \(2^{52}\)개의 수를 등간격으로 깝니다. 다음 구간으로 가면 간격이 두 배가 됩니다. 그래서 수직선 위의 점들은 0 근처에 빽빽하고 멀어질수록 듬성듬성하지만, <b>간격 ÷ 크기</b>는 거의 일정합니다. 그 상대 간격의 상한이 <span class="term">기계 엡실론</span><span class="en">(Machine Epsilon)</span>입니다.</p>
+    <div class="formula">$$\mathrm{fl}(x) = x(1+\delta),\quad |\delta| \le u = \tfrac12\varepsilon,\qquad \varepsilon = 2^{-p+1}$$
+      <div class="where">\(p\): 가수 정밀도(숨은 비트 포함). 배정밀도 \(p=53\)이면 \(\varepsilon = 2^{-52}\approx2.22\times10^{-16}\), 단정밀도 \(p=24\)이면 \(\varepsilon=2^{-23}\approx1.19\times10^{-7}\). \(\varepsilon\)은 '1과 1 다음 수의 간격'이고, 가장 가까운 수로 반올림하면 상대 오차는 그 절반 \(u\) 이하다. 이 한 줄이 모든 반올림 오차 해석의 출발점이다.</div>
+    </div>
+    <p>실제 64비트 수직선은 너무 촘촘해 그릴 수 없으니, 지수와 가수 비트를 몇 개만 쓰는 장난감 형식(<span class="term">미니플로트</span><span class="en">(minifloat)</span>)으로 모든 수를 찍어 봅시다.</p>
+
+    <div class="sim" id="sim-num-minifloat">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>미니플로트의 모든 수를 수직선에</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-num-mini"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>지수 비트 E <output id="num-mf-e-out"></output></span><input type="range" id="num-mf-e" min="2" max="5" value="3"></label>
+          <label class="ctrl"><span>가수 비트 M <output id="num-mf-m-out"></output></span><input type="range" id="num-mf-m" min="1" max="6" value="3"></label>
+          <label class="ctrl"><span>찍어 볼 값 x <output id="num-mf-x-out"></output></span><input type="range" id="num-mf-x" min="0" max="1000" value="430"></label>
+          <label class="check"><input type="checkbox" id="num-mf-sub" checked> 비정규수(subnormal) 포함</label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">양수 개수</span><span class="v" id="num-mf-count">—</span></div>
+        <div class="stat"><span class="k">기계 엡실론 ε</span><span class="v" id="num-mf-eps">—</span></div>
+        <div class="stat"><span class="k">최댓값</span><span class="v" id="num-mf-max">—</span></div>
+        <div class="stat"><span class="k">x → fl(x), 상대 오차</span><span class="v" id="num-mf-round">—</span></div>
+      </div>
+      <div class="sim-note">위 줄은 선형 눈금, 아래 줄은 로그 눈금(각 이진 구간이 같은 폭)이다. 해볼 것: ① 위 줄에서 오른쪽으로 갈수록 점 간격이 두 배씩 벌어지는 것, 아래 줄에서는 구간마다 점 수가 \(2^M\)개로 같은 것을 확인한다. ② x를 옮기며 상대 오차가 항상 ε/2 이하인지 본다(비정규수 영역 제외). ③ 비정규수를 끄면 0 근처에 구멍(언더플로 틈)이 생긴다. 모델: IEEE 754식 형식(편향 \(2^{E-1}-1\), 최상위 지수는 ∞·NaN 예약, 가장 가까운 짝수로 반올림). 실제 fp8 E4M3(OCP 규격)는 최상위 지수도 일부 수에 써서 최댓값이 448로 이 모델(240)보다 크다.</div>
+    </div>
+
+    <p>가수 비트 M개 형식에서 정수는 \(2^{M+1}\)까지만 빠짐없이 표현됩니다. 그 위에서는 간격이 2 이상이라 홀수가 사라집니다. 단정밀도(가수 23비트)라면 \(2^{24}=16\,777\,216\)이고, 그래서 float32에서는 <code>16777216 + 1 == 16777216</code>입니다. float32 누적 카운터나 누적 합이 어느 순간 더 이상 늘지 않는 버그가 이것입니다. 배정밀도에서는 \(2^{53}\approx9.007\times10^{15}\)이 그 경계입니다.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>형식</th><th class="num">지수/가수 비트</th><th class="num">ε (1 다음 수 간격)</th><th class="num">대략 최댓값</th><th>주 용도</th></tr></thead>
+      <tbody>
+        <tr><td>binary64 (double)</td><td class="num">11 / 52</td><td class="num">2.2×10⁻¹⁶</td><td class="num">1.8×10³⁰⁸</td><td>과학 계산, 시뮬레이터, JavaScript의 모든 수</td></tr>
+        <tr><td>binary32 (float)</td><td class="num">8 / 23</td><td class="num">1.2×10⁻⁷</td><td class="num">3.4×10³⁸</td><td>그래픽스, 신호 처리, 신경망 학습의 기준</td></tr>
+        <tr><td>binary16 (fp16)</td><td class="num">5 / 10</td><td class="num">9.8×10⁻⁴</td><td class="num">65 504</td><td>GPU 추론, 이미지 HDR 저장</td></tr>
+        <tr><td>bfloat16 (bf16)</td><td class="num">8 / 7</td><td class="num">7.8×10⁻³</td><td class="num">3.4×10³⁸</td><td>신경망 학습: float32와 같은 범위, 정밀도는 포기</td></tr>
+        <tr><td>fp8 E4M3 / E5M2</td><td class="num">4 / 3, 5 / 2</td><td class="num">0.125 / 0.25</td><td class="num">448 / 57 344</td><td>대형 모델 학습·추론의 행렬 곱</td></tr>
+      </tbody>
+    </table></div>
+    <p>표의 아래쪽으로 갈수록 비트를 아낍니다. 신경망 가중치 하나가 1% 틀려도 수백만 개가 평균되면 결과는 크게 변하지 않지만, 값이 범위를 넘으면(오버플로) 학습이 망가집니다. 그래서 bf16은 <b>가수를 깎고 지수는 float32만큼 남긴</b> 형식입니다. fp8은 더 극단적이어서 텐서마다 배율<span class="en">(scale factor)</span>을 따로 곱해 값을 표현 가능한 범위 한가운데로 옮겨 놓고 씁니다(AIBook 참고). 미니플로트 시뮬레이터에서 E=4, M=3을 놓으면 fp8의 점들이 얼마나 성긴지 보입니다.</p>
+  </section>
+
+  <!-- =============================================================== 3 -->
+  <section id="patriot">
+    <h2>패트리어트 계산 다시 하기: 작은 오차가 쌓일 때</h2>
+    <p>이제 첫머리의 사고를 숫자로 재현합니다. GAO 보고서에 따르면 시스템은 0.1초마다 1씩 늘어나는 정수 카운터를 두고, 이를 24비트 고정소수점 레지스터에 담긴 0.1과 곱해 초 단위 시간을 만들었습니다. 저장된 0.1은 2진 소수점 아래 23자리에서 잘린 값이었습니다.</p>
+    <div class="formula">$$0.1 \;\to\; 0.000\,1100\,1100\,1100\,1100\,1100_2 = \frac{\lfloor 0.1\cdot2^{23}\rfloor}{2^{23}} = \frac{838\,860}{8\,388\,608}$$
+      <div class="where">한 번 셀 때마다 \(0.1 - 838\,860/2^{23} \approx 9.54\times10^{-8}\)초가 모자란다. 100시간이면 \(100\times3600\times10 = 3.6\times10^{6}\)번 세므로 누적 오차는 약 0.3433초.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 220" role="img" aria-label="레인지 게이트가 어긋나는 모식도">
+        <line x1="40" y1="170" x2="760" y2="170" class="s-axis"/>
+        <path d="M60 170 Q 200 20 520 60 T 760 150" class="s-line" stroke-dasharray="5 4"/>
+        <circle cx="430" cy="47" r="7" fill="var(--accent-2)"/>
+        <text x="430" y="30" class="t" text-anchor="middle">실제 스커드 위치</text>
+        <rect x="408" y="36" width="44" height="26" rx="4" fill="none" stroke="var(--ok)" stroke-width="2"/>
+        <rect x="268" y="18" width="44" height="26" rx="4" fill="none" stroke="var(--bad)" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="290" y="60" class="t-dim" text-anchor="middle">0.34초 늦은 시계로</text>
+        <text x="290" y="76" class="t-dim" text-anchor="middle">예측한 추적 창</text>
+        <line x1="316" y1="31" x2="404" y2="45" class="s-line"/>
+        <text x="360" y="104" class="t-mono" text-anchor="middle">≈ 수백 m</text>
+        <rect x="60" y="158" width="40" height="12" class="f-surface"/>
+        <text x="80" y="196" class="t-dim" text-anchor="middle">레이더</text>
+        <text x="520" y="200" class="t-dim">창 안에 표적이 없음 → '허위 표적'으로 판단</text>
+      </svg>
+      <figcaption><b>그림 10-2.</b> 레이더는 탐지한 표적의 다음 위치를 예측해 그 주변의 '레인지 게이트'만 살핀다. 시간 계산이 0.34초 어긋나면 예측 위치가 표적의 이동 거리만큼 밀리고, 창 안에 아무것도 없으니 시스템은 추적을 포기한다.</figcaption>
+    </figure>
+
+    <div class="sim" id="sim-num-patriot">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>0.1초 시계의 누적 오차</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-num-pat"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>연속 가동 시간 <output id="num-pat-h-out"></output></span><input type="range" id="num-pat-h" min="0" max="120" step="0.5" value="100"></label>
+          <label class="ctrl"><span>0.1을 담는 소수 비트 수 <output id="num-pat-b-out"></output></span><input type="range" id="num-pat-b" min="10" max="40" value="23"></label>
+          <label class="ctrl"><span>표적 속도 <output id="num-pat-v-out"></output></span><input type="range" id="num-pat-v" min="300" max="3000" step="1" value="1676"></label>
+          <label class="check"><input type="checkbox" id="num-pat-gao" checked> GAO 보고서 표 값 표시</label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">한 번 셀 때 오차</span><span class="v" id="num-pat-tick">—</span></div>
+        <div class="stat"><span class="k">센 횟수</span><span class="v" id="num-pat-n">—</span></div>
+        <div class="stat"><span class="k">누적 시간 오차</span><span class="v" id="num-pat-dt">—</span></div>
+        <div class="stat"><span class="k">속도 × 오차</span><span class="v" id="num-pat-dx">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① 23비트, 100시간에서 누적 오차가 0.3433초인지 확인한다(GAO 표의 점과 겹친다). ② 비트 수를 1씩 늘려 보면 오차가 대략 절반씩 준다. 단 0.1의 2진 전개 '0011' 반복 때문에 잘리는 위치에 따라 들쭉날쭉하다. ③ 8시간이면 오차가 0.03초 남짓이다. 짧게 가동하고 재부팅하면 피할 수 있는 버그였다. 모델: 오차 = (0.1 − 잘린 0.1) × 센 횟수, 거리 = 표적 속도 × 시간 오차의 단순 추정. 1676 m/s는 GAO가 인용한 스커드 속도다. GAO 표의 '레인지 게이트 이동'(100시간에 687 m)은 시스템 내부 계산 방식을 반영한 값이라 이 단순 곱(약 575 m)과 다르다.</div>
+    </div>
+    <p>교훈은 두 가지입니다. 첫째, 한 번의 오차가 \(10^{-7}\)이라도 <b>같은 방향으로</b> 백만 번 쌓이면 \(10^{-1}\)이 됩니다. 무작위 반올림 오차는 서로 상쇄되어 \(\sqrt{N}\)으로 자라지만, 잘림처럼 한쪽으로 치우친 오차는 \(N\)으로 자랍니다. 둘째, 같은 시간 값을 일부 루틴은 개선된 변환으로, 일부는 옛 변환으로 계산하면서 두 값의 차이를 쓰는 바람에 오차가 상쇄되지 않았다는 분석도 있습니다(R. Skeel, 1992). 시간처럼 오래 누적되는 양은 정수 틱으로 세고 마지막에 한 번만 변환하는 것이 정석입니다.</p>
+  </section>
+
+  <!-- =============================================================== 4 -->
+  <section id="cancellation">
+    <h2>상쇄 오차: 비슷한 두 수의 뺄셈</h2>
+    <div class="problem"><strong>정확한 공식이 틀린 답을 낸다</strong>
+      <p>렌즈 처짐<span class="en">(sag)</span>, 빛의 경로차, 작은 각도의 위상차를 계산하다 보면 \(1-\cos x\) 같은 식이 자주 나옵니다. \(x = 10^{-8}\)이면 참값은 \(5\times10^{-17}\)인데, 배정밀도로 <code>1 - Math.cos(1e-8)</code>를 계산하면 <b>정확히 0</b>이 나옵니다. 수식은 맞는데 답은 100% 틀렸습니다.</p></div>
+    <p>원인은 뺄셈 자체가 아니라 그 전 단계입니다. \(\cos(10^{-8}) = 1 - 5\times10^{-17}\)인데, 1 근처의 간격은 \(\varepsilon\approx2.2\times10^{-16}\)이라 이 값은 저장되는 순간 1로 반올림됩니다. 뺄셈은 그 반올림 오차를 <b>드러낼</b> 뿐입니다. 일반적으로 \(a\approx b\)일 때 \(a-b\)의 상대 오차는</p>
+    <div class="formula">$$\frac{|\Delta(a-b)|}{|a-b|} \lesssim u\,\frac{|a|+|b|}{|a-b|}$$
+      <div class="where">\(a\)와 \(b\)가 각각 상대 오차 \(u\)를 품고 있으면, 결과의 상대 오차는 \(\tfrac{|a|+|b|}{|a-b|}\)배로 커진다. 두 수가 앞 \(k\)자리까지 같으면 유효숫자 약 \(k\)자리를 잃는다. 이를 <span class="term">파국적 상쇄</span><span class="en">(Catastrophic Cancellation)</span>라 한다.</div>
+    </div>
+    <p>치료법은 대수적으로 같은 식으로 바꿔 뺄셈을 없애는 것입니다.</p>
+    <div class="formula">$$1-\cos x = 2\sin^2\frac{x}{2},\qquad x_{1,2}=\frac{-b\mp\sqrt{b^2-4ac}}{2a}\;\Rightarrow\; x_1 = \frac{-b-\operatorname{sgn}(b)\sqrt{b^2-4ac}}{2a},\;\; x_2 = \frac{c}{a\,x_1}$$
+      <div class="where">근의 공식: \(b^2\gg4ac\)이면 \(\sqrt{b^2-4ac}\approx|b|\)라 \(-b+\sqrt{\cdot}\) 쪽 근에서 상쇄가 일어난다. 부호가 같은 두 수를 더하는 쪽 근을 먼저 구하고, 다른 근은 근과 계수의 관계 \(x_1x_2=c/a\)로 얻는다. 이 밖에 \(\sqrt{x+1}-\sqrt{x} = 1/(\sqrt{x+1}+\sqrt{x})\), 표준 라이브러리의 <code>expm1</code>, <code>log1p</code>, <code>hypot</code>도 같은 목적의 도구다.</div>
+    </div>
+
+    <div class="sim" id="sim-num-cancel">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>순진한 식 vs 안정적인 식</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-num-cancel"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>문제</span><div class="seg" id="num-cc-prob"><button data-value="cos" class="on">1 − cos x</button><button data-value="quad">근의 공식</button></div></div>
+          <div class="ctrl"><span>정밀도</span><div class="seg" id="num-cc-prec"><button data-value="64" class="on">float64</button><button data-value="32">float32</button></div></div>
+          <label class="ctrl"><span>관찰점 <output id="num-cc-x-out"></output></span><input type="range" id="num-cc-x" min="0" max="1000" value="500"></label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">참값</span><span class="v" id="num-cc-true">—</span></div>
+        <div class="stat"><span class="k">순진한 식</span><span class="v" id="num-cc-naive">—</span></div>
+        <div class="stat"><span class="k">안정적인 식</span><span class="v" id="num-cc-stable">—</span></div>
+      </div>
+      <div class="sim-note">그래프는 상대 오차(로그 눈금)다. 10⁰ = 100% 틀림. 해볼 것: ① 1 − cos x에서 x를 줄이면 순진한 식의 오차가 x⁻²에 비례해 커지다가(기울기 −2) 결국 100%(결과 0)에 붙는다. ② float32로 바꾸면 같은 일이 x ≈ 10⁻³에서 이미 일어난다. ③ 근의 공식(x² + bx + 1 = 0의 작은 근)에서 b가 커질수록 순진한 식이 무너지고, 안정적인 식은 끝까지 ε 수준을 유지한다. 모델: 참값은 배정밀도의 안정적인 식(float32 모드에서는 이것이 충분히 정확한 기준)으로 계산. float32는 각 연산 결과를 <code>Math.fround</code>로 반올림해 흉내 낸다. 오차가 0(완전 일치)이면 그래프 맨 아래에 붙여 그린다.</div>
+    </div>
+    <div class="callout warn"><strong>상쇄는 어디에나 숨어 있다</strong> 분산을 \(\overline{x^2}-\bar{x}^2\)로 계산하면(큰 평균 위의 작은 산포) 음수 분산이 나오기도 한다. 웰퍼드<span class="en">(Welford)</span> 알고리즘처럼 평균을 먼저 빼는 방식으로 계산해야 한다. 이미지 센서의 다크 프레임 차감, 큰 오프셋 위의 작은 신호 측정도 같은 구조다.</div>
+  </section>
+
+  <!-- =============================================================== 5 -->
+  <section id="numerical-derivative">
+    <h2>수치 미분의 U자 곡선: h를 줄이면 더 정확해질까</h2>
+    <div class="problem"><strong>시뮬레이터에 기울기가 필요하다</strong>
+      <p>최적화(9장)는 목적함수의 기울기가 필요하지만, 상용 시뮬레이터의 출력은 공식이 아니라 숫자입니다. 가장 쉬운 방법은 \(f'(x)\approx\frac{f(x+h)-f(x)}{h}\)입니다. 극한의 정의대로라면 h를 작게 할수록 정확해져야 합니다. 정말 그럴까요?</p></div>
+    <p>테일러 전개(1장)로 오차를 쓰면 두 항이 싸웁니다.</p>
+    <div class="formula">$$\left|\frac{\mathrm{fl}(f(x+h))-\mathrm{fl}(f(x))}{h}-f'(x)\right| \;\lesssim\; \underbrace{\frac{|f''|}{2}\,h}_{\text{절단 오차}} \;+\; \underbrace{\frac{2u|f|}{h}}_{\text{반올림 오차}}$$
+      <div class="where">절단 오차<span class="en">(truncation error)</span>는 테일러 급수를 1차에서 자른 대가로 h에 비례해 줄고, 반올림 오차<span class="en">(round-off error)</span>는 거의 같은 두 함수값의 상쇄를 h로 나누므로 1/h로 커진다. 합을 최소화하면 \(h^*\approx2\sqrt{u|f|/|f''|}\sim\sqrt{\varepsilon}\approx10^{-8}\), 그때 오차 \(\sim\sqrt{\varepsilon}\): 배정밀도의 16자리 중 8자리만 건진다.</div>
+    </div>
+    <p>중심 차분 \(\frac{f(x+h)-f(x-h)}{2h}\)은 짝수 차수 항이 상쇄되어 절단 오차가 \(\frac{|f'''|}{6}h^2\)입니다. 반올림 항 \(u|f|/h\)과 균형을 맞추면 \(h^*\sim\sqrt[3]{\varepsilon}\approx6\times10^{-6}\), 오차 \(\sim\varepsilon^{2/3}\approx10^{-11}\)입니다.</p>
+
+    <div class="sim" id="sim-num-ushape">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>미분 오차 vs 간격 h (로그–로그)</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-num-ush"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>함수 (x = 1에서)</span><div class="seg" id="num-us-f"><button data-value="sin" class="on">sin x</button><button data-value="exp">eˣ</button><button data-value="cube">x³ + 1000</button></div></div>
+          <div class="ctrl"><span>정밀도</span><div class="seg" id="num-us-prec"><button data-value="64" class="on">float64</button><button data-value="32">float32</button></div></div>
+          <label class="ctrl"><span>h = 10^<output id="num-us-h-out"></output></span><input type="range" id="num-us-h" min="-16" max="0" step="0.1" value="-4"></label>
+          <label class="check"><input type="checkbox" id="num-us-theory" checked> 이론 오차 상한(점선)</label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">전진 차분 오차</span><span class="v" id="num-us-fe">—</span></div>
+        <div class="stat"><span class="k">중심 차분 오차</span><span class="v" id="num-us-ce">—</span></div>
+        <div class="stat"><span class="k">최적 h (전진 / 중심)</span><span class="v" id="num-us-opt">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① 오른쪽(큰 h)에서 전진 차분은 기울기 1, 중심 차분은 기울기 2로 내려간다(절단 오차 ∝ h, h²). ② 왼쪽에서는 둘 다 기울기 −1로 다시 올라가며 들쭉날쭉하다. 반올림 오차는 무작위처럼 보인다. ③ x³ + 1000은 함수값이 커서(|f| 큼) 반올림 항이 커지고 최적 h가 오른쪽으로 옮겨 간다. float32에서는 최적 h가 10⁻³ 근처, 최선의 오차도 훨씬 크다. 모델: 오차 = |차분 근사 − 해석적 도함수|, 0이면 10⁻¹⁹에 표시. 점선은 위 공식의 상한 \(\tfrac{|f''|}{2}h + \tfrac{2u|f|}{h}\), \(\tfrac{|f'''|}{6}h^2 + \tfrac{u|f|}{h}\).</div>
+    </div>
+    <div class="callout deep"><strong>오차 없는 미분</strong> 반올림 문제를 피하는 길도 있다. 복소 스텝 미분 \(f'(x)\approx\mathrm{Im}\,f(x+ih)/h\)(2장의 복소수)는 뺄셈이 없어 \(h=10^{-200}\)도 쓸 수 있다. 자동 미분<span class="en">(Automatic Differentiation)</span>은 프로그램의 각 연산에 연쇄 법칙을 적용해 기계 정밀도로 정확한 기울기를 준다. 딥러닝 프레임워크의 역전파가 바로 역방향 자동 미분이다.</div>
+  </section>
+
+  <!-- =============================================================== 6 -->
+  <section id="finite-difference">
+    <h2>유한 차분: 미분방정식을 격자 위의 덧셈으로</h2>
+    <div class="problem"><strong>해석해가 없는 방정식</strong>
+      <p>칩의 열 분포, 막대의 진동, 공정 중 도펀트 확산은 모두 편미분방정식입니다. 경계 모양이 조금만 복잡해도 손으로 푼 해는 없습니다. 컴퓨터는 덧셈과 곱셈밖에 못 하는데, 미분을 어떻게 시킬까요?</p></div>
+    <p>답은 앞 절의 차분을 공간과 시간 양쪽에 쓰는 것입니다. 연속 함수 \(u(x,t)\)를 간격 \(\Delta x,\Delta t\)의 격자점 값 \(u_i^n = u(i\Delta x, n\Delta t)\)으로 바꾸고(6장의 표본화), 도함수를 이웃 값의 가중합으로 근사합니다. 어떤 이웃을 어떤 가중치로 쓰는지 그린 그림을 <span class="term">스텐실</span><span class="en">(stencil)</span>이라 합니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 250" role="img" aria-label="유한 차분 스텐실">
+        <g transform="translate(20,0)">
+          <text x="110" y="24" class="t" text-anchor="middle">전진 차분 ∂u/∂x</text>
+          <line x1="30" y1="80" x2="190" y2="80" class="s-axis"/>
+          <circle cx="70" cy="80" r="13" class="f-acc-soft"/><circle cx="150" cy="80" r="13" class="f-acc-soft"/>
+          <text x="70" y="85" class="t" text-anchor="middle">−1</text><text x="150" y="85" class="t" text-anchor="middle">+1</text>
+          <text x="70" y="112" class="t-mono" text-anchor="middle">i</text><text x="150" y="112" class="t-mono" text-anchor="middle">i+1</text>
+          <text x="110" y="140" class="t-dim" text-anchor="middle">÷ Δx · 오차 O(Δx)</text>
+        </g>
+        <g transform="translate(270,0)">
+          <text x="120" y="24" class="t" text-anchor="middle">2계 중심 차분 ∂²u/∂x²</text>
+          <line x1="20" y1="80" x2="220" y2="80" class="s-axis"/>
+          <circle cx="50" cy="80" r="13" class="f-acc-soft"/><circle cx="120" cy="80" r="13" class="f-acc2-soft"/><circle cx="190" cy="80" r="13" class="f-acc-soft"/>
+          <text x="50" y="85" class="t" text-anchor="middle">1</text><text x="120" y="85" class="t" text-anchor="middle">−2</text><text x="190" y="85" class="t" text-anchor="middle">1</text>
+          <text x="50" y="112" class="t-mono" text-anchor="middle">i−1</text><text x="120" y="112" class="t-mono" text-anchor="middle">i</text><text x="190" y="112" class="t-mono" text-anchor="middle">i+1</text>
+          <text x="120" y="140" class="t-dim" text-anchor="middle">÷ Δx² · 오차 O(Δx²)</text>
+        </g>
+        <g transform="translate(540,0)">
+          <text x="120" y="24" class="t" text-anchor="middle">파동 방정식(리프프로그)</text>
+          <line x1="40" y1="200" x2="200" y2="200" class="s-axis"/><line x1="40" y1="140" x2="200" y2="140" class="s-axis"/><line x1="40" y1="80" x2="200" y2="80" class="s-axis"/>
+          <text x="22" y="204" class="t-mono" text-anchor="end">n−1</text><text x="22" y="144" class="t-mono" text-anchor="end">n</text><text x="22" y="84" class="t-mono" text-anchor="end">n+1</text>
+          <line x1="120" y1="80" x2="120" y2="200" class="s-line"/><line x1="60" y1="140" x2="180" y2="140" class="s-line"/>
+          <circle cx="120" cy="80" r="11" fill="var(--accent-2)"/>
+          <circle cx="60" cy="140" r="10" class="f-acc-soft"/><circle cx="120" cy="140" r="10" class="f-acc-soft"/><circle cx="180" cy="140" r="10" class="f-acc-soft"/>
+          <circle cx="120" cy="200" r="10" class="f-acc-soft"/>
+          <text x="120" y="232" class="t-dim" text-anchor="middle">4개 값 → 미래 1개</text>
+          <text x="140" y="70" class="t-dim">구할 값</text>
+        </g>
+        <text x="400" y="190" class="t-dim" text-anchor="middle">테일러 전개의 앞 항을</text>
+        <text x="400" y="208" class="t-dim" text-anchor="middle">지우도록 가중치를 고른다</text>
+      </svg>
+      <figcaption><b>그림 10-3.</b> 유한 차분 스텐실. 가중치 (1, −2, 1)은 \(u(x\pm\Delta x)\)를 테일러 전개해 더하면 1계 항이 상쇄되고 \(\Delta x^2 u''\)가 남는다는 데서 나온다. 오른쪽은 파동 방정식에서 시간 n−1, n의 값 4개로 n+1의 값 1개를 만드는 스텐실이다.</figcaption>
+    </figure>
+    <p>파동 방정식 \(u_{tt} = c^2u_{xx}\)의 양변에 2계 중심 차분을 쓰고 미래 값을 풀면 갱신식이 나옵니다.</p>
+    <div class="formula">$$u_i^{n+1} = 2u_i^n - u_i^{n-1} + C^2\left(u_{i+1}^n - 2u_i^n + u_{i-1}^n\right),\qquad C = \frac{c\,\Delta t}{\Delta x}$$
+      <div class="where">\(C\): <span class="term">쿠랑 수</span><span class="en">(Courant number)</span>. 한 시간 스텝 동안 파동이 몇 칸 가는지를 뜻한다. 프로그램은 이 한 줄을 모든 i에 대해 반복할 뿐이다.</div>
+    </div>
+    <p>여기에 함정이 있습니다. 스텐실은 한 스텝에 이웃 한 칸까지만 봅니다. 그런데 실제 파동은 \(\Delta t\) 동안 \(c\Delta t\)만큼 갑니다. \(c\Delta t > \Delta x\)이면 실제로는 영향을 받아야 할 정보가 격자 알고리즘의 '시야' 밖에 있게 됩니다. 이것이 1928년 쿠랑·프리드리히스·레비가 밝힌 <span class="term">CFL 조건</span><span class="en">(Courant–Friedrichs–Lewy condition)</span>입니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 230" role="img" aria-label="CFL 의존 영역">
+        <g transform="translate(40,10)">
+          <text x="160" y="18" class="t" text-anchor="middle">C ≤ 1 : 안정</text>
+          <polygon points="160,40 60,190 260,190" class="f-acc-soft" opacity="0.6"/>
+          <polygon points="160,40 100,190 220,190" fill="var(--ok)" opacity="0.22"/>
+          <line x1="20" y1="190" x2="300" y2="190" class="s-axis"/>
+          <circle cx="160" cy="40" r="6" fill="var(--accent-2)"/>
+          <text x="160" y="212" class="t-dim" text-anchor="middle">수치 의존 영역(파랑) ⊇ 실제 의존 영역(초록)</text>
+        </g>
+        <g transform="translate(440,10)">
+          <text x="160" y="18" class="t" text-anchor="middle">C &gt; 1 : 불안정</text>
+          <polygon points="160,40 20,190 300,190" fill="var(--ok)" opacity="0.22"/>
+          <polygon points="160,40 80,190 240,190" class="f-acc-soft" opacity="0.6"/>
+          <line x1="10" y1="190" x2="310" y2="190" class="s-axis"/>
+          <circle cx="160" cy="40" r="6" fill="var(--accent-2)"/>
+          <text x="160" y="212" class="t-dim" text-anchor="middle">실제 파동이 격자의 시야 밖에서 온다</text>
+        </g>
+      </svg>
+      <figcaption><b>그림 10-4.</b> 한 점(주황)의 값이 과거의 어느 범위에 의존하는가. 실제 해는 기울기 \(\pm c\)인 원뿔 안의 초기값에, 격자 해는 기울기 \(\pm\Delta x/\Delta t\) 안의 값에 의존한다. 격자의 영역이 실제 영역을 덮어야 수렴할 수 있다(필요조건).</figcaption>
+    </figure>
+
+    <div class="sim" id="sim-num-wave">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>1D 파동 방정식과 CFL 조건</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-num-wave"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>쿠랑 수 C = cΔt/Δx <output id="num-wv-c-out"></output></span><input type="range" id="num-wv-c" min="0.2" max="1.2" step="0.01" value="0.9"></label>
+          <div class="ctrl"><span>초기 모양</span><div class="seg" id="num-wv-init"><button data-value="gauss" class="on">가우시안</button><button data-value="tri">삼각(뜯은 현)</button></div></div>
+          <label class="check"><input type="checkbox" id="num-wv-noise"> 초기값에 10⁻¹² 잡음 섞기</label>
+          <div class="btn-row"><button class="btn primary" id="num-wv-play">▶ 실행</button><button class="btn" id="num-wv-reset">초기화</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">시간 스텝</span><span class="v" id="num-wv-n">—</span></div>
+        <div class="stat"><span class="k">max |u|</span><span class="v" id="num-wv-max">—</span></div>
+        <div class="stat"><span class="k">최고 주파수 모드 증폭률</span><span class="v" id="num-wv-g">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① C = 0.9에서 펄스가 둘로 갈라져 양 끝에서 뒤집혀 반사되는 것을 본다. ② C를 1.02로 올리고 실행하면 처음에는 멀쩡하다가 수십~백여 스텝 뒤 톱니 모양 진동이 폭발한다. 반올림 수준(10⁻¹⁶)의 고주파 성분이 매 스텝 증폭된 것이다. ③ C = 1.00은 1차원 파동에서 차분 해가 정확해지는 '마법의 시간 간격'이다. 0.5로 낮추면 안정하지만 뾰족한 삼각 모양 뒤에 잔물결(수치 분산)이 생긴다. 모델: 격자 200칸, 양 끝 고정(u = 0), 정지 상태에서 출발. 증폭률은 폰 노이만 분석으로 구한 파수 π/Δx 모드의 |λ|.</div>
+    </div>
+    <p>시뮬레이터의 폭발은 <span class="term">폰 노이만 안정성 분석</span><span class="en">(von Neumann stability analysis)</span>으로 정확히 예측됩니다. 오차를 푸리에 모드 \(e^{ik i\Delta x}\)(5장)로 분해해 한 스텝에 몇 배가 되는지(증폭률 \(\lambda\)) 계산하면, 위 스킴은 \(\lambda^2 - 2(1-2C^2\sin^2\tfrac{k\Delta x}{2})\lambda + 1 = 0\)을 만족합니다. \(C\le1\)이면 모든 k에서 \(|\lambda|=1\)이고, \(C>1\)이면 가장 짧은 파장(\(k\Delta x=\pi\))에서 \(|\lambda|>1\)인 근이 생깁니다. 반올림 오차는 모든 주파수 성분을 조금씩 갖고 있으므로, 증폭되는 모드가 하나라도 있으면 반드시 폭발합니다.</p>
+    <div class="callout"><strong>열 방정식은 더 엄격하다</strong> 확산 방정식 \(u_t = D u_{xx}\)을 전진 오일러(명시적 방법)로 풀면 안정 조건이 \(D\Delta t/\Delta x^2\le\tfrac12\)이다. 격자를 2배 촘촘히 하면 시간 간격은 4배 줄여야 한다. 그래서 확산·열 해석(TCAD의 도펀트 확산, 4장의 열 방정식)은 조건 없이 안정한 암시적 방법(크랭크–니콜슨 등)으로 매 스텝 연립방정식을 푸는 경우가 많다.</div>
+  </section>
+
+  <!-- =============================================================== 7 -->
+  <section id="fdtd">
+    <h2>FDTD: 맥스웰 방정식을 격자에서 직접 풀기</h2>
+    <div class="problem"><strong>1 µm 픽셀 속의 빛</strong>
+      <p>스마트폰 이미지 센서의 픽셀은 한 변이 1 µm 안팎으로, 가시광 파장과 비슷합니다. 이 크기에서는 광선 추적이 맞지 않습니다. 마이크로렌즈, 컬러 필터, 금속 격벽, 실리콘 속 깊은 트렌치 격리(DTI)를 지나는 빛의 회절과 간섭을 계산하려면 맥스웰 방정식을 그대로 풀어야 합니다.</p></div>
+    <p>1966년 케인 이<span class="en">(Kane Yee)</span>는 유한 차분을 맥스웰 방정식에 쓰는 우아한 방법을 냈습니다. 1차원(\(x\)로 진행하는 \(E_z, H_y\))으로 쓰면 두 방정식이 서로를 갱신합니다.</p>
+    <div class="formula">$$\varepsilon\frac{\partial E_z}{\partial t} = \frac{\partial H_y}{\partial x},\qquad \mu\frac{\partial H_y}{\partial t} = \frac{\partial E_z}{\partial x}$$
+      <div class="where">(부호는 장의 방향 규약에 따라 다르게 쓰기도 한다.) 핵심은 E의 시간 변화가 H의 공간 변화로, H의 시간 변화가 E의 공간 변화로 정해진다는 것이다. Yee는 E와 H를 <b>공간에서 반 칸, 시간에서 반 스텝 엇갈려</b> 놓았다. 그러면 모든 미분이 자동으로 정확도 2차의 중심 차분이 된다.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 260" role="img" aria-label="Yee 격자의 엇갈린 배치">
+        <line x1="60" y1="70" x2="740" y2="70" class="s-axis"/>
+        <line x1="60" y1="190" x2="740" y2="190" class="s-axis"/>
+        <text x="40" y="74" class="t-mono" text-anchor="end">t = n</text>
+        <text x="40" y="134" class="t-mono" text-anchor="end">n+½</text>
+        <text x="40" y="194" class="t-mono" text-anchor="end">n+1</text>
+        <line x1="60" y1="130" x2="740" y2="130" class="s-axis" stroke-dasharray="3 4"/>
+        <circle cx="120" cy="70" r="11" class="f-acc-soft"/><circle cx="260" cy="70" r="11" class="f-acc-soft"/><circle cx="400" cy="70" r="11" class="f-acc-soft"/><circle cx="540" cy="70" r="11" class="f-acc-soft"/><circle cx="680" cy="70" r="11" class="f-acc-soft"/>
+        <rect x="179" y="119" width="22" height="22" rx="3" class="f-acc2-soft"/><rect x="319" y="119" width="22" height="22" rx="3" class="f-acc2-soft"/><rect x="459" y="119" width="22" height="22" rx="3" class="f-acc2-soft"/><rect x="599" y="119" width="22" height="22" rx="3" class="f-acc2-soft"/>
+        <circle cx="120" cy="190" r="11" class="f-acc-soft"/><circle cx="260" cy="190" r="11" class="f-acc-soft"/><circle cx="400" cy="190" r="11" class="f-acc-soft"/><circle cx="540" cy="190" r="11" class="f-acc-soft"/><circle cx="680" cy="190" r="11" class="f-acc-soft"/>
+        <line x1="260" y1="81" x2="324" y2="121" class="s-acc" stroke-width="1.5"/><line x1="400" y1="81" x2="336" y2="121" class="s-acc" stroke-width="1.5"/>
+        <line x1="330" y1="141" x2="398" y2="180" stroke="var(--accent-2)" stroke-width="1.5"/><line x1="470" y1="141" x2="402" y2="180" stroke="var(--accent-2)" stroke-width="1.5"/>
+        <text x="120" y="48" class="t-mono" text-anchor="middle">E(i−1)</text><text x="260" y="48" class="t-mono" text-anchor="middle">E(i)</text><text x="400" y="48" class="t-mono" text-anchor="middle">E(i+1)</text>
+        <text x="330" y="160" class="t-mono" text-anchor="middle">H(i+½)</text>
+        <text x="400" y="222" class="t-mono" text-anchor="middle">E(i+1) 새 값</text>
+        <text x="400" y="250" class="t-dim" text-anchor="middle">E로 H를, H로 E를 번갈아 갱신(리프프로그) — 연립방정식을 풀 필요가 없다</text>
+        <text x="760" y="74" class="t-acc" text-anchor="end">E</text><text x="760" y="134" class="t" text-anchor="end" style="fill:var(--accent-2);font-weight:700">H</text>
+      </svg>
+      <figcaption><b>그림 10-5.</b> 1차원 Yee 격자. 원(E)은 정수 격자점과 정수 시간에, 사각형(H)은 반 칸 위치와 반 스텝 시간에 산다. 3차원에서는 정육면체 셀의 모서리에 E의 세 성분, 면 중심에 H의 세 성분을 놓아 회전(curl) 연산이 저절로 맞물린다.</figcaption>
+    </figure>
+    <p>FDTD<span class="en">(Finite-Difference Time-Domain)</span>도 앞 절의 파동 방정식과 같은 CFL 조건을 따릅니다. 3차원 균일 격자라면 \(c\Delta t\le\Delta x/\sqrt3\)입니다. 또 계산 영역은 유한하므로 바깥으로 나가는 파동이 경계에서 되돌아오지 않게 해야 합니다. 아래 시뮬레이터는 가장 단순한 흡수 경계(1차 무어<span class="en">(Mur)</span> 조건의 특수한 경우)를 쓰고, 실무에서는 경계에 인공 손실층을 두는 PML<span class="en">(Perfectly Matched Layer)</span>을 씁니다.</p>
+
+    <div class="sim" id="sim-num-fdtd">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>1D FDTD: 유전체 판에 부딪히는 펄스</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-num-fdtd"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>판의 굴절률 n <output id="num-fd-n-out"></output></span><input type="range" id="num-fd-n" min="1" max="4" step="0.05" value="2"></label>
+          <label class="ctrl"><span>판 두께 <output id="num-fd-d-out"></output></span><input type="range" id="num-fd-d" min="10" max="120" step="5" value="60"></label>
+          <label class="check"><input type="checkbox" id="num-fd-abc" checked> 흡수 경계(끄면 완전 도체 벽)</label>
+          <label class="check"><input type="checkbox" id="num-fd-h" checked> H 함께 표시</label>
+          <div class="btn-row"><button class="btn primary" id="num-fd-play">▶ 실행</button><button class="btn" id="num-fd-reset">다시 쏘기</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">시간 스텝</span><span class="v" id="num-fd-t">—</span></div>
+        <div class="stat"><span class="k">프레넬 반사 계수 r</span><span class="v" id="num-fd-rth">—</span></div>
+        <div class="stat"><span class="k">FDTD로 잰 r (첫 면)</span><span class="v" id="num-fd-rme">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① n = 2에서 첫 면 반사 펄스가 뒤집혀(음수) 돌아오고, 측정한 r이 이론값 (1−n)/(1+n) = −1/3에 맞는지 본다. ② 판 안에서 펄스가 n배 느려지고 짧아지는 것, 뒷면에서 반사된 두 번째 펄스(부호 +)를 찾는다. ③ 흡수 경계를 끄면 양 끝에서 펄스가 뒤집혀 영원히 돌아다닌다. 모델: 정규화 단위의 1D FDTD(Sullivan 형식), 쿠랑 수 0.5, 무손실 비자성 유전체(ε = n²), 소스 위치에 가우시안 펄스를 더하는 소프트 소스. r은 소스와 판 사이 탐침에서 입사 펄스 최댓값 대비 첫 반사 펄스의 극값.</div>
+    </div>
+    <p>FDTD의 장점은 한 번의 시간 영역 계산에 넓은 대역의 펄스를 넣고 푸리에 변환하면 모든 파장의 응답이 한꺼번에 나온다는 것, 구조가 아무리 복잡해도 격자에 재료값만 칠하면 된다는 것입니다. 대가는 계산량입니다. 파장당 10~20칸 이상이 필요하고 3차원이면 격자 수가 세제곱으로 늘어납니다. 그래서 다음 절의 방법이 함께 쓰입니다.</p>
+  </section>
+
+  <!-- =============================================================== 8 -->
+  <section id="rcwa">
+    <h2>RCWA: 주기 구조는 푸리에 고조파로 푼다</h2>
+    <div class="problem"><strong>같은 픽셀이 수천만 개 반복된다</strong>
+      <p>이미지 센서의 픽셀 배열, 반도체 노광 마스크의 라인·스페이스 패턴, 회절 격자, 메타표면은 같은 단위 셀이 주기적으로 반복됩니다. 전체를 FDTD 격자로 덮을 필요가 있을까요? 한 주기만 알면 나머지는 같지 않을까요?</p></div>
+    <p>주기 \(\Lambda\)인 구조에 평면파가 들어오면 산란된 장도 같은 주기성(블로흐–플로케 조건)을 가집니다. 그래서 장을 <b>이산적인 방향들의 합</b>으로 쓸 수 있고(5장의 푸리에 급수), 각 방향이 <span class="term">회절 차수</span><span class="en">(diffraction order)</span>입니다. 방향은 다음 <span class="term">격자 방정식</span><span class="en">(grating equation)</span>으로 정해집니다.</p>
+    <div class="formula">$$n_{\text{out}}\sin\theta_m = n_{\text{in}}\sin\theta_i + m\frac{\lambda}{\Lambda},\qquad m = 0,\pm1,\pm2,\ldots$$
+      <div class="where">\(\lambda\): 진공 파장, \(\Lambda\): 주기. 격자는 입사파의 가로 파수에 \(2\pi m/\Lambda\)만 더할 수 있다. 우변의 절댓값이 \(n_{\text{out}}\)보다 크면 그 차수는 퍼져 나가지 못하고 표면에 붙어 지수적으로 사라지는 소멸파<span class="en">(evanescent wave)</span>가 된다.</div>
+    </div>
+
+    <div class="sim" id="sim-num-grating">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>회절 차수의 방향</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-num-grat"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>파장 λ <output id="num-gr-l-out"></output></span><input type="range" id="num-gr-l" min="380" max="1000" step="5" value="550"></label>
+          <label class="ctrl"><span>주기 Λ <output id="num-gr-p-out"></output></span><input type="range" id="num-gr-p" min="200" max="3000" step="10" value="1200"></label>
+          <label class="ctrl"><span>입사각 θᵢ <output id="num-gr-a-out"></output></span><input type="range" id="num-gr-a" min="-60" max="60" value="10"></label>
+          <label class="ctrl"><span>아래 매질 굴절률 <output id="num-gr-n-out"></output></span><input type="range" id="num-gr-n" min="1" max="4" step="0.05" value="1"></label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">반사 전파 차수</span><span class="v" id="num-gr-r">—</span></div>
+        <div class="stat"><span class="k">투과 전파 차수</span><span class="v" id="num-gr-t">—</span></div>
+        <div class="stat"><span class="k">λ/Λ</span><span class="v" id="num-gr-ratio">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① Λ를 줄여 λ/Λ &gt; 2가 되면(수직 입사 기준 Λ &lt; λ/2) 반사와 투과 모두 0차만 남는다. 이것이 '서브파장 구조'로, 반사 방지 나방눈 구조와 메타렌즈의 조건이다. ② 아래 매질을 실리콘(n ≈ 4)으로 바꾸면 투과 쪽에는 공기 쪽보다 많은 차수가 산다. 1 µm 픽셀 배열이 실리콘 안으로 빛을 여러 방향으로 흩뜨리는 이유다. ③ 파장을 바꾸면 ±1차의 각도가 바뀐다. 분광기의 원리다. 모델: 위 매질은 공기(n = 1), 각 차수의 방향만 계산하며 세기(회절 효율)는 계산하지 않는다. 세기는 아래에 설명할 RCWA 같은 엄밀 해석이 필요하다.</div>
+    </div>
+    <p>격자 방정식은 방향만 알려 줍니다. 각 차수에 에너지가 얼마씩 가는지는 격자 안의 장을 풀어야 합니다. <span class="term">RCWA</span><span class="en">(Rigorous Coupled-Wave Analysis, 엄밀 결합파 해석)</span>는 이렇게 합니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 270" role="img" aria-label="RCWA의 층 분할과 푸리에 전개">
+        <text x="150" y="22" class="t" text-anchor="middle">① 구조를 z 방향 얇은 층으로 자른다</text>
+        <rect x="40" y="40" width="220" height="40" class="f-surface"/>
+        <rect x="40" y="80" width="220" height="40" fill="none" stroke="var(--border)"/>
+        <rect x="60" y="80" width="40" height="40" class="f-acc-soft"/><rect x="150" y="80" width="40" height="40" class="f-acc-soft"/>
+        <rect x="40" y="120" width="220" height="30" fill="none" stroke="var(--border)"/>
+        <rect x="50" y="120" width="60" height="30" class="f-acc-soft"/><rect x="140" y="120" width="60" height="30" class="f-acc-soft"/>
+        <rect x="40" y="150" width="220" height="50" class="f-acc2-soft"/>
+        <text x="270" y="64" class="t-dim">공기</text><text x="270" y="104" class="t-dim">층 1</text><text x="270" y="140" class="t-dim">층 2</text><text x="270" y="180" class="t-dim">기판</text>
+        <line x1="40" y1="215" x2="130" y2="215" class="s-line"/><text x="85" y="232" class="t-mono" text-anchor="middle">Λ</text>
+        <text x="530" y="22" class="t" text-anchor="middle">② 각 층의 ε(x)와 장을 푸리에 급수로</text>
+        <line x1="380" y1="110" x2="700" y2="110" class="s-axis"/>
+        <path d="M380 110 L380 70 L440 70 L440 110 L540 110 L540 70 L600 70 L600 110 L700 110" class="s-line"/>
+        <path d="M380 92 C 400 60, 430 60, 450 95 S 520 130, 545 95 S 590 60, 610 92 S 680 130, 700 100" class="s-acc"/>
+        <text x="540" y="146" class="t-dim" text-anchor="middle">ε(x) ≈ Σ εₖ e^{i2πkx/Λ}, k = −N…N (2N+1개 고조파)</text>
+        <text x="530" y="188" class="t" text-anchor="middle">③ 층마다 (2N+1)차 행렬의 고유값 문제</text>
+        <text x="530" y="212" class="t-dim" text-anchor="middle">고유벡터 = 그 층 안의 '모드', 고유값 = z 방향 전파 상수</text>
+        <text x="530" y="246" class="t" text-anchor="middle">④ 층 경계에서 접선 성분 연속 → 산란 행렬로 연결</text>
+      </svg>
+      <figcaption><b>그림 10-6.</b> RCWA의 흐름. z 방향으로 굴절률이 일정한 층들로 근사하고, 각 층에서 x 방향은 푸리에 급수로 전개한다. 층 안의 해는 행렬 고유값 문제(3장)로 정확히 풀리고, 층과 층은 경계 조건으로 이어 붙인다. 결과로 각 회절 차수의 복소 진폭이 나온다.</figcaption>
+    </figure>
+    <p>근사는 단 하나, <b>푸리에 고조파를 유한 개 \(2N+1\)에서 자른다</b>는 것입니다. 고조파를 늘리면 결과가 수렴하고, 실무에서는 N을 키워 가며 회절 효율이 더 변하지 않는 지점을 찾습니다(수렴 시험). 날카로운 금속 모서리처럼 유전율 대비가 큰 구조는 깁스 현상(5장) 때문에 수렴이 느려서, 리<span class="en">(L. Li, 1996)</span>가 정리한 '푸리에 인수분해 규칙'으로 행렬을 만드는 방식이 표준이 되었습니다. 2차원 주기(픽셀 배열)이면 고조파가 \((2N_x+1)(2N_y+1)\)개라 행렬 크기가 빠르게 커지고, 고유값 계산 비용은 그 세제곱에 비례합니다.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th></th><th>FDTD</th><th>RCWA</th></tr></thead>
+      <tbody>
+        <tr><td>영역</td><td>시간 영역, 공간 격자</td><td>주파수 영역, 푸리에 공간(층별)</td></tr>
+        <tr><td>잘 맞는 구조</td><td>임의 모양, 비주기, 비선형</td><td>주기 구조, 층으로 나눌 수 있는 단면</td></tr>
+        <tr><td>한 번의 계산으로</td><td>넓은 대역(펄스 + 푸리에 변환)</td><td>한 파장·한 입사각</td></tr>
+        <tr><td>주된 수치 오차</td><td>격자 분산, CFL, 경계 반사</td><td>고조파 절단, 계단 근사</td></tr>
+        <tr><td>쓰이는 곳</td><td>픽셀 광학, 안테나, 나노포토닉스</td><td>노광 마스크·계측(OCD), 격자, 픽셀 배열</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- =============================================================== 9 -->
+  <section id="condition-number">
+    <h2>조건수: 문제 자체가 오차를 키울 때</h2>
+    <div class="problem"><strong>측정값을 0.1% 바꿨더니 답이 50% 바뀌었다</strong>
+      <p>공정 계측에서 두 측정값으로 막 두께 두 개를 역산하거나, 색 보정에서 RGB 응답으로 스펙트럼을 추정할 때, 우리는 \(A\mathbf{x}=\mathbf{b}\)를 풉니다. 계산은 완벽하게 했는데 측정 잡음이 조금만 바뀌어도 답이 크게 흔들린다면, 잘못은 알고리즘이 아니라 문제에 있습니다.</p></div>
+    <p>2×2 연립방정식은 두 직선의 교점입니다. 측정값 \(\mathbf{b}\)의 오차는 직선을 평행 이동시킵니다. 두 직선이 거의 평행하면 조금만 옮겨도 교점은 멀리 미끄러집니다. 이 증폭률의 최악값이 <span class="term">조건수</span><span class="en">(Condition Number)</span>입니다.</p>
+    <div class="formula">$$\frac{\|\Delta\mathbf{x}\|}{\|\mathbf{x}\|} \;\le\; \kappa(A)\,\frac{\|\Delta\mathbf{b}\|}{\|\mathbf{b}\|},\qquad \kappa(A) = \|A\|\,\|A^{-1}\| = \frac{\sigma_{\max}}{\sigma_{\min}}$$
+      <div class="where">\(\sigma\): 특이값(3장의 SVD). \(A\)가 공간을 어떤 방향으로는 \(\sigma_{\max}\)배, 어떤 방향으로는 \(\sigma_{\min}\)배 늘린다면, 역산은 그 반대로 \(1/\sigma_{\min}\)배 키운다. 경험 법칙: 조건수가 \(10^k\)이면 답에서 유효숫자 약 \(k\)자리를 잃는다. 배정밀도로 \(\kappa\approx10^{16}\)이면 답의 자릿수가 하나도 믿을 수 없다.</div>
+    </div>
+
+    <div class="sim" id="sim-num-cond">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>거의 평행한 두 직선의 교점</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-num-cond"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>측정 오차 δ (직선 이동 폭) <output id="num-cd-d-out"></output></span><input type="range" id="num-cd-d" min="0.02" max="0.4" step="0.01" value="0.12"></label>
+          <label class="check"><input type="checkbox" id="num-cd-mc" checked> 무작위 오차로 푼 교점 200개</label>
+          <div class="btn-row"><button class="btn" id="num-cd-near">거의 평행하게</button><button class="btn" id="num-cd-ortho">직교로</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">두 직선 사이 각</span><span class="v" id="num-cd-ang">—</span></div>
+        <div class="stat"><span class="k">조건수 κ</span><span class="v" id="num-cd-k">—</span></div>
+        <div class="stat"><span class="k">교점 최대 이동 / δ</span><span class="v" id="num-cd-amp">—</span></div>
+      </div>
+      <div class="sim-note">점 네 개를 끌어 두 직선의 방향과 위치를 바꾼다. 해볼 것: ① 두 직선을 직교로 두면 교점이 흔들리는 영역(평행사변형)이 작은 마름모, κ = 1. ② 거의 평행하게 하면 영역이 직선 방향으로 길게 늘어나고 κ가 수십~수백으로 커진다. ③ 각을 절반으로 줄이면 교점 이동이 약 두 배가 되는 것을 확인한다(작은 각 θ에서 κ ≈ 2/θ). 모델: 각 직선을 \(\mathbf{n}_i\cdot\mathbf{x} = c_i\)(단위 법선)로 쓰고 \(c_i\)에 ±δ 균일 오차. κ는 법선을 행으로 하는 행렬의 2-노름 조건수 \(\sqrt{(1+|\cos\theta|)/(1-|\cos\theta|)}\).</div>
+    </div>
+    <p>조건수는 알고리즘이 아니라 <b>문제</b>의 성질입니다. 어떤 알고리즘도 \(\kappa\cdot u\)보다 정확한 답을 보장할 수 없습니다. 좋은 알고리즘(<span class="term">후방 안정</span><span class="en">(backward stable)</span>, 예: 부분 피벗팅 가우스 소거, QR 분해)은 '조금 다른 문제의 정확한 답'을 주며, 그 이상은 문제를 바꿔야 얻습니다. 유명한 예는 힐베르트 행렬 \(H_{ij}=1/(i+j-1)\)로, 5×5에서 \(\kappa\approx5\times10^{5}\), 10×10에서 \(\kappa\approx1.6\times10^{13}\)입니다. 다항식 피팅에서 \(1, x, x^2,\ldots\)를 기저로 쓰면 이런 행렬이 나오기 때문에, 고차 피팅에는 직교 다항식이나 QR 기반 최소제곱을 씁니다.</p>
+    <div class="callout tip"><strong>조건수를 낮추는 세 가지 방법</strong> ① 측정을 다시 설계한다(두 직선이 덜 평행하도록, 예: 계측 파장·각도를 다양하게). ② 변수의 단위·스케일을 맞춘다(nm와 m를 한 벡터에 섞지 않는다). ③ 정칙화(티호노프, 9장): 작은 특이값 방향의 해를 억제해 잡음 증폭을 막고, 대신 약간의 편향을 받아들인다.</div>
+  </section>
+
+  <!-- =============================================================== 10 -->
+  <section id="uses">
+    <h2>이 도구가 쓰이는 곳</h2>
+    <p>시리즈의 다른 책에서 이 장의 도구가 등장하는 곳입니다. 시뮬레이터의 결과를 볼 때 "격자는 충분히 촘촘한가, 시간 간격은 안정 조건 안인가, 고조파는 수렴했는가, 문제의 조건수는 괜찮은가"를 먼저 묻는 습관이 이 장의 목표입니다.</p>
+    <div class="uses">
+      <a href="https://tcadbook.euiyun.com/"><small>TCADBOOK</small>소자·공정 시뮬레이션<br><span>확산·포아송 방정식의 유한 차분/유한 요소, 암시적 시간 적분, 뉴턴 반복과 조건수</span></a>
+      <a href="https://opticsbook.euiyun.com/"><small>OPTICSBOOK</small>파동 광학 시뮬레이션<br><span>FDTD, RCWA, 회절 차수와 격자 방정식, 박막 전달 행렬</span></a>
+      <a href="https://sensorbook.euiyun.com/"><small>SENSORBOOK</small>픽셀 광학과 신호 처리<br><span>마이크로렌즈·DTI 구조의 FDTD 해석, 다크 프레임 차감의 상쇄, ADC 양자화</span></a>
+      <a href="https://lithobook.euiyun.com/"><small>LITHOBOOK</small>마스크와 계측<br><span>마스크 3D 효과의 RCWA, OCD 계측의 역문제와 조건수</span></a>
+      <a href="https://computerbook.euiyun.com/"><small>COMPUTERBOOK</small>컴퓨터 산술<br><span>IEEE 754 하드웨어, FPU와 융합 곱셈–덧셈(FMA), 정수 오버플로</span></a>
+      <a href="https://aibook.euiyun.com/"><small>AIBOOK</small>저정밀도 학습·추론<br><span>bf16·fp8, 손실 스케일링, 혼합 정밀도, 자동 미분과 역전파</span></a>
+      <a href="https://socbook.euiyun.com/"><small>SOCBOOK</small>고정소수점 DSP<br><span>비트 폭 결정, 잘림과 반올림, 누적기 오버플로</span></a>
+      <a href="https://moneybook.euiyun.com/"><small>MONEYBOOK</small>돈의 계산<br><span>금액은 왜 부동소수점이 아닌 정수·10진 소수로 다루는가, 복리의 누적 반올림</span></a>
+    </div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>핵심 정리</h2>
+    <ol>
+      <li>부동소수점은 \((-1)^s\times1.f\times2^{e-\text{bias}}\). 0.1처럼 분모에 2 이외의 소인수가 있는 수는 2진수로 끝나지 않아 저장 순간 반올림된다. 그래서 0.1 + 0.2 ≠ 0.3.</li>
+      <li>표현 가능한 수의 간격은 크기에 비례하고 상대 오차는 \(u=\varepsilon/2\) 이하다(배정밀도 \(\varepsilon=2^{-52}\approx2.2\times10^{-16}\)). 가수 비트 수가 정밀도를, 지수 비트 수가 범위를 정한다. bf16은 범위를, fp16은 정밀도를 택했다.</li>
+      <li>한쪽으로 치우친 작은 오차는 횟수에 비례해 쌓인다. 패트리어트의 0.1초 시계는 틱당 \(9.5\times10^{-8}\)초 오차가 100시간 동안 0.34초가 되었다.</li>
+      <li>비슷한 두 수의 뺄셈은 앞자리가 같은 만큼 유효숫자를 잃는다(상쇄). 식을 대수적으로 바꿔 뺄셈을 없앤다: \(2\sin^2(x/2)\), 근과 계수의 관계, expm1·log1p.</li>
+      <li>수치 미분은 절단 오차(∝ h 또는 h²)와 반올림 오차(∝ 1/h)의 합이라 U자다. 최적 간격은 전진 차분 \(\sim\sqrt\varepsilon\), 중심 차분 \(\sim\sqrt[3]\varepsilon\).</li>
+      <li>명시적 유한 차분은 CFL 조건 \(c\Delta t/\Delta x\le1\)(3차원 FDTD는 \(1/\sqrt3\))을 어기면 반올림 수준의 고주파가 매 스텝 증폭되어 폭발한다.</li>
+      <li>FDTD는 E와 H를 반 칸·반 스텝 엇갈린 Yee 격자에서 번갈아 갱신하고, RCWA는 주기 구조를 층별 푸리에 고조파의 고유값 문제로 푼다. 회절 차수 방향은 \(\sin\theta_m=\sin\theta_i+m\lambda/\Lambda\).</li>
+      <li>조건수 \(\kappa=\sigma_{\max}/\sigma_{\min}\)는 문제 자체의 오차 증폭률이다. \(\kappa\approx10^k\)이면 약 k자리를 잃는다.</li>
+    </ol>
+  </section>
+
+  <section class="quiz-sec" id="quiz">
+    <h2>확인 퀴즈</h2>
+    <div class="quiz">
+      <div class="quiz-q"><p>1. 다음 중 IEEE 754 배정밀도로 <b>정확히</b> 저장되는 수는?</p><div class="opts">
+        <button class="opt">0.1</button><button class="opt">0.2</button><button class="opt" data-correct>0.375</button><button class="opt">1/3</button>
+      </div><div class="quiz-exp">0.375 = 3/8 = 0.011₂로 분모가 2의 거듭제곱이라 유한 2진 소수다. 0.1 = 1/10과 0.2 = 1/5는 분모에 5가, 1/3은 3이 있어 2진수로 끝나지 않는다.</div></div>
+      <div class="quiz-q"><p>2. float32로 1부터 1씩 계속 더하는 카운터가 있다. 결국 값이 더 이상 늘지 않는 지점은?</p><div class="opts">
+        <button class="opt">2¹⁶ = 65 536</button><button class="opt" data-correct>2²⁴ = 16 777 216</button><button class="opt">2³¹ − 1</button><button class="opt">약 3.4 × 10³⁸</button>
+      </div><div class="quiz-exp">float32는 가수 23비트 + 숨은 비트 1 = 24비트 정밀도다. 2²⁴ 이상에서는 이웃 수 간격이 2라서 2²⁴ + 1은 짝수 쪽(2²⁴)으로 반올림되고 카운터가 멈춘다. 3.4×10³⁸은 최댓값(오버플로 경계)이다.</div></div>
+      <div class="quiz-q"><p>3. 작은 x에서 \(\sqrt{1+x}-1\)을 정확하게 계산하려면?</p><div class="opts">
+        <button class="opt">float32 대신 float64를 쓰면 문제가 완전히 사라진다</button><button class="opt" data-correct>\(x/(\sqrt{1+x}+1)\)로 바꿔 쓴다</button><button class="opt">\(\sqrt{1+x}\)를 먼저 반올림한 뒤 1을 뺀다</button><button class="opt">x를 키운 뒤 결과를 다시 나눈다</button>
+      </div><div class="quiz-exp">분자를 유리화하면 \(\sqrt{1+x}-1 = x/(\sqrt{1+x}+1)\)이 되어 비슷한 두 수의 뺄셈이 사라진다. 정밀도를 높이면 상쇄가 일어나는 x의 범위가 작은 쪽으로 밀릴 뿐, 충분히 작은 x에서는 같은 문제가 생긴다.</div></div>
+      <div class="quiz-q"><p>4. 배정밀도에서 중심 차분 \(\frac{f(x+h)-f(x-h)}{2h}\)로 미분할 때 h를 \(10^{-12}\)로 잡았다. 결과는?</p><div class="opts">
+        <button class="opt">h가 작을수록 정확하므로 최적에 가깝다</button><button class="opt" data-correct>반올림 오차(∝ ε/h)가 지배해 h ≈ 10⁻⁵일 때보다 오차가 훨씬 크다</button><button class="opt">절단 오차가 지배해 오차가 크다</button><button class="opt">정확히 0이 된다</button>
+      </div><div class="quiz-exp">중심 차분의 최적 h는 \(\sqrt[3]{\varepsilon}\approx6\times10^{-6}\) 근처다. h = 10⁻¹²에서는 절단 오차(∝ h² ≈ 10⁻²⁴)는 무시할 만하지만 반올림 오차 ε/h ≈ 10⁻⁴가 지배한다. U자 곡선의 왼쪽 벽이다.</div></div>
+      <div class="quiz-q"><p>5. 1D 파동 시뮬레이션이 Δx = 1 mm, c = 340 m/s(공기 중 음속)에서 안정했다. 격자를 Δx = 0.5 mm로 촘촘히 하면 명시적 리프프로그 스킴의 Δt는?</p><div class="opts">
+        <button class="opt">그대로 두어도 된다</button><button class="opt" data-correct>절반 이하로 줄여야 한다(Δt ≤ Δx/c)</button><button class="opt">1/4로 줄여야 한다</button><button class="opt">두 배로 늘려도 된다</button>
+      </div><div class="quiz-exp">CFL 조건 cΔt/Δx ≤ 1에서 Δt의 상한은 Δx에 비례한다. Δx를 절반으로 하면 Δt도 절반으로 줄여야 한다(Δx = 0.5 mm이면 Δt ≤ 약 1.47 µs). 1/4로 줄여야 하는 것은 확산 방정식(Δt ∝ Δx²)의 명시적 방법이다.</div></div>
+      <div class="quiz-q"><p>6. 주기 Λ = 400 nm인 격자에 λ = 550 nm 빛이 공기 중에서 수직으로 입사한다. 공기 쪽으로 반사되는 전파 차수는?</p><div class="opts">
+        <button class="opt">0차, ±1차</button><button class="opt" data-correct>0차뿐</button><button class="opt">±1차뿐</button><button class="opt">0차, ±1차, ±2차</button>
+      </div><div class="quiz-exp">sin θ₁ = λ/Λ = 1.375 &gt; 1이므로 ±1차는 소멸파가 된다. 공기 쪽으로는 0차(거울 반사)만 퍼져 나간다. 다만 아래 매질이 n = 1.5 유리라면 투과 쪽에서는 1.375 &lt; 1.5라서 ±1차가 산다(약 66°).</div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ---------------------------------------------------------------- 공통 도우미 */
+const NUM = (function () {
+  const dv = new DataView(new ArrayBuffer(8));
+  function toBig(x) { dv.setFloat64(0, x); return dv.getBigUint64(0); }
+  function fromBig(b) { dv.setBigUint64(0, BigInt.asUintN(64, b)); return dv.getFloat64(0); }
+  /** 배정밀도 값 → {neg, num, den} (값 = num/den, den은 2의 거듭제곱) */
+  function rational(x) {
+    const b = toBig(x), neg = b >> 63n === 1n, ex = Number((b >> 52n) & 0x7ffn);
+    let mant = b & ((1n << 52n) - 1n), e;
+    if (ex === 0) e = -1074; else { mant |= 1n << 52n; e = ex - 1075; }
+    if (e >= 0) return { neg, num: mant << BigInt(e), den: 1n };
+    return { neg, num: mant, den: 1n << BigInt(-e) };
+  }
+  /** 정확한 10진 전개 문자열 */
+  function exactDec(x) {
+    if (!isFinite(x)) return String(x);
+    if (x === 0) return Object.is(x, -0) ? "-0" : "0";
+    const r = rational(x);
+    let s;
+    if (r.den === 1n) s = r.num.toString();
+    else {
+      const k = r.den.toString(2).length - 1;
+      const t = (r.num * 5n ** BigInt(k)).toString().padStart(k + 1, "0");
+      const ip = t.slice(0, t.length - k), fp = t.slice(t.length - k).replace(/0+$/, "");
+      s = ip + (fp ? "." + fp : "");
+    }
+    return (r.neg ? "-" : "") + s;
+  }
+  function nextUp(x) {
+    if (isNaN(x) || x === Infinity) return x;
+    if (x === 0) return 5e-324;
+    const b = toBig(x);
+    return x > 0 ? fromBig(b + 1n) : fromBig(b - 1n);
+  }
+  const nextDown = (x) => -nextUp(-x);
+  /** 10진 문자열(부호·소수점·e 지수) → {num, den} BigInt 유리수, 실패 시 null */
+  function parseDec(str) {
+    const m = /^\s*([+-]?)(\d*)(?:\.(\d*))?(?:[eE]([+-]?\d+))?\s*$/.exec(str);
+    if (!m || (!m[2] && !m[3])) return null;
+    const digits = (m[2] || "") + (m[3] || "");
+    let e = (m[4] ? parseInt(m[4], 10) : 0) - (m[3] || "").length;
+    if (Math.abs(e) > 400) return null;
+    let num = BigInt(digits || "0"), den = 1n;
+    if (e >= 0) num *= 10n ** BigInt(e); else den = 10n ** BigInt(-e);
+    if (m[1] === "-") num = -num;
+    return { num, den };
+  }
+  /** 큰 정수 비율을 유효숫자 d자리 지수 표기로 */
+  function ratioStr(num, den, d = 3) {
+    if (num === 0n) return "0";
+    const neg = (num < 0n) !== (den < 0n); if (num < 0n) num = -num; if (den < 0n) den = -den;
+    const L = num.toString().length - den.toString().length;
+    let sh = d + 2 - L; let q = sh >= 0 ? (num * 10n ** BigInt(sh)) / den : num / (den * 10n ** BigInt(-sh));
+    const v = Number(q) * Math.pow(10, -sh);
+    return (neg ? "−" : "") + v.toExponential(d - 1).replace("e", "×10^").replace("^+", "^").replace(/\^(-?\d+)/, (a, p) => supNum(p));
+  }
+  const SUP = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+  const supNum = (p) => String(p).split("").map((c) => SUP[c] || c).join("");
+  /** 숫자를 a×10ⁿ 형태로 */
+  function sci(x, d = 2) {
+    if (x === 0) return "0";
+    if (!isFinite(x)) return String(x);
+    const ax = Math.abs(x);
+    if (ax >= 1e-3 && ax < 1e5) return String(Number(x.toPrecision(d + 1)));
+    const s = x.toExponential(d); const [a, p] = s.split("e");
+    return a + "×10" + supNum(parseInt(p, 10));
+  }
+  return { rational, exactDec, nextUp, nextDown, parseDec, ratioStr, sci, supNum, toBig };
+})();
+
+/* ---------------------------------------------------------------- 1. 배정밀도 해부기 */
+(function () {
+  const inp = document.getElementById("num-bits-in");
+  let cur = 0.1, curLabel = "0.1";
+  function evalExpr(s) {
+    const t = s.replace(/\s+/g, "").replace(/\^/g, "**").replace(/×/g, "*").replace(/−/g, "-");
+    if (!t || !/^[0-9eE+\-*/().]+$/.test(t)) return NaN;
+    try { const v = Function('"use strict";return (' + t + ")")(); return typeof v === "number" ? v : NaN; } catch (e) { return NaN; }
+  }
+  function render() {
+    const x = cur;
+    const fb = MB.float64Bits(x);
+    const row = document.getElementById("num-bits-row");
+    let h = `<span class="b-s" title="부호">${fb.sign}</span><span class="gap"></span>`;
+    for (const c of fb.exp) h += `<span class="b-e">${c}</span>`;
+    h += `<span class="gap"></span>`;
+    for (let i = 0; i < 52; i++) h += `<span class="b-f">${fb.frac[i]}</span>`;
+    row.innerHTML = h;
+    const e = parseInt(fb.exp, 2);
+    let form;
+    if (!isFinite(x) || isNaN(x)) form = e === 2047 ? (isNaN(x) ? "NaN (지수 전부 1, 가수 ≠ 0)" : "±∞ (지수 전부 1, 가수 0)") : "";
+    else if (e === 0) form = x === 0 ? "0 (지수·가수 모두 0)" : `비정규수: 0.f × 2⁻¹⁰²²`;
+    else form = `e = ${e} → ${fb.sign === "1" ? "−" : ""}1.f × 2${NUM.supNum(e - 1023)}`;
+    document.getElementById("num-bits-form").textContent = form + "  ·  hex 0x" + fb.hex;
+    const dec = NUM.exactDec(x);
+    const box = document.getElementById("num-bits-dec");
+    let disp = dec;
+    const digits = dec.replace(/[-.]/g, "").replace(/^0+/, "").length;
+    if (dec.length > 200) disp = dec.slice(0, 120) + " … " + dec.slice(-40);
+    // 입력과 처음 달라지는 자리 강조
+    let lab = curLabel.trim();
+    let hl = disp;
+    if (/^[+-]?\d*\.?\d*$/.test(lab) && lab && isFinite(x)) {
+      let i = 0; const a = disp, b = lab.replace(/^\+/, "");
+      while (i < a.length && i < b.length && a[i] === b[i]) i++;
+      if (i < a.length && b.length < a.length) hl = a.slice(0, i) + '<span class="hl">' + a.slice(i) + "</span>";
+    }
+    box.innerHTML = `<b>저장된 실제 값</b> (${isFinite(x) ? "유효숫자 " + digits + "자리, 정확" : "특수값"})<br>${hl}`;
+    // 오차
+    const p = NUM.parseDec(lab);
+    if (p && isFinite(x)) {
+      const r = NUM.rational(x); const rn = r.neg ? -r.num : r.num;
+      const diffNum = rn * p.den - p.num * r.den, diffDen = r.den * p.den;
+      if (diffNum === 0n) MB.stat("num-bits-err", "0 <small>(정확히 표현됨)</small>");
+      else MB.stat("num-bits-err", NUM.ratioStr(diffNum, diffDen, 3) + (p.num !== 0n ? ` <small>(상대 ${NUM.ratioStr((diffNum < 0n ? -diffNum : diffNum) * p.den, diffDen * (p.num < 0n ? -p.num : p.num), 2)})</small>` : ""));
+    } else MB.stat("num-bits-err", isFinite(x) ? "식 입력: 각 연산마다 반올림" : "—");
+    if (isFinite(x)) {
+      const up = NUM.nextUp(Math.abs(x)) - Math.abs(x);
+      MB.stat("num-bits-ulp", NUM.sci(up, 3) + (x !== 0 ? ` <small>(상대 ${NUM.sci(up / Math.abs(x), 2)})</small>` : ""));
+      const f = Math.fround(x);
+      const fs = NUM.exactDec(f);
+      MB.stat("num-bits-f32", (fs.length > 20 ? fs.slice(0, 18) + "…" : fs) + (f !== x ? ' <small>(오차 ' + NUM.sci(Math.abs(f - x) / Math.abs(x || 1), 1) + ')</small>' : ''));
+    } else { MB.stat("num-bits-ulp", "—"); MB.stat("num-bits-f32", String(Math.fround(x))); }
+  }
+  function setFromInput() {
+    const v = evalExpr(inp.value);
+    if (isNaN(v) && !/^\s*NaN\s*$/i.test(inp.value)) { MB.stat("num-bits-err", "식을 읽을 수 없음"); return; }
+    cur = v; curLabel = inp.value; render();
+  }
+  inp.addEventListener("input", setFromInput);
+  document.querySelectorAll("#num-bits-presets button").forEach((b) => b.addEventListener("click", () => { inp.value = b.dataset.v; setFromInput(); }));
+  document.getElementById("num-bits-up").addEventListener("click", () => { cur = NUM.nextUp(cur); curLabel = ""; inp.value = NUM.exactDec(cur).length < 40 ? String(cur) : String(cur); render(); });
+  document.getElementById("num-bits-down").addEventListener("click", () => { cur = NUM.nextDown(cur); curLabel = ""; inp.value = String(cur); render(); });
+  setFromInput();
+})();
+
+/* ---------------------------------------------------------------- 2. 미니플로트 수직선 */
+(function () {
+  let vals = [], info = {};
+  function build() {
+    const E = Eb(), M = Mb(), sub = subOn();
+    const bias = (1 << (E - 1)) - 1, emax = (1 << E) - 2;
+    vals = [];
+    if (sub) for (let k = 1; k < 1 << M; k++) vals.push({ v: (k / (1 << M)) * Math.pow(2, 1 - bias), sub: true, e: 0 });
+    for (let e = 1; e <= emax; e++) for (let k = 0; k < 1 << M; k++) vals.push({ v: (1 + k / (1 << M)) * Math.pow(2, e - bias), sub: false, e });
+    info = { E, M, bias, max: vals[vals.length - 1].v, minNorm: Math.pow(2, 1 - bias), minSub: Math.pow(2, 1 - bias - M), eps: Math.pow(2, -M) };
+  }
+  function roundTo(x) {
+    let best = 0, bd = Math.abs(x);
+    for (const o of vals) { const d = Math.abs(o.v - x); if (d < bd - 1e-15) { bd = d; best = o.v; } }
+    return best;
+  }
+  const fmtv = (v) => (v >= 1000 || (v < 0.01 && v > 0) ? NUM.sci(v, 2) : String(Number(v.toPrecision(4))));
+  const Eb = MB.range("num-mf-e", (v) => v + "비트", () => upd());
+  const Mb = MB.range("num-mf-m", (v) => v + "비트", () => upd());
+  const xs = MB.range("num-mf-x", () => "", () => upd());
+  const subOn = MB.check("num-mf-sub", () => upd());
+  build();
+  const xVal = () => (xs() / 1000) * info.max;
+  const cv = MB.canvas("#cv-num-mini", (ctx, w, h) => {
+    const P = MB.palette(); const font = getComputedStyle(document.body).getPropertyValue("--mono");
+    const L = 22, R = w - 22;
+    const y1 = h * 0.3, y2 = h * 0.76;
+    ctx.font = "11px " + font;
+    // 선형 줄
+    ctx.strokeStyle = P.axis; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(L, y1); ctx.lineTo(R, y1); ctx.moveTo(L, y2); ctx.lineTo(R, y2); ctx.stroke();
+    ctx.fillStyle = P.dim; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+    ctx.fillText("선형 눈금: 0 … 최댓값 " + fmtv(info.max), L, y1 - 22);
+    ctx.fillText("로그 눈금(log₂): 이진 구간마다 점 2ᴹ개", L, y2 - 22);
+    const XL = (v) => L + (v / info.max) * (R - L);
+    const lmin = Math.log2(subOn() ? info.minSub : info.minNorm), lmax = Math.log2(info.max);
+    const XG = (v) => L + ((Math.log2(v) - lmin) / (lmax - lmin || 1)) * (R - L);
+    // 이진 구간 경계(로그 줄)
+    ctx.strokeStyle = P.grid; ctx.lineWidth = 1;
+    for (let e = Math.ceil(lmin); e <= Math.floor(lmax); e++) { const px = XG(Math.pow(2, e)); ctx.beginPath(); ctx.moveTo(px, y2 - 14); ctx.lineTo(px, y2 + 14); ctx.stroke(); }
+    ctx.fillStyle = P.faint; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    const eSpan = Math.floor(lmax) - Math.ceil(lmin) + 1, eStep = Math.max(1, Math.ceil(eSpan / Math.max(3, Math.floor((R - L) / 46))));
+    for (let e = Math.ceil(lmin); e <= Math.floor(lmax); e += eStep) ctx.fillText("2" + NUM.supNum(e), XG(Math.pow(2, e)), y2 + 16);
+    // 점
+    const tick = (px, y, col, hgt) => { ctx.strokeStyle = col; ctx.beginPath(); ctx.moveTo(px, y - hgt); ctx.lineTo(px, y + hgt); ctx.stroke(); };
+    ctx.lineWidth = 1.3;
+    tick(XL(0), y1, P.text, 9);
+    vals.forEach((o) => { const c = o.sub ? P.accent2 : P.accent; tick(XL(o.v), y1, c, 8); tick(XG(o.v), y2, c, 8); });
+    // 선형 줄 눈금
+    ctx.fillStyle = P.faint; ctx.textBaseline = "top";
+    ctx.fillText("0", XL(0), y1 + 14);
+    for (let e = 0; Math.pow(2, e) <= info.max; e++) { const v = Math.pow(2, e); const px = XL(v); if (px - XL(0) < 20) continue; ctx.fillText(fmtv(v), px, y1 + 14); }
+    // x 표시
+    const x = xVal(), fx = roundTo(x);
+    ctx.strokeStyle = P.bad; ctx.lineWidth = 2;
+    tick(XL(x), y1, P.bad, 14);
+    ctx.fillStyle = P.bad; ctx.beginPath(); ctx.arc(XL(fx), y1 - 15, 4, 0, 7); ctx.fill();
+    ctx.fillStyle = P.text; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+    if (x > 0) { const gx = XG(Math.max(x, Math.pow(2, lmin))); ctx.strokeStyle = P.bad; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(gx, y2 - 14); ctx.lineTo(gx, y2 + 14); ctx.stroke(); }
+    ctx.fillStyle = P.dim; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+    ctx.fillText("파랑: 정규수 · 주황: 비정규수 · 빨강: x", R, h - 4);
+  }, { aspect: 0.42, minHeight: 230, maxHeight: 320 });
+  function upd() {
+    build(); cv.redraw();
+    const x = xVal(), fx = roundTo(x);
+    document.getElementById("num-mf-x-out").textContent = fmtv(x);
+    MB.stat("num-mf-count", vals.length + (subOn() ? ` <small>(비정규 ${(1 << info.M) - 1})</small>` : ""));
+    MB.stat("num-mf-eps", `2${NUM.supNum(-info.M)} = ${fmtv(info.eps)}`);
+    MB.stat("num-mf-max", fmtv(info.max) + ` <small>· 정수 연속 ≤ ${fmtv(Math.pow(2, info.M + 1))}</small>`);
+    MB.stat("num-mf-round", x > 0 ? `${fmtv(x)} → ${fmtv(fx)} <small>(${(Math.abs(fx - x) / x * 100).toFixed(2)}%)</small>` : "0 → 0");
+  }
+  upd();
+})();
+
+/* ---------------------------------------------------------------- 3. 패트리어트 */
+(function () {
+  const GAO = [[0, 0], [1, 0.0034], [8, 0.0275], [20, 0.0687], [48, 0.1648], [72, 0.2472], [100, 0.3433]];
+  const H = MB.range("num-pat-h", (v) => v + " 시간", () => upd());
+  const B = MB.range("num-pat-b", (v) => v + "비트", () => upd());
+  const V = MB.range("num-pat-v", (v) => v + " m/s", () => upd());
+  const gao = MB.check("num-pat-gao", () => upd());
+  const tickErr = (b) => 0.1 - Math.floor(0.1 * Math.pow(2, b)) / Math.pow(2, b);
+  const cv = MB.canvas("#cv-num-pat", (ctx, w, h) => {
+    const P = MB.palette(), e = tickErr(B()), hh = H();
+    const ymax = Math.max(0.05, e * 120 * 36000 * 1.08);
+    const series = [{ data: [[0, 0], [120, e * 120 * 36000]], color: P.accent, width: 2.4 }];
+    const c = MB.chart(ctx, null, {
+      x: [0, 120], y: [0, ymax], xLabel: "연속 가동 시간 (h)", yLabel: "누적 시간 오차 (s)",
+      series, vlines: [{ x: hh, color: P.accent2, label: hh + " h" }],
+      points: [{ x: hh, y: e * hh * 36000, color: P.accent2, r: 5 }].concat(gao() ? GAO.map(([a, b]) => ({ x: a, y: b, color: P.ok, r: 3.5 })) : []),
+    });
+    ctx.fillStyle = P.dim; ctx.font = "12px " + getComputedStyle(document.body).getPropertyValue("--font");
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    const vM = V() * e * hh * 36000;
+    ctx.fillText(`표적 이동 ≈ ${vM < 10 ? vM.toFixed(2) : Math.round(vM)} m`, c.box.x + 8, c.box.y + 6);
+    if (gao()) { ctx.fillStyle = P.ok; ctx.fillText("● GAO 보고서 표", c.box.x + 8, c.box.y + 24); }
+  }, { aspect: 0.56, maxHeight: 360, minHeight: 220 });
+  function upd() {
+    const e = tickErr(B()), n = Math.round(H() * 36000), dt = e * n;
+    MB.stat("num-pat-tick", NUM.sci(e, 3) + " s");
+    MB.stat("num-pat-n", n.toLocaleString("ko-KR") + "회");
+    MB.stat("num-pat-dt", dt.toFixed(4) + " s");
+    MB.stat("num-pat-dx", Math.round(dt * V()).toLocaleString("ko-KR") + " m");
+    cv.redraw();
+  }
+  upd();
+})();
+
+/* ---------------------------------------------------------------- 4. 상쇄 오차 */
+(function () {
+  const f = Math.fround;
+  const prob = MB.seg("num-cc-prob", () => upd());
+  const prec = MB.seg("num-cc-prec", () => upd());
+  const xs = MB.range("num-cc-x", () => "", () => upd());
+  const R = () => (prob() === "cos" ? [-10, 0] : [1, 10]); // log10 범위
+  const val = (s) => { const [a, b] = R(); return Math.pow(10, a + ((b - a) * s) / 1000); };
+  function calc(x) {
+    const p32 = prec() === "32";
+    if (prob() === "cos") {
+      const tru = 2 * Math.sin(x / 2) ** 2;
+      let nv, st;
+      if (p32) { const xx = f(x); nv = f(1 - f(Math.cos(xx))); const s = f(Math.sin(f(xx / 2))); st = f(2 * f(s * s)); }
+      else { nv = 1 - Math.cos(x); st = 2 * Math.sin(x / 2) ** 2; }
+      return { tru, nv, st };
+    }
+    const b = x; // x² + b x + 1 = 0의 작은 근
+    const tru = -2 / (b + Math.sqrt(b * b - 4));
+    let nv, st;
+    if (p32) { const bb = f(b), d = f(Math.sqrt(f(f(bb * bb) - 4))); nv = f(f(-bb + d) / 2); st = f(-2 / f(bb + d)); }
+    else { const d = Math.sqrt(b * b - 4); nv = (-b + d) / 2; st = -2 / (b + d); }
+    return { tru, nv, st };
+  }
+  const rel = (a, t) => Math.max(2e-18, Math.min(10, Math.abs(a - t) / Math.abs(t)));
+  const cv = MB.canvas("#cv-num-cancel", (ctx, w, h) => {
+    const P = MB.palette(), [a, b] = R(), N = 400;
+    const s1 = [], s2 = [];
+    for (let i = 0; i <= N; i++) { const x = Math.pow(10, a + ((b - a) * i) / N), c = calc(x); s1.push([x, rel(c.nv, c.tru)]); s2.push([x, rel(c.st, c.tru)]); }
+    const x = val(xs()), c = calc(x);
+    const eps = prec() === "32" ? Math.pow(2, -24) : Math.pow(2, -53);
+    MB.chart(ctx, null, {
+      x: [Math.pow(10, a), Math.pow(10, b)], y: [1e-18, 10], logX: true, logY: true,
+      xLabel: prob() === "cos" ? "x" : "b  (x² + bx + 1 = 0)", yLabel: "상대 오차",
+      yTicks: [1e-16, 1e-12, 1e-8, 1e-4, 1],
+      series: [{ data: s1, color: P.bad, width: 1.6 }, { data: s2, color: P.ok, width: 2.2 }],
+      hlines: [{ y: eps, color: P.faint, label: "u = ε/2" }],
+      vlines: [{ x, color: P.accent2 }],
+      points: [{ x, y: rel(c.nv, c.tru), color: P.bad, r: 4.5 }, { x, y: rel(c.st, c.tru), color: P.ok, r: 4.5 }],
+    });
+    ctx.font = "12px " + getComputedStyle(document.body).getPropertyValue("--font"); ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillStyle = P.bad; ctx.fillText(prob() === "cos" ? "순진: 1 − cos x" : "순진: (−b + √(b²−4))/2", 66, 20);
+    ctx.fillStyle = P.ok; ctx.fillText(prob() === "cos" ? "안정: 2 sin²(x/2)" : "안정: −2/(b + √(b²−4))", 66, 38);
+  }, { aspect: 0.6, maxHeight: 380, minHeight: 240 });
+  function upd() {
+    const x = val(xs()), c = calc(x);
+    document.getElementById("num-cc-x-out").textContent = (prob() === "cos" ? "x = " : "b = ") + NUM.sci(x, 2);
+    const g = (v) => (v === 0 ? "0" : v.toPrecision(prec() === "32" ? 8 : 12));
+    MB.stat("num-cc-true", g(c.tru));
+    MB.stat("num-cc-naive", g(c.nv) + ` <small>(${NUM.sci(rel(c.nv, c.tru), 1)})</small>`);
+    MB.stat("num-cc-stable", g(c.st) + ` <small>(${NUM.sci(rel(c.st, c.tru), 1)})</small>`);
+    cv.redraw();
+  }
+  upd();
+})();
+
+/* ---------------------------------------------------------------- 5. 수치 미분 U자 곡선 */
+(function () {
+  const FN = {
+    sin: { f: Math.sin, d: Math.cos, d2: (x) => -Math.sin(x), d3: (x) => -Math.cos(x) },
+    exp: { f: Math.exp, d: Math.exp, d2: Math.exp, d3: Math.exp },
+    cube: { f: (x) => x * x * x + 1000, d: (x) => 3 * x * x, d2: (x) => 6 * x, d3: () => 6 },
+  };
+  const fsel = MB.seg("num-us-f", () => upd());
+  const prec = MB.seg("num-us-prec", () => upd());
+  const hs = MB.range("num-us-h", (v) => v.toFixed(1), () => upd());
+  const th = MB.check("num-us-theory", () => upd());
+  const x0 = 1;
+  function errs(h) {
+    const F = FN[fsel()], p32 = prec() === "32", r = p32 ? Math.fround : (v) => v;
+    const fx = (x) => r(F.f(r(x)));
+    const xp = r(x0 + h), xm = r(x0 - h);
+    const fwd = r(r(fx(xp) - fx(x0)) / h), cen = r(r(fx(xp) - fx(xm)) / (2 * h));
+    const t = F.d(x0);
+    return { fe: Math.max(1e-19, Math.abs(fwd - t)), ce: Math.max(1e-19, Math.abs(cen - t)) };
+  }
+  function theory() {
+    const F = FN[fsel()], u = prec() === "32" ? Math.pow(2, -24) : Math.pow(2, -53);
+    const a = Math.abs(F.d2(x0)) / 2, b = 2 * u * Math.abs(F.f(x0)), c = Math.abs(F.d3(x0)) / 6, dd = u * Math.abs(F.f(x0));
+    return { a, b, c, dd, hf: Math.sqrt(b / a), hc: Math.cbrt(dd / (2 * c)) };
+  }
+  const cv = MB.canvas("#cv-num-ush", (ctx, w, h) => {
+    const P = MB.palette(), N = 320;
+    const s1 = [], s2 = [], t1 = [], t2 = [], T = theory();
+    for (let i = 0; i <= N; i++) {
+      const hh = Math.pow(10, -16 + (16 * i) / N), e = errs(hh);
+      s1.push([hh, e.fe]); s2.push([hh, e.ce]);
+      t1.push([hh, T.a * hh + T.b / hh]); t2.push([hh, T.c * hh * hh + T.dd / hh]);
+    }
+    const hc = Math.pow(10, hs()), e = errs(hc);
+    const series = [{ data: s1, color: P.accent2, width: 1.5 }, { data: s2, color: P.accent, width: 1.5 }];
+    if (th()) series.push({ data: t1, color: P.accent2, width: 1.2, dash: [5, 4] }, { data: t2, color: P.accent, width: 1.2, dash: [5, 4] });
+    MB.chart(ctx, null, {
+      x: [1e-16, 1], y: [1e-19, 1e3], logX: true, logY: true, xLabel: "간격 h", yLabel: "|근사 − f′(1)|",
+      xTicks: [1e-16, 1e-12, 1e-8, 1e-4, 1], yTicks: [1e-18, 1e-14, 1e-10, 1e-6, 1e-2, 1e2],
+      series, vlines: [{ x: hc, color: P.text }],
+      points: [{ x: hc, y: e.fe, color: P.accent2, r: 5 }, { x: hc, y: e.ce, color: P.accent, r: 5 }],
+    });
+    ctx.font = "12px " + getComputedStyle(document.body).getPropertyValue("--font"); ctx.textAlign = "right"; ctx.textBaseline = "top";
+    ctx.fillStyle = P.accent2; ctx.fillText("전진 차분", w - 24, 22);
+    ctx.fillStyle = P.accent; ctx.fillText("중심 차분", w - 24, 40);
+  }, { aspect: 0.6, maxHeight: 380, minHeight: 240 });
+  function upd() {
+    const e = errs(Math.pow(10, hs())), T = theory();
+    MB.stat("num-us-fe", NUM.sci(e.fe, 2));
+    MB.stat("num-us-ce", NUM.sci(e.ce, 2));
+    MB.stat("num-us-opt", NUM.sci(T.hf, 1) + " / " + NUM.sci(T.hc, 1));
+    cv.redraw();
+  }
+  upd();
+})();
+
+/* ---------------------------------------------------------------- 6. 파동 방정식 CFL */
+(function () {
+  const N = 200;
+  let u = new Float64Array(N), up = new Float64Array(N), un = new Float64Array(N), step = 0, blown = false;
+  const Cs = MB.range("num-wv-c", (v) => v.toFixed(2), () => readout());
+  const init = MB.seg("num-wv-init", () => reset());
+  const noise = MB.check("num-wv-noise", () => reset());
+  function shape(i) {
+    const x = i / (N - 1);
+    if (init() === "gauss") return Math.exp(-(((x - 0.35) / 0.05) ** 2));
+    return Math.max(0, 1 - Math.abs(x - 0.35) / 0.15);
+  }
+  function reset() {
+    const R = MB.rng(3);
+    for (let i = 0; i < N; i++) { u[i] = i === 0 || i === N - 1 ? 0 : shape(i) + (noise() ? (R() - 0.5) * 2e-12 : 0); }
+    // 정지 상태 출발: u^{-1}을 2차 정확도로
+    const C2 = Cs() ** 2;
+    for (let i = 1; i < N - 1; i++) up[i] = u[i] + 0.5 * C2 * (u[i + 1] - 2 * u[i] + u[i - 1]);
+    up[0] = up[N - 1] = 0;
+    step = 0; blown = false;
+    readout(); if (cv) cv.redraw();
+  }
+  function advance() {
+    if (blown) return;
+    const C2 = Cs() ** 2;
+    for (let i = 1; i < N - 1; i++) un[i] = 2 * u[i] - up[i] + C2 * (u[i + 1] - 2 * u[i] + u[i - 1]);
+    un[0] = un[N - 1] = 0;
+    const t = up; up = u; u = un; un = t; step++;
+    let m = 0; for (let i = 0; i < N; i++) m = Math.max(m, Math.abs(u[i]));
+    if (!isFinite(m) || m > 1e6) blown = true;
+  }
+  function gain(C) {
+    // λ² − 2(1−2C²)λ + 1 = 0 (kΔx = π)
+    const b = 1 - 2 * C * C, d = b * b - 1;
+    if (d <= 0) return 1;
+    return Math.abs(b) + Math.sqrt(d);
+  }
+  function readout() {
+    let m = 0; for (let i = 0; i < N; i++) m = Math.max(m, Math.abs(u[i]));
+    MB.stat("num-wv-n", String(step));
+    MB.stat("num-wv-max", blown ? '<span style="color:var(--bad)">발산</span>' : NUM.sci(m, 3));
+    const g = gain(Cs());
+    MB.stat("num-wv-g", g === 1 ? "|λ| = 1 (안정)" : `|λ| = ${g.toFixed(3)} <small>(스텝마다)</small>`);
+  }
+  let cv = null;
+  reset();
+  cv = MB.canvas("#cv-num-wave", (ctx, w, h) => {
+    const P = MB.palette(), L = 16, Rr = w - 16, mid = h * 0.55, A = h * 0.38;
+    ctx.strokeStyle = P.axis; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(L, mid); ctx.lineTo(Rr, mid); ctx.stroke();
+    ctx.strokeStyle = P.grid; ctx.beginPath(); ctx.moveTo(L, mid - A); ctx.lineTo(Rr, mid - A); ctx.moveTo(L, mid + A); ctx.lineTo(Rr, mid + A); ctx.stroke();
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 26, w, h - 26); ctx.clip();
+    ctx.strokeStyle = blown || gain(Cs()) > 1 ? P.bad : P.accent; ctx.lineWidth = 2; ctx.beginPath();
+    for (let i = 0; i < N; i++) { const px = L + ((Rr - L) * i) / (N - 1), v = MB.clamp(u[i], -1.3, 1.3); const py = mid - v * A; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.stroke(); ctx.restore();
+    ctx.fillStyle = P.text; ctx.fillRect(L - 3, mid - A - 6, 3, 2 * A + 12); ctx.fillRect(Rr, mid - A - 6, 3, 2 * A + 12);
+    ctx.font = "12px " + getComputedStyle(document.body).getPropertyValue("--font"); ctx.fillStyle = P.dim; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText(`C = ${Cs().toFixed(2)}  ·  스텝 ${step}`, L + 6, 8);
+    if (blown) { ctx.fillStyle = P.bad; ctx.textAlign = "center"; ctx.font = "700 16px " + getComputedStyle(document.body).getPropertyValue("--font"); const msg = "발산! (|u| > 10⁶) — 초기화를 누르세요", tw = ctx.measureText(msg).width; ctx.fillStyle = P.bg; ctx.globalAlpha = 0.85; ctx.fillRect(w / 2 - tw / 2 - 8, 32, tw + 16, 26); ctx.globalAlpha = 1; ctx.fillStyle = P.bad; ctx.fillText(msg, w / 2, 36); }
+  }, { aspect: 0.48, maxHeight: 320, minHeight: 200 });
+  const loop = MB.loop(cv.canvas, () => { for (let k = 0; k < 2; k++) advance(); readout(); cv.redraw(); });
+  loop.stop();
+  const play = document.getElementById("num-wv-play");
+  play.addEventListener("click", () => { const r = loop.toggle(); play.textContent = r ? "■ 정지" : "▶ 실행"; });
+  document.getElementById("num-wv-reset").addEventListener("click", () => reset());
+})();
+
+/* ---------------------------------------------------------------- 7. 1D FDTD */
+(function () {
+  const N = 400, SRC = 50, PROBE = 110, S0 = 160;
+  let ex, hy, cb, t, lo1, lo2, hi1, hi2, inc, incT, refl;
+  const nS = MB.range("num-fd-n", (v) => v.toFixed(2), () => reset());
+  const dS = MB.range("num-fd-d", (v) => v + "칸", () => reset());
+  const abc = MB.check("num-fd-abc", () => reset());
+  const showH = MB.check("num-fd-h", () => cv && cv.redraw());
+  const T0 = 40, SP = 12;
+  function reset() {
+    ex = new Float64Array(N); hy = new Float64Array(N); cb = new Float64Array(N);
+    const eps = nS() ** 2, s1 = S0 + dS();
+    for (let k = 0; k < N; k++) cb[k] = k >= S0 && k < s1 ? 0.5 / eps : 0.5;
+    t = 0; lo1 = lo2 = hi1 = hi2 = 0; inc = 0; incT = -1; refl = 0;
+    readout(); if (cv) cv.redraw();
+  }
+  function stepOnce() {
+    for (let k = 1; k < N; k++) ex[k] += cb[k] * (hy[k - 1] - hy[k]);
+    ex[SRC] += Math.exp(-0.5 * ((t - T0) / SP) ** 2);
+    if (abc()) { ex[0] = lo2; lo2 = lo1; lo1 = ex[1]; ex[N - 1] = hi2; hi2 = hi1; hi1 = ex[N - 2]; }
+    else { ex[0] = 0; ex[N - 1] = 0; }
+    for (let k = 0; k < N - 1; k++) hy[k] += 0.5 * (ex[k] - ex[k + 1]);
+    t++;
+    const v = ex[PROBE];
+    const tr = 4 * (S0 - PROBE); // 탐침 → 판 앞면 → 탐침 왕복 스텝 수(칸당 2스텝)
+    if (t < 300) { if (v > inc) { inc = v; incT = t; } }
+    if (incT > 0 && t > incT + tr - 60 && t < incT + tr + 120) { if (Math.abs(v) > Math.abs(refl)) refl = v; }
+  }
+  function readout() {
+    const n = nS(), r = (1 - n) / (1 + n);
+    MB.stat("num-fd-t", String(t));
+    MB.stat("num-fd-rth", r.toFixed(3) + ` <small>(R = ${(r * r * 100).toFixed(1)}%)</small>`);
+    const done = incT > 0 && t > incT + 4 * (S0 - PROBE) + 120;
+    MB.stat("num-fd-rme", !abc() ? "— (흡수 경계 필요)" : done ? (n === 1 ? "0" : (refl / inc).toFixed(3)) : "측정 중…");
+  }
+  let cv = null;
+  reset();
+  cv = MB.canvas("#cv-num-fdtd", (ctx, w, h) => {
+    const P = MB.palette(), L = 10, R = w - 10, mid = h * 0.52, A = h * 0.4;
+    const X = (k) => L + ((R - L) * k) / (N - 1);
+    ctx.fillStyle = P.accent2; ctx.globalAlpha = 0.12 + 0.05 * (nS() - 1);
+    ctx.fillRect(X(S0), 0, X(S0 + dS()) - X(S0), h); ctx.globalAlpha = 1;
+    ctx.strokeStyle = P.axis; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(L, mid); ctx.lineTo(R, mid); ctx.stroke();
+    const plot = (arr, col, wd) => { ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.beginPath(); for (let k = 0; k < N; k++) { const py = mid - MB.clamp(arr[k], -1.2, 1.2) * A; k ? ctx.lineTo(X(k), py) : ctx.moveTo(X(k), py); } ctx.stroke(); };
+    if (showH()) plot(hy, P.accent2, 1.4);
+    plot(ex, P.accent, 2.2);
+    ctx.fillStyle = P.dim; ctx.font = "12px " + getComputedStyle(document.body).getPropertyValue("--font"); ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillText("소스", X(SRC), 6); ctx.fillText("탐침", X(PROBE), 6);
+    ctx.fillText("n = " + nS().toFixed(2), X(S0 + dS() / 2), 6);
+    ctx.strokeStyle = P.faint; ctx.setLineDash([3, 3]);
+    [SRC, PROBE].forEach((k) => { ctx.beginPath(); ctx.moveTo(X(k), 22); ctx.lineTo(X(k), h - 6); ctx.stroke(); });
+    ctx.setLineDash([]);
+    ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillStyle = P.accent; ctx.fillText("E", L + 4, h - 6);
+    if (showH()) { ctx.fillStyle = P.accent2; ctx.fillText("H", L + 20, h - 6); }
+  }, { aspect: 0.46, maxHeight: 320, minHeight: 200 });
+  const loop = MB.loop(cv.canvas, () => { for (let k = 0; k < 4; k++) stepOnce(); readout(); cv.redraw(); });
+  loop.stop();
+  const play = document.getElementById("num-fd-play");
+  play.addEventListener("click", () => { const r = loop.toggle(); play.textContent = r ? "■ 정지" : "▶ 실행"; });
+  document.getElementById("num-fd-reset").addEventListener("click", () => { reset(); if (!loop.running) { loop.start(); play.textContent = "■ 정지"; } });
+})();
+
+/* ---------------------------------------------------------------- 8. 회절 차수 */
+(function () {
+  const Ls = MB.range("num-gr-l", (v) => v + " nm", () => cv.redraw());
+  const Ps = MB.range("num-gr-p", (v) => v + " nm", () => cv.redraw());
+  const As = MB.range("num-gr-a", (v) => v + "°", () => cv.redraw());
+  const Ns = MB.range("num-gr-n", (v) => v.toFixed(2), () => cv.redraw());
+  const cv = MB.canvas("#cv-num-grat", (ctx, w, h) => {
+    const P = MB.palette(), lam = Ls(), Lam = Ps(), ti = (As() * Math.PI) / 180, n2 = Ns();
+    const cx = w / 2, cy = h / 2, Rr = Math.min(w * 0.44, h * 0.42);
+    const font = getComputedStyle(document.body).getPropertyValue("--font");
+    // 매질
+    ctx.fillStyle = P.accent2; ctx.globalAlpha = 0.05 + 0.04 * (n2 - 1); ctx.fillRect(0, cy, w, h - cy); ctx.globalAlpha = 1;
+    // 격자
+    ctx.fillStyle = P.text; const tw = Math.max(4, Math.min(40, (Lam / 3000) * 40));
+    for (let x = cx - Math.floor((w / 2) / (tw * 2)) * tw * 2; x < w; x += tw * 2) ctx.fillRect(x, cy - 3, tw, 6);
+    ctx.strokeStyle = P.axis; ctx.setLineDash([3, 4]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, cy - Rr); ctx.lineTo(cx, cy + Rr); ctx.stroke(); ctx.setLineDash([]);
+    const ray = (ang, up, col, wd, lab, inbound) => {
+      const dx = Math.sin(ang), dy = up ? -Math.cos(ang) : Math.cos(ang);
+      const ex = cx + dx * Rr, ey = cy + dy * Rr;
+      ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); ctx.stroke();
+      // 화살촉
+      const [hx, hy, ux, uy] = inbound ? [cx, cy, -dx, -dy] : [ex, ey, dx, dy];
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx - ux * 10 - uy * 5, hy - uy * 10 + ux * 5); ctx.lineTo(hx - ux * 10 + uy * 5, hy - uy * 10 - ux * 5); ctx.closePath(); ctx.fill();
+      if (lab) { ctx.font = "700 12px " + font; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(lab, cx + dx * (Rr + 12), cy + dy * (Rr + 12)); }
+    };
+    // 입사 (위 왼쪽에서 들어옴): 방향 (sin ti, +cos) 아래로 → 시작점은 (−sin, −cos)
+    ray(-ti, true, P.text, 2.6, "", true);
+    const refl = [], trans = [];
+    const cols = [P.accent, P.ok, P.warn, P.bad, P.dim];
+    for (let m = -12; m <= 12; m++) {
+      const s = Math.sin(ti) + (m * lam) / Lam;
+      const col = cols[Math.min(Math.abs(m), 4)];
+      if (Math.abs(s) <= 1) { const a = Math.asin(s); ray(a, true, col, m === 0 ? 2.4 : 1.8, String(m)); refl.push(`${m}: ${((a * 180) / Math.PI).toFixed(1)}°`); }
+      const s2 = s / n2;
+      if (Math.abs(s2) <= 1) { const a = Math.asin(s2); ray(a, false, col, m === 0 ? 2.4 : 1.8, String(m)); trans.push(`${m}: ${((a * 180) / Math.PI).toFixed(1)}°`); }
+    }
+    ctx.font = "12px " + font; ctx.fillStyle = P.dim; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("공기 (n = 1) · 반사", 8, 8);
+    ctx.textBaseline = "bottom"; ctx.fillText(`n = ${n2.toFixed(2)} · 투과`, 8, h - 8);
+    ctx.textAlign = "right"; ctx.textBaseline = "top"; ctx.fillStyle = P.text; ctx.fillText("입사광", w - 8, 8);
+    MB.stat("num-gr-r", `${refl.length}개 <small>${refl.length <= 3 ? refl.join(", ") : ""}</small>`);
+    MB.stat("num-gr-t", `${trans.length}개 <small>${trans.length <= 3 ? trans.join(", ") : ""}</small>`);
+    MB.stat("num-gr-ratio", (lam / Lam).toFixed(3));
+  }, { aspect: 0.62, maxHeight: 400, minHeight: 240 });
+})();
+
+/* ---------------------------------------------------------------- 9. 조건수 */
+(function () {
+  const dS = MB.range("num-cd-d", (v) => v.toFixed(2), () => pl.redraw());
+  const mc = MB.check("num-cd-mc", () => pl.redraw());
+  const line = (A, D) => { const dx = D.x - A.x, dy = D.y - A.y, L = Math.hypot(dx, dy) || 1e-9; const n = [-dy / L, dx / L]; return { n, c: n[0] * A.x + n[1] * A.y, d: [dx / L, dy / L] }; };
+  const solve = (l1, l2, c1, c2) => { const det = l1.n[0] * l2.n[1] - l1.n[1] * l2.n[0]; if (Math.abs(det) < 1e-12) return null; return [(c1 * l2.n[1] - l1.n[1] * c2) / det, (l1.n[0] * c2 - c1 * l2.n[0]) / det]; };
+  const pl = MB.plane("#cv-num-cond", {
+    x: [-5, 5], aspect: 0.62, gridStep: 1,
+    points: [
+      { x: -3.5, y: -1.6, label: "" }, { x: 3.5, y: 1.6, label: "" },
+      { x: -3.5, y: 1.0, label: "" }, { x: 3.5, y: -0.8, label: "" },
+    ],
+    draw(P, api) {
+      const pts = api.points, pal = P.P, d = dS();
+      pts[0].color = pts[1].color = pal.accent; pts[2].color = pts[3].color = pal.accent2;
+      const l1 = line(pts[0], pts[1]), l2 = line(pts[2], pts[3]);
+      const far = 30;
+      const drawL = (l, A, col, off, dash, wd) => { const ox = l.n[0] * off, oy = l.n[1] * off; P.line(A.x - l.d[0] * far + ox, A.y - l.d[1] * far + oy, A.x + l.d[0] * far + ox, A.y + l.d[1] * far + oy, { color: col, dash, width: wd }); };
+      // 오차 띠
+      [[l1, pts[0], pal.accent], [l2, pts[2], pal.accent2]].forEach(([l, A, col]) => {
+        const ox = l.n[0] * d, oy = l.n[1] * d;
+        P.poly([[A.x - l.d[0] * far + ox, A.y - l.d[1] * far + oy], [A.x + l.d[0] * far + ox, A.y + l.d[1] * far + oy], [A.x + l.d[0] * far - ox, A.y + l.d[1] * far - oy], [A.x - l.d[0] * far - ox, A.y - l.d[1] * far - oy]], { fill: col, color: col, alpha: 0.12, stroke: false });
+        drawL(l, A, col, d, [4, 4], 1); drawL(l, A, col, -d, [4, 4], 1);
+      });
+      drawL(l1, pts[0], pal.accent, 0, [], 2.2); drawL(l2, pts[2], pal.accent2, 0, [], 2.2);
+      const x0 = solve(l1, l2, l1.c, l2.c);
+      let amp = Infinity;
+      if (x0) {
+        const corners = [[1, 1], [1, -1], [-1, -1], [-1, 1]].map(([a, b]) => solve(l1, l2, l1.c + a * d, l2.c + b * d));
+        P.poly(corners, { fill: pal.bad, color: pal.bad, alpha: 0.35, width: 1.5 });
+        amp = Math.max(...corners.map((c) => Math.hypot(c[0] - x0[0], c[1] - x0[1]))) / d;
+        if (mc()) {
+          const R = MB.rng(11);
+          for (let i = 0; i < 200; i++) { const p = solve(l1, l2, l1.c + (R() * 2 - 1) * d, l2.c + (R() * 2 - 1) * d); if (p) P.dot(p[0], p[1], { r: 1.8, color: pal.text, alpha: 0.6 }); }
+        }
+        P.dot(x0[0], x0[1], { r: 5, color: pal.bad, stroke: pal.bg });
+      }
+      const cs = Math.abs(l1.n[0] * l2.n[0] + l1.n[1] * l2.n[1]);
+      const ang = (Math.acos(Math.min(1, cs)) * 180) / Math.PI;
+      const kappa = cs >= 1 - 1e-15 ? Infinity : Math.sqrt((1 + cs) / (1 - cs));
+      MB.stat("num-cd-ang", ang.toFixed(1) + "°");
+      MB.stat("num-cd-k", isFinite(kappa) ? (kappa < 100 ? kappa.toFixed(2) : Math.round(kappa).toLocaleString()) : "∞ (평행)");
+      MB.stat("num-cd-amp", isFinite(amp) ? amp.toFixed(2) + "배" : "∞");
+    },
+  });
+  document.getElementById("num-cd-near").addEventListener("click", () => { const p = pl.points; p[0].x = -3.5; p[0].y = -0.9; p[1].x = 3.5; p[1].y = 0.9; p[2].x = -3.5; p[2].y = -0.45; p[3].x = 3.5; p[3].y = 0.75; pl.redraw(); });
+  document.getElementById("num-cd-ortho").addEventListener("click", () => { const p = pl.points; p[0].x = -2.5; p[0].y = -2.5; p[1].x = 2.5; p[1].y = 2.5; p[2].x = -2.5; p[2].y = 2.5; p[3].x = 2.5; p[3].y = -2.5; pl.redraw(); });
+})();
+</script>
+</body>
+</html>
