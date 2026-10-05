@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<title>무한을 길들이기 · MathBook</title>
+<meta name="description" content="계산기는 덧셈과 곱셈만으로 sin을 어떻게 구할까? 제논의 역설, 조화급수와 블록 쌓기, ε–δ 공차 계약, 미분·적분, e와 테일러 급수를 직접 끌어 보며 무한을 다루는 법을 익힌다.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<script src="../js/common.js"></script>
+<style>
+  .lim-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 14px; font-size: 13px; color: var(--text-dim); background: var(--canvas-bg); border-top: 1px solid var(--border); }
+  .lim-legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .lim-legend i.dash { background: repeating-linear-gradient(90deg, currentColor 0 5px, transparent 5px 9px) !important; height: 2px; }
+  .lim-stack canvas + canvas { border-top: 1px solid var(--border); }
+</style>
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3d6151a0abc94ede89285d462527fa80"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</head>
+<body data-chapter="limits">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">Chapter 01</div>
+    <h1>무한을 길들이기</h1>
+    <p class="lead">컴퓨터의 산술 장치가 직접 하는 일은 덧셈·뺄셈·곱셈·나눗셈과 자리 이동 정도입니다. 그런데도 <code>Math.sin(0.5)</code>는 소수점 아래 16자리까지 맞는 답을 순식간에 돌려줍니다. 비결은 <b>무한</b>을 다루는 기술에 있습니다. 무한히 많은 항을 더하면 정확한 값이 되고, 그 가운데 유한한 몇 항에서 멈추면 오차가 얼마인지 <b>보장</b>할 수 있습니다. 이 장에서는 "무한히 잘게 쪼개기"라는 하나의 도구가 급수, 극한, 미분, 적분, e, 테일러 급수로 이어지는 과정을 직접 끌어 보며 따라갑니다.</p>
+    <ul class="objectives">
+      <li>항이 0으로 가도 합이 발산할 수 있음을 알고, 기하급수·조화급수·\(\sum 1/n^2\)의 차이를 그림으로 설명한다.</li>
+      <li>극한의 ε–δ 정의를 "출력 공차 ε를 요구받으면 입력 공차 δ를 돌려주는 계약"으로 읽는다.</li>
+      <li>미분(할선 → 접선)과 적분(리만 합)이 같은 극한 과정임을 알고, 수치 미분·적분의 오차 차수를 비교한다.</li>
+      <li>e를 복리의 극한과 "자기 자신이 도함수인 지수"라는 두 얼굴로 이해한다.</li>
+      <li>테일러 급수로 함수를 다항식으로 근사하고, 수렴 반경과 절단 오차를 따져 계산기의 sin 버튼을 설계한다.</li>
+    </ul>
+    <div class="origin">
+      <div class="o-head"><small>이 수식이 없었다면</small><b>계산기·컴퓨터의 sin / exp / log 버튼</b></div>
+      <div class="o-body"><p>sin 0.5를 구하라고 하면 기계는 막힙니다. 각도를 재는 자도, 원을 그리는 컴퍼스도 없고 사칙연산만 있기 때문입니다. 해법은 sin을 <b>다항식</b>, 곧 덧셈과 곱셈만으로 된 식으로 바꾸는 것입니다. 테일러 급수 \(\sin x = x - x^3/3! + x^5/5! - \cdots\)는 무한히 긴 다항식이고, 이를 몇 항에서 자르면 남는 오차의 상한을 계산할 수 있습니다. 실제 수학 라이브러리는 먼저 인수를 작은 구간으로 줄이는 <b>범위 축소</b>를 하고, 그 구간에서 최소 최대 오차가 되도록 계수를 다시 맞춘 다항식을 씁니다. 일부 하드웨어와 초기 계산기는 덧셈과 자리 이동만으로 회전을 쌓는 CORDIC 계열 알고리즘을 썼습니다. 어느 쪽이든 바탕에 있는 생각은 같습니다. 무한 과정을 유한한 단계에서 끊되, 오차를 보장한다는 것입니다.</p>
+        <div class="o-chain"><span>sin 0.5 계산</span><i>→</i><span>사칙연산뿐인 기계</span><i>→</i><span class="tool">무한급수 + 오차 보장</span><i>→</i><span>다항식 몇 번 계산</span></div></div>
+    </div>
+  </header>
+
+  <!-- =============================================================== 1 -->
+  <section id="zeno">
+    <h2>무한히 많은 조각의 합은 유한할 수 있다</h2>
+    <div class="problem"><strong>sin을 "끝없이 더해서" 만들 수 있을까?</strong>
+      <p>계산기를 설계하는 사람이 sin x를 다항식들의 합으로 쓰는 공식을 받았다고 합시다. 항이 무한히 많습니다. 무한히 많은 수를 더하면 무한대가 되지 않을까요? 그리고 유한한 시간 안에 끝나지 않는 계산을 어떻게 믿을 수 있을까요? 이 질문은 2,400년 전 그리스에서 이미 역설의 형태로 나왔습니다.</p>
+    </div>
+    <p>엘레아의 제논<span class="en">(Zeno of Elea)</span>이 남긴 역설 가운데 하나는 이렇습니다. 1 m 떨어진 벽까지 걸어가려면 먼저 절반(1/2 m)을 가야 하고, 그다음 남은 거리의 절반(1/4 m), 또 그 절반(1/8 m)을 가야 합니다. 이 단계는 끝없이 이어지므로 벽에 영원히 닿지 못한다는 주장입니다. 그러나 우리는 벽에 닿습니다. 무엇이 틀렸을까요?</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 170" role="img" aria-label="0에서 1까지 절반씩 뛰는 수직선">
+        <line x1="40" y1="110" x2="760" y2="110" class="s-axis"/>
+        <line x1="40" y1="100" x2="40" y2="120" class="s-line"/><text x="40" y="140" class="t-mono" text-anchor="middle">0</text>
+        <line x1="760" y1="96" x2="760" y2="124" class="s-acc" style="stroke-width:4"/><text x="760" y="140" class="t-mono" text-anchor="middle">1 (벽)</text>
+        <path d="M40 110 Q 220 20 400 110" class="s-acc"/><text x="220" y="52" class="t-acc" text-anchor="middle">1/2</text>
+        <path d="M400 110 Q 490 50 580 110" class="s-acc"/><text x="490" y="70" class="t-acc" text-anchor="middle">1/4</text>
+        <path d="M580 110 Q 625 75 670 110" class="s-acc"/><text x="625" y="86" class="t-dim" text-anchor="middle">1/8</text>
+        <path d="M670 110 Q 692.5 90 715 110" class="s-acc"/><text x="692" y="98" class="t-mono" text-anchor="middle">1/16</text>
+        <path d="M715 110 Q 726 100 737.5 110" class="s-acc"/>
+        <path d="M737.5 110 Q 743 104 749 110" class="s-acc"/>
+        <text x="400" y="162" class="t-dim" text-anchor="middle">n번 뛴 뒤 남은 거리 = 1/2ⁿ → 0, 지나온 거리의 합 → 1</text>
+      </svg>
+      <figcaption><b>그림 1-1.</b> 제논의 이분법. 뛰는 횟수는 무한하지만 각 걸음이 기하급수적으로 짧아져, 걸음 길이의 합은 정확히 1에 수렴한다. 걸음마다 걸리는 시간도 같은 비율로 줄어들므로 걸린 시간의 합도 유한하다.</figcaption>
+    </figure>
+    <p>제논의 논증이 놓친 것은 "무한히 많은 단계"와 "무한히 긴 합"이 다르다는 점입니다. n걸음 뒤까지 간 거리를 <span class="term">부분합</span><span class="en">(Partial Sum)</span> \(S_n\)이라 하면</p>
+    <div class="formula">$$S_n = \frac12 + \frac14 + \cdots + \frac1{2^n} = 1 - \frac1{2^n}, \qquad \lim_{n\to\infty} S_n = 1$$
+      <div class="where">부분합이 어떤 값에 한없이 가까워지면 그 값을 무한급수의 <b>합</b>이라 부른다. "무한 번 더한다"는 동작이 아니라 "부분합 수열의 극한"이 정의다.</div>
+    </div>
+    <p>일반적으로 공비가 \(r\)인 <span class="term">기하급수</span><span class="en">(Geometric Series)</span>는 \(|r|&lt;1\)이면 수렴하고, 그 합은 다음과 같습니다.</p>
+    <div class="formula">$$\sum_{k=0}^{\infty} r^k = \frac{1}{1-r}\quad(|r|<1), \qquad \text{n항에서 자른 오차} = \frac{r^{n}}{1-r}$$
+      <div class="where">유도: \(S_n = 1 + r + \cdots + r^{n-1}\)에 \(r\)을 곱해 빼면 \(S_n(1-r) = 1-r^n\). \(|r|<1\)이면 \(r^n\to0\). 오차 공식이 핵심이다. 몇 항에서 멈추면 오차가 얼마인지 <b>미리</b> 알 수 있다.</div>
+    </div>
+
+    <div class="sim" id="sim-lim-zeno">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>정사각형을 반씩 채우기</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-lim-zeno"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>더한 조각 수 n <output id="lim-zeno-n-out"></output></span><input type="range" id="lim-zeno-n" min="0" max="40" value="5" step="1"></label>
+          <div class="btn-row"><button class="btn primary" id="lim-zeno-play">▶ 한 걸음씩</button><button class="btn" id="lim-zeno-reset">처음으로</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">부분합 Sₙ</span><span class="v" id="lim-zeno-s">—</span></div>
+        <div class="stat"><span class="k">남은 거리 (벽까지 1 m일 때)</span><span class="v" id="lim-zeno-rem">—</span></div>
+        <div class="stat"><span class="k">비유</span><span class="v" id="lim-zeno-cmp">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① n을 하나씩 올리며 넓이 1인 정사각형이 1/2, 1/4, 1/8 조각으로 채워지는 모습과 오른쪽 부분합 그래프를 비교한다. ② 남은 거리가 원자 지름(약 0.1 nm)보다 작아지는 n을 찾는다(34). ③ n이 40일 때도 부분합이 정확히 1은 아니라는 점에 주목한다. 극한은 "도달"이 아니라 "얼마든지 가까워짐"이다. · 모델: 넓이 1인 정사각형에서 남은 직사각형의 절반을 세로·가로로 번갈아 채운다. 그림은 24조각까지만 그린다.</div>
+    </div>
+
+    <p>계산기의 관점에서 이것은 아주 반가운 소식입니다. 무한급수가 수렴하고 남은 꼬리<span class="en">(Tail)</span>의 크기를 계산할 수 있다면, "오차 \(10^{-16}\) 이하가 될 때까지 n항만 더한다"는 <b>유한한</b> 알고리즘이 됩니다. 그렇다면 항이 0으로 줄어들기만 하면 항상 수렴할까요? 다음 절의 답은 "아니다"입니다.</p>
+  </section>
+
+  <!-- =============================================================== 2 -->
+  <section id="harmonic">
+    <h2>항이 0으로 가도 발산한다: 블록 쌓기 오버행</h2>
+    <div class="problem"><strong>탁자 밖으로 얼마나 멀리 내밀 수 있나</strong>
+      <p>길이 1인 똑같은 블록(책, 벽돌, 도미노)을 탁자 모서리에서 한 층에 하나씩 쌓아 위로 갈수록 바깥으로 내민다고 합시다. 접착제는 쓰지 않습니다. 맨 위 블록은 탁자 모서리에서 최대 얼마나 멀리 나갈 수 있을까요? 블록 하나 길이(1)를 넘길 수 있을까요? 10을 넘길 수 있을까요?</p>
+    </div>
+    <p>위에서부터 생각하면 쉽습니다. 맨 위 블록은 바로 아래 블록 위에서 자기 무게중심이 아래 블록의 끝에 오도록, 즉 1/2만큼 내밀 수 있습니다. 위 두 개를 한 덩어리로 보면 그 무게중심이 세 번째 블록의 끝에 오도록 1/4만큼 더 내밀 수 있습니다. 위 k개 덩어리의 무게중심을 그 아래 블록의 끝에 맞추면 k번째 단계에서 \(1/(2k)\)만큼 더 나갑니다. 그래서 n개를 쌓았을 때 최대 오버행<span class="en">(Overhang)</span>은</p>
+    <div class="formula">$$\text{오버행}(n) = \frac12\left(1 + \frac12 + \frac13 + \cdots + \frac1n\right) = \frac{H_n}{2}$$
+      <div class="where">\(H_n\)은 n번째 <span class="term">조화수</span><span class="en">(Harmonic Number)</span>. 블록 길이를 1로 둔 값이며, 한 층에 블록 하나씩 쌓는다는 조건에서의 최적이다.</div>
+    </div>
+    <p>그런데 조화급수 \(\sum 1/n\)은 <b>발산</b>합니다. 항 \(1/n\)은 0으로 줄어드는데도 합은 한없이 커집니다. 따라서 블록만 충분하면 맨 위 블록을 탁자 밖으로 <b>얼마든지 멀리</b> 내밀 수 있습니다. 4개면 이미 1을 넘고(\(H_4/2 \approx 1.042\)), 2를 넘으려면 31개, 3을 넘으려면 227개, 5를 넘으려면 약 1만 2천 개가 필요합니다. 증가가 로그만큼 느릴 뿐 상한은 없습니다.</p>
+
+    <div class="sim" id="sim-lim-overhang">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>조화 쌓기와 두 급수의 경주</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><div class="split">
+          <div><canvas id="cv-lim-stack"></canvas><span class="cap">블록 쌓기(옆에서 본 모습)</span></div>
+          <div><canvas id="cv-lim-hsum"></canvas><span class="cap">부분합 (가로축 로그)</span></div>
+        </div></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>블록(항) 수 n <output id="lim-ov-n-out"></output></span><input type="range" id="lim-ov-n"></label>
+          <label class="check"><input type="checkbox" id="lim-ov-com" checked> 위 k개의 무게중심 표시</label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">오버행 Hₙ/2</span><span class="v" id="lim-ov-over">—</span></div>
+        <div class="stat"><span class="k">Σ 1/k (조화)</span><span class="v" id="lim-ov-h">—</span></div>
+        <div class="stat"><span class="k">Σ 1/k²</span><span class="v" id="lim-ov-b">—</span></div>
+        <div class="stat"><span class="k">π²/6 − Σ 1/k²</span><span class="v" id="lim-ov-rem">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① n = 4에서 맨 위 블록 전체가 탁자 모서리(점선) 바깥에 있는지 확인한다. ② n을 31, 227로 올리며 오버행이 2, 3을 넘는 순간을 본다. ③ 오른쪽 그래프에서 Σ1/k는 로그 가로축 위에서 거의 직선(= ln n만큼 증가)이고, Σ1/k²는 π²/6에 달라붙는 것을 비교한다. · 모델: 길이 1의 강체 블록, 한 층에 하나, 마찰과 변형은 무시한다. 무게중심 점(○)이 바로 아래 블록의 오른쪽 끝에 놓이는 아슬아슬한 균형이다. 그래프는 n = 10⁶까지 미리 계산했다.</div>
+    </div>
+
+    <h3>왜 발산하나: 14세기의 묶음 논법</h3>
+    <p>조화급수의 발산은 14세기 니콜 오렘<span class="en">(Nicole Oresme)</span>의 논법으로 잘 알려져 있습니다. 항을 2의 거듭제곱 경계로 묶으면 각 묶음이 1/2 이상입니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 190" role="img" aria-label="조화급수 항을 묶어 각 묶음이 1/2 이상임을 보이는 그림">
+        <g>
+          <rect x="30" y="40" width="120" height="40" class="f-acc-soft"/><text x="90" y="65" class="t" text-anchor="middle">1</text>
+          <rect x="160" y="40" width="60" height="40" class="f-acc2-soft"/><text x="190" y="65" class="t" text-anchor="middle">1/2</text>
+          <rect x="230" y="40" width="40" height="40" class="f-acc-soft"/><rect x="270" y="40" width="30" height="40" class="f-acc-soft"/>
+          <text x="265" y="65" class="t-mono" text-anchor="middle">1/3+1/4</text>
+          <rect x="310" y="40" width="24" height="40" class="f-acc2-soft"/><rect x="334" y="40" width="20" height="40" class="f-acc2-soft"/><rect x="354" y="40" width="17" height="40" class="f-acc2-soft"/><rect x="371" y="40" width="15" height="40" class="f-acc2-soft"/>
+          <text x="348" y="100" class="t-mono" text-anchor="middle">1/5+…+1/8</text>
+          <rect x="396" y="40" width="13" height="40" class="f-acc-soft"/><rect x="409" y="40" width="12" height="40" class="f-acc-soft"/><rect x="421" y="40" width="11" height="40" class="f-acc-soft"/><rect x="432" y="40" width="10" height="40" class="f-acc-soft"/><rect x="442" y="40" width="9" height="40" class="f-acc-soft"/><rect x="451" y="40" width="9" height="40" class="f-acc-soft"/><rect x="460" y="40" width="8" height="40" class="f-acc-soft"/><rect x="468" y="40" width="8" height="40" class="f-acc-soft"/>
+          <text x="436" y="100" class="t-mono" text-anchor="middle">1/9+…+1/16</text>
+          <text x="520" y="65" class="t-dim">…</text>
+        </g>
+        <g>
+          <path d="M232 128 v8 h68 v-8" class="s-line"/><text x="266" y="156" class="t-acc" text-anchor="middle">≥ 2×1/4 = 1/2</text>
+          <path d="M312 128 v8 h74 v-8" class="s-line"/><text x="349" y="176" class="t-acc" text-anchor="middle">≥ 4×1/8 = 1/2</text>
+          <path d="M398 128 v8 h78 v-8" class="s-line"/><text x="470" y="156" class="t-acc" text-anchor="middle">≥ 8×1/16 = 1/2</text>
+          <text x="560" y="130" class="t">묶음이 끝없이 나오고</text>
+          <text x="560" y="152" class="t">각각 1/2 이상 → 합은 ∞</text>
+          <text x="560" y="174" class="t-dim">(2ᵏ항까지의 합 ≥ 1 + k/2)</text>
+        </g>
+      </svg>
+      <figcaption><b>그림 1-2.</b> 조화급수의 묶음 논법. 사각형 폭이 항의 크기다. \(2^{k-1}+1\)번째부터 \(2^k\)번째까지 \(2^{k-1}\)개 항은 모두 \(1/2^k\) 이상이므로 묶음의 합은 1/2 이상이다. 항은 줄어들지만 묶음 안의 항 개수가 두 배씩 늘어나 손해를 메운다.</figcaption>
+    </figure>
+    <p>더 정확히는 \(H_n \approx \ln n + \gamma\)(\(\gamma \approx 0.5772\), 오일러–마스케로니 상수)입니다. 증가 속도는 놀랄 만큼 느려서, 100만 항을 더해도 약 14.39이고 \(H_n\)이 100을 넘으려면 대략 \(1.5\times10^{43}\)항이 필요합니다. 컴퓨터로 "더해 보고 멈추는지 확인"해서는 수렴과 발산을 구별할 수 없다는 뜻입니다. 단정 실수(float32)로 1/n을 더하면 어느 순간 1/n이 누적합의 반올림 단위보다 작아져 더해도 값이 변하지 않습니다. 화면에는 수렴처럼 보이지만 실제 급수는 발산합니다(<a href="numerics.html">10장</a>).</p>
+    <div class="callout warn"><strong>항이 0으로 가는 것은 필요조건일 뿐</strong> \(\sum a_n\)이 수렴하려면 \(a_n\to0\)이어야 하지만, 그것만으로는 부족하다. 얼마나 <b>빨리</b> 0으로 가느냐가 관건이다. \(\sum 1/n^p\)는 \(p&gt;1\)이면 수렴, \(p\le1\)이면 발산한다(적분 \(\int_1^\infty x^{-p}dx\)와 비교).</div>
+
+    <h3>\(\sum 1/n^2\) 그리고 갑자기 나타나는 π</h3>
+    <p>항을 제곱만 해도 상황이 바뀝니다. \(1 + 1/4 + 1/9 + 1/16 + \cdots\)는 수렴합니다. 그 값을 정확히 구하는 문제는 17세기 중반 피에트로 멩골리가 제기했고 이후 바젤 문제<span class="en">(Basel Problem)</span>로 불렸습니다. 레온하르트 오일러가 1734년 무렵 답을 냈습니다.</p>
+    <div class="formula">$$\sum_{n=1}^{\infty}\frac{1}{n^2} = \frac{\pi^2}{6} \approx 1.644934$$
+      <div class="where">원도, 각도도 등장하지 않는 정수의 제곱 역수 합에 π가 나온다. 오일러의 발상은 \(\sin x/x\)를 근(\(x = \pm\pi, \pm2\pi,\dots\))으로 인수분해한 무한곱과 테일러 급수의 \(x^2\) 계수를 비교하는 것이었다. π는 sin의 <b>주기</b>를 타고 들어온다. 8절에서 다시 다룬다.</div>
+    </div>
+    <p>수렴하더라도 속도는 별개의 문제입니다. n항에서 자른 꼬리는 대략 \(1/n\)이므로 1000항을 더해도 소수점 셋째 자리에서 틀립니다(위 시뮬레이터의 마지막 칸). 수렴이 느린 급수를 그대로 계산기에 넣으면 안 됩니다. 계산기에 쓸 급수는 꼬리가 기하급수보다 빨리 줄어야 하고, 7절의 테일러 급수가 그 조건을 만족합니다.</p>
+  </section>
+
+  <!-- =============================================================== 3 -->
+  <section id="epsilon-delta">
+    <h2>극한은 공차 계약이다: ε–δ</h2>
+    <div class="problem"><strong>저항값을 얼마나 정밀하게 맞춰야 하나</strong>
+      <p>센서 회로의 출력 전압이 저항값 R의 함수 \(V = f(R)\)이라고 합시다. 고객은 출력이 목표값 L에서 ±ε 안에 들어오길 요구합니다. 저항 공급사에 "공칭값 a에서 ±δ 이내"라는 공차를 주문해야 합니다. 어떤 ε를 요구받아도 그에 맞는 δ를 항상 제시할 수 있을까요? 제시할 수 없는 경우는 언제일까요?</p>
+    </div>
+    <p>"\(x\)가 \(a\)에 가까워지면 \(f(x)\)가 \(L\)에 가까워진다"는 말은 듣기에는 분명하지만 "가까워진다"가 무엇인지 정해 두지 않으면 증명에 쓸 수 없습니다. 19세기에 코시와 바이어슈트라스가 다듬은 정의는 이 말을 <b>공차 계약</b>으로 바꿉니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 200" role="img" aria-label="입력 공차 δ와 출력 공차 ε의 계약 그림">
+        <rect x="320" y="60" width="160" height="80" rx="12" class="f-elev"/>
+        <text x="400" y="98" class="t" text-anchor="middle" style="font-size:18px">f</text>
+        <text x="400" y="120" class="t-dim" text-anchor="middle">회로·공정·함수</text>
+        <line x1="190" y1="100" x2="316" y2="100" class="s-acc"/><path d="M316 100 l-10 -6 v12 z" class="f-acc"/>
+        <line x1="484" y1="100" x2="610" y2="100" class="s-line"/><path d="M610 100 l-10 -6 v12 z" style="fill:var(--text-dim)"/>
+        <rect x="70" y="80" width="120" height="40" rx="8" class="f-acc-soft"/><text x="130" y="105" class="t" text-anchor="middle">x ∈ a ± δ</text>
+        <rect x="610" y="80" width="130" height="40" rx="8" class="f-acc2-soft"/><text x="675" y="105" class="t" text-anchor="middle">f(x) ∈ L ± ε</text>
+        <text x="675" y="62" class="t-dim" text-anchor="middle">① 고객이 요구</text>
+        <text x="130" y="62" class="t-dim" text-anchor="middle">② 설계자가 응답</text>
+        <path d="M660 140 C 600 190, 200 190, 140 140" class="s-line" style="stroke-dasharray:5 5"/>
+        <path d="M140 140 l2 12 l8 -10 z" style="fill:var(--text-dim)"/>
+        <text x="400" y="186" class="t-dim" text-anchor="middle">"어떤 ε를 대도 그에 맞는 δ를 내놓을 수 있다" = 극한이 L이다</text>
+      </svg>
+      <figcaption><b>그림 1-3.</b> 극한의 ε–δ 정의를 제조 공차로 읽기. 고객(반론자)이 먼저 출력 공차 ε를 정하고, 설계자는 입력 공차 δ로 답한다. 고객이 아무리 작은 ε를 불러도 설계자가 항상 답할 수 있으면 계약이 성립한다.</figcaption>
+    </figure>
+    <div class="formula">$$\lim_{x\to a} f(x) = L \iff \forall \varepsilon>0\ \exists \delta>0:\ 0<|x-a|<\delta \Rightarrow |f(x)-L|<\varepsilon$$
+      <div class="where">\(\forall\varepsilon\)가 먼저, \(\exists\delta\)가 나중이라는 순서가 핵심이다. δ는 ε에 의존해도 되지만 ε는 δ를 보고 고를 수 없다. \(f(a) = L\)까지 성립하면 \(f\)는 \(a\)에서 <span class="term">연속</span><span class="en">(Continuous)</span>이다.</div>
+    </div>
+
+    <div class="sim" id="sim-lim-epsdelta">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>ε 띠를 좁혀라, δ 띠가 답한다</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-lim-ed"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>함수</span><select id="lim-ed-f">
+            <option value="sq">x² (매끄러움)</option>
+            <option value="sqrt">√x (0 근처에서 가파름)</option>
+            <option value="recip">1/x (0에 가까울수록 민감)</option>
+            <option value="step">계단 (x = 1에서 점프)</option>
+            <option value="wig">x·sin(1/x) (무한 진동, a = 0)</option>
+          </select></label>
+          <label class="ctrl"><span>출력 공차 ε <output id="lim-ed-eps-out"></output></span><input type="range" id="lim-ed-eps" min="0.01" max="1.5" step="0.01" value="0.5"></label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">ε (요구)</span><span class="v" id="lim-ed-e">—</span></div>
+        <div class="stat"><span class="k">최대 δ (응답)</span><span class="v" id="lim-ed-d">—</span></div>
+        <div class="stat"><span class="k">δ / ε</span><span class="v" id="lim-ed-r">—</span></div>
+        <div class="stat"><span class="k">1 / |f′(a)|</span><span class="v" id="lim-ed-k">—</span></div>
+      </div>
+      <div class="sim-msg" id="lim-ed-msg">—</div>
+      <div class="sim-note">곡선 위의 점 a를 좌우로 끌어 기준점을 옮기고, 오른쪽의 ε 손잡이를 위아래로 끌어 출력 공차를 바꿉니다. 해볼 것: ① x²에서 ε를 줄이면 δ/ε가 1/|f′(a)|에 다가간다(작은 범위에서 함수는 직선처럼 보인다). ② 1/x에서 a를 0 쪽으로 옮기면 같은 ε에 대해 δ가 급격히 줄어든다. ③ 계단 함수에서 a를 정확히 1에 두고 ε를 1보다 작게 하면 어떤 δ도 존재하지 않는다(불연속). · 모델: L = f(a)로 두고, a 양쪽으로 로그 간격 표본 + 이분법으로 위반이 처음 생기는 거리를 찾는다. 정의역 밖의 점(√x의 x &lt; 0)은 계약 대상에서 뺀다.</div>
+    </div>
+
+    <p>시뮬레이터에서 본 비율 \(\delta/\varepsilon \to 1/|f'(a)|\)은 공학자에게 익숙한 <b>감도</b><span class="en">(Sensitivity)</span> 계산입니다. 출력 공차를 입력 공차로 나눠 주는 환산 계수가 미분계수이고, 공정 산포 예산이나 센서 오차 전파<span class="en">(Error Propagation)</span>는 모두 이 1차 근사 위에 서 있습니다. 감도가 큰 곳(1/x의 0 근처)에서는 같은 출력 공차를 맞추려면 입력을 훨씬 정밀하게 관리해야 합니다.</p>
+    <div class="callout deep"><strong>균등 연속과 "어디서나 같은 δ"</strong> 1/x는 \((0, 1]\)의 모든 점에서 연속이지만, 하나의 ε에 대해 구간 전체에서 통하는 단일 δ는 없다(0 근처로 갈수록 δ가 0으로 줄어든다). 모든 점에서 같은 δ로 계약할 수 있는 성질을 <b>균등 연속</b>이라 한다. 닫힌 유계 구간 위의 연속 함수는 언제나 균등 연속이고, 이 사실이 다음 절들에서 리만 적분이 수렴하는 근거가 된다.</div>
+    <p>극한은 무한급수의 수렴도 같은 언어로 말해 줍니다. "\(\sum a_k = S\)"는 "어떤 ε를 대도 그보다 큰 N부터는 \(|S_n - S| &lt; \varepsilon\)"이라는 계약입니다. 계산기 설계로 옮기면 "오차 \(2^{-53}\)을 요구받으면 몇 항까지 더하면 되는지 답할 수 있다"가 됩니다.</p>
+  </section>
+
+  <!-- =============================================================== 4 -->
+  <section id="derivative">
+    <h2>미분: 할선이 접선이 되는 극한</h2>
+    <div class="problem"><strong>속도계는 "순간"의 속도를 어떻게 아나</strong>
+      <p>GPS 수신기는 1초마다 위치만 기록합니다. 그런데 화면에는 "지금" 속도가 나옵니다. 속도는 (이동 거리)/(걸린 시간)인데, "순간"이라는 시간 0 동안의 이동 거리는 0이라서 0/0이 됩니다. 0/0은 계산할 수 없는데 순간 속도는 어떻게 정의할까요?</p>
+    </div>
+    <p>답은 0/0을 직접 계산하지 않고 <b>0/0으로 가는 과정</b>의 극한을 쓰는 것입니다. 두 점 \((a, f(a))\), \((a+h, f(a+h))\)를 지나는 할선<span class="en">(Secant)</span>의 기울기는 평균 변화율이고, \(h\)를 0으로 보내면 접선<span class="en">(Tangent)</span>의 기울기, 곧 <span class="term">도함수</span><span class="en">(Derivative)</span>가 됩니다.</p>
+    <div class="formula">$$f'(a) = \lim_{h\to0}\frac{f(a+h)-f(a)}{h}$$
+      <div class="where">ε–δ로 읽으면 "기울기 오차 ε를 요구받으면, \(|h|&lt;\delta\)인 모든 할선이 그 공차 안에 들게 하는 δ가 있다"는 계약이다. 왼쪽(\(h&lt;0\))과 오른쪽(\(h&gt;0\))에서 다가간 값이 다르면 미분 불가능하다.</div>
+    </div>
+
+    <div class="sim" id="sim-lim-secant">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>h → 0: 할선을 접선으로 접기</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><div class="split">
+          <div><canvas id="cv-lim-sec"></canvas><span class="cap">할선(주황)과 접선(초록 점선)</span></div>
+          <div><canvas id="cv-lim-secerr"></canvas><span class="cap">기울기 오차 vs h (double)</span></div>
+        </div></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>함수</span><select id="lim-sec-f">
+            <option value="sin">sin x</option><option value="sq">x²</option><option value="exp">eˣ</option><option value="abs">|x| (꺾임)</option>
+          </select></label>
+          <label class="ctrl"><span>간격 h <output id="lim-sec-h-out"></output></span><input type="range" id="lim-sec-h"></label>
+          <label class="check"><input type="checkbox" id="lim-sec-left"> 왼쪽에서 다가가기 (h &lt; 0)</label>
+          <div class="btn-row"><button class="btn primary" id="lim-sec-play">▶ h를 줄이기</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">할선 기울기</span><span class="v" id="lim-sec-m">—</span></div>
+        <div class="stat"><span class="k">참 f′(a)</span><span class="v" id="lim-sec-d">—</span></div>
+        <div class="stat"><span class="k">|오차|</span><span class="v" id="lim-sec-e">—</span></div>
+      </div>
+      <div class="sim-note">곡선 위의 점 a를 끌어 위치를 바꿉니다. 해볼 것: ① h를 1.5에서 0.01까지 줄이며 주황 할선이 초록 접선에 포개지는 것을 본다. 오차는 h에 비례해 줄어든다(오른쪽 그래프의 기울기 1 직선). ② h를 계속 10⁻¹⁵까지 줄이면 오차가 다시 <b>커진다</b>. 컴퓨터에서는 h → 0이 최선이 아니다. ③ |x|에서 a = 0에 두고 "왼쪽에서"를 켜고 끄면 할선 기울기가 −1과 +1로 갈려 하나의 접선이 없다. · 모델: 전진 차분 (f(a+h) − f(a))/h를 IEEE 754 배정밀도로 실제 계산한다.</div>
+    </div>
+
+    <p>오른쪽 그래프의 V자 모양은 두 오차의 줄다리기입니다. 수학적 근사 오차인 <span class="term">절단 오차</span><span class="en">(Truncation Error)</span>는 테일러 전개로 \(\tfrac{h}{2}|f''(a)|\) 정도이고 h가 작을수록 줄어듭니다. 반면 \(f(a+h)\)와 \(f(a)\)가 거의 같아지면 두 수를 빼는 순간 유효 숫자가 사라지는 <span class="term">상쇄 오차</span><span class="en">(Cancellation)</span>가 \(\epsilon_{\text{mach}}|f(a)|/h\) 정도로 커집니다. 두 오차의 합은 \(h \approx \sqrt{\epsilon_{\text{mach}}} \approx 10^{-8}\) 근처에서 가장 작습니다. 수학의 극한과 컴퓨터의 극한은 다릅니다. 이 차이는 <a href="numerics.html">10장</a>의 주제입니다.</p>
+    <div class="callout tip"><strong>엔지니어의 눈으로</strong> 중심 차분 \((f(a+h)-f(a-h))/2h\)은 절단 오차가 \(h^2\)에 비례해 최적 h가 \(10^{-5}\) 근처로 커지고 최소 오차도 \(10^{-11}\) 수준으로 작아진다. 잡음이 섞인 센서 데이터를 미분하면 같은 원리로 잡음이 \(1/h\)배로 증폭되므로, 실무에서는 먼저 저역 통과 필터를 걸고 미분한다(<a href="fourier.html">5장</a>).</div>
+  </section>
+
+  <!-- =============================================================== 5 -->
+  <section id="riemann">
+    <h2>적분: 무한히 잘게 쪼갠 직사각형의 합</h2>
+    <div class="problem"><strong>배터리에 남은 전하량은?</strong>
+      <p>배터리 관리 칩<span class="en">(BMS)</span>은 전류 i(t)를 1 ms마다 측정합니다. 남은 전하량은 전류를 시간에 대해 "모두 더한" 값인 \(Q = \int i\,dt\)입니다. 전류는 계속 변하므로 "전류 × 시간"이라는 직사각형 공식은 그대로 쓸 수 없습니다. 짧은 구간에서는 전류를 일정하다고 보고 직사각형으로 더한다면, 측정 간격을 얼마나 줄여야 원하는 정확도가 나올까요?</p>
+    </div>
+    <p>구간 \([a,b]\)를 n등분하고 각 조각 위에 직사각형을 세워 넓이를 더한 것이 <span class="term">리만 합</span><span class="en">(Riemann Sum)</span>입니다. 직사각형 높이를 조각의 왼쪽 끝, 오른쪽 끝, 가운데 중 어디서 재든 n → ∞이면 같은 값으로 수렴하고, 그 극한이 정적분입니다.</p>
+    <div class="formula">$$\int_a^b f(x)\,dx = \lim_{n\to\infty}\sum_{i=0}^{n-1} f(x_i^*)\,\Delta x, \qquad \Delta x = \frac{b-a}{n}$$
+      <div class="where">\(x_i^*\)는 i번째 조각 안의 아무 점. 왼쪽 끝 합과 오른쪽 끝 합의 오차는 \(\propto 1/n\), 중점 합과 사다리꼴 합은 \(\propto 1/n^2\)(f가 충분히 매끄러울 때).</div>
+    </div>
+
+    <div class="sim" id="sim-lim-riemann">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>리만 합 네 가지와 오차 차수</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><div class="split">
+          <div><canvas id="cv-lim-rs"></canvas><span class="cap" id="lim-rs-cap">넓이</span></div>
+          <div><canvas id="cv-lim-rerr"></canvas><span class="cap">|오차| vs n (로그–로그)</span></div>
+        </div>
+          <div class="lim-legend" id="lim-rs-legend"></div>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>함수와 구간</span><select id="lim-rs-f">
+            <option value="sin">sin x, [0, π] → 2</option>
+            <option value="sq">x², [0, 2] → 8/3</option>
+            <option value="exp">eˣ, [0, 1] → e − 1</option>
+            <option value="sqrt">√x, [0, 1] → 2/3</option>
+            <option value="atan">1/(1+x²), [0, 1] → π/4</option>
+          </select></label>
+          <div class="ctrl"><span>높이를 재는 곳</span><div class="seg" id="lim-rs-m"><button data-value="left" class="on">왼쪽</button><button data-value="right">오른쪽</button><button data-value="mid">중점</button><button data-value="trap">사다리꼴</button></div></div>
+          <label class="ctrl"><span>조각 수 n <output id="lim-rs-n-out"></output></span><input type="range" id="lim-rs-n" min="1" max="100" value="6" step="1"></label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">합</span><span class="v" id="lim-rs-s">—</span></div>
+        <div class="stat"><span class="k">정확한 값</span><span class="v" id="lim-rs-i">—</span></div>
+        <div class="stat"><span class="k">|오차|</span><span class="v" id="lim-rs-e">—</span></div>
+        <div class="stat"><span class="k">n → 2n 이면 오차 ÷</span><span class="v" id="lim-rs-q">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① x²에서 왼쪽 합과 중점 합을 같은 n으로 비교한다. 오른쪽 그래프에서 왼쪽 합은 기울기 −1, 중점 합은 기울기 −2 직선이다. "n을 2배로 하면 오차 ÷"가 2와 4 근처에 머문다. ② 1/(1+x²)를 [0, 1]에서 적분하면 π/4. 원과 무관해 보이는 함수에서 π가 나온다(8절). ③ √x에서는 중점 합도 ÷4가 아니라 ÷2.8 근처다. x = 0에서 기울기가 무한대라 매끄러움 가정이 깨지기 때문이다. · 모델: 균일 간격 n등분. sin x on [0, π]는 양 끝 값이 0이고 좌우 대칭이라 왼쪽·오른쪽·사다리꼴 합이 같아진다.</div>
+    </div>
+
+    <p>미분과 적분은 같은 도구를 반대 방향으로 쓴 것입니다. 미분은 곡선을 잘게 쪼개 각 조각을 직선으로 보고(국소 선형화), 적분은 영역을 잘게 쪼개 각 조각을 직사각형으로 봅니다. 두 연산이 서로의 역이라는 <span class="term">미적분의 기본 정리</span><span class="en">(Fundamental Theorem of Calculus)</span>도 이 그림에서 나옵니다. 넓이 함수 \(A(x) = \int_a^x f\)에 폭 h의 얇은 띠를 더하면 넓이는 약 \(f(x)\,h\)만큼 늘어나므로, \(A'(x) = \lim_{h\to0} \frac{f(x)h}{h} = f(x)\)입니다.</p>
+    <div class="callout"><strong>오차 차수가 비용이다</strong> BMS 예에서 오차를 1/100로 줄여야 한다면, 왼쪽 합(오차 ∝ 1/n)은 표본을 100배, 사다리꼴(∝ 1/n²)은 10배만 늘리면 된다. 같은 데이터로 더 높은 차수의 공식(심프슨 공식 ∝ 1/n⁴, 가우스 구적법)을 쓰면 비용이 크게 줄어든다. 시뮬레이터 회로의 시간 적분, 칩 열 해석, 카메라 노출 누적이 모두 이 선택 위에 있다.</div>
+  </section>
+
+  <!-- =============================================================== 6 -->
+  <section id="e-number">
+    <h2>e: 복리의 극한, 자기 자신이 기울기인 지수</h2>
+    <div class="problem"><strong>이자를 더 자주 붙이면 무한히 부자가 될까</strong>
+      <p>연 100% 이자를 1년에 한 번 붙이면 1원이 2원이 됩니다. 반년마다 50%씩 두 번 붙이면 \(1.5^2 = 2.25\)원, 매달 \(1/12\)씩 붙이면 약 2.613원입니다. 붙이는 횟수 n을 무한히 늘리면 잔고도 무한히 커질까요? 17세기 말 야코프 베르누이가 이 문제를 다룬 것으로 알려져 있습니다.</p>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>이자 붙이는 주기</th><th class="num">n (연간 횟수)</th><th class="num">(1 + 1/n)ⁿ</th></tr></thead>
+      <tbody>
+        <tr><td>연 1회</td><td class="num">1</td><td class="num">2</td></tr>
+        <tr><td>반기</td><td class="num">2</td><td class="num">2.25</td></tr>
+        <tr><td>분기</td><td class="num">4</td><td class="num">2.441406…</td></tr>
+        <tr><td>월</td><td class="num">12</td><td class="num">2.613035…</td></tr>
+        <tr><td>일</td><td class="num">365</td><td class="num">2.714567…</td></tr>
+        <tr><td>시간</td><td class="num">8,760</td><td class="num">2.718127…</td></tr>
+        <tr><td>분</td><td class="num">525,600</td><td class="num">2.718279…</td></tr>
+        <tr><td>연속 복리</td><td class="num">∞</td><td class="num">e = 2.718281828…</td></tr>
+      </tbody>
+    </table></div>
+    <p>잔고는 무한히 커지지 않고 한 수에 수렴합니다. 이 수가 <span class="term">자연상수 e</span>입니다. 증가분이 계속 줄어들어 무한대로 달아나지 못하는, 1절과 같은 이야기입니다. 이항 전개를 해 보면 \((1+1/n)^n \to \sum_{k\ge0} 1/k!\)이 되고, 이 급수는 매우 빨리 수렴합니다. 10항이면 오차가 \(3\times10^{-7}\) 정도입니다.</p>
+    <p>하지만 e가 공학 곳곳에 나오는 진짜 이유는 다른 데 있습니다. 모든 지수 함수 \(b^x\)는 자기 자신에 비례하는 기울기를 가집니다.</p>
+    <div class="formula">$$\frac{d}{dx}b^x = \lim_{h\to0}\frac{b^{x+h}-b^x}{h} = b^x\cdot\underbrace{\lim_{h\to0}\frac{b^h-1}{h}}_{=\ \ln b}$$
+      <div class="where">기울기 ÷ 높이 = ln b는 x와 무관한 상수다. 이 상수가 정확히 1이 되는 밑이 e이고, 그래서 \((e^x)' = e^x\). e^x는 "자기 자신이 도함수인" 유일한 지수 함수다(상수배를 빼면 \(y'=y\)의 유일한 해).</div>
+    </div>
+
+    <div class="sim" id="sim-lim-ebase">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>밑 b를 돌려 기울기 곡선과 겹쳐라</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-lim-e"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>밑 b <output id="lim-e-b-out"></output></span><input type="range" id="lim-e-b" min="1.3" max="4.5" step="0.01" value="2"></label>
+          <div class="btn-row"><button class="btn" id="lim-e-two">b = 2</button><button class="btn" id="lim-e-ten">b = 4</button><button class="btn primary" id="lim-e-snap">b = e</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">ln b = 기울기 ÷ 높이</span><span class="v" id="lim-e-ln">—</span></div>
+        <div class="stat"><span class="k">점의 높이 bˣ</span><span class="v" id="lim-e-y">—</span></div>
+        <div class="stat"><span class="k">점의 기울기</span><span class="v" id="lim-e-s">—</span></div>
+      </div>
+      <div class="sim-msg" id="lim-e-msg">—</div>
+      <div class="sim-note">곡선 위의 점을 끌면 그 점의 접선과 "가로 1, 세로 = 기울기" 삼각형이 따라옵니다. 해볼 것: ① b = 2에서 점을 어디로 옮겨도 기울기/높이가 0.693으로 일정한지 확인한다. ② 슬라이더로 b를 움직여 주황 점선(기울기 곡선)과 파란 곡선이 완전히 겹치는 b를 찾는다. ③ b = e에서 삼각형의 세로 변이 점의 높이와 같아지는 것을 본다. · 모델: 기울기 곡선은 해석적 도함수 (ln b)·bˣ. 회색 점선은 비교용 eˣ.</div>
+    </div>
+
+    <p>"변화율이 현재 양에 비례한다"는 문장은 자연과 공학에서 가장 흔한 법칙입니다. 커패시터의 방전 전류는 남은 전압에 비례하고, 방사성 붕괴 속도는 남은 원자 수에 비례하며, 칩의 냉각 속도는 주변과의 온도 차에 비례합니다. 모두 \(y' = -y/\tau\)이고 해는 \(y = y_0 e^{-t/\tau}\)입니다. 밑을 e로 쓰는 것은 취향이 아니라, 미분해도 모양이 바뀌지 않는 함수를 쓰면 미분방정식이 대수 문제가 되기 때문입니다. RC 회로의 시정수 τ = RC는 <a href="ode.html">4장</a>에서, \(e^{i\omega t}\)로 회전을 표현하는 이야기는 <a href="complex.html">2장</a>에서 이어집니다.</p>
+    <div class="callout deep"><strong>e의 테일러 급수</strong> \(e^x\)의 모든 도함수가 \(e^x\)이고 \(e^0 = 1\)이므로 다음 절의 테일러 공식에 넣으면 바로 \(e^x = \sum x^k/k!\)를 얻는다. 복리 극한에서 이항 전개로 얻은 \(\sum 1/k!\)는 이 식의 \(x=1\)인 경우다. 두 정의(복리 극한, 자기 도함수)가 같은 수를 가리킨다는 것이 이렇게 확인된다.</div>
+  </section>
+
+  <!-- =============================================================== 7 -->
+  <section id="taylor">
+    <h2>테일러 급수: 함수를 다항식으로 바꾸는 기계</h2>
+    <div class="problem"><strong>다시 계산기 문제: sin 0.5에 몇 항이 필요한가</strong>
+      <p>배정밀도(double)의 상대 정밀도는 \(2^{-53} \approx 1.1\times10^{-16}\)입니다. sin 0.5를 이 정밀도로 내려면 다항식을 몇 차까지 계산해야 할까요? 같은 방법으로 sin 100이나 ln 3도 계산할 수 있을까요?</p>
+    </div>
+    <p>미분은 "한 점 근처에서 함수 ≈ 직선"이라는 1차 근사였습니다. 직선 대신 2차, 3차 … 다항식으로 맞추면 근사가 점점 더 넓은 범위에서 정확해집니다. 점 \(a\)에서 함숫값과 1차, 2차, …, n차 도함수까지 모두 일치하는 다항식이 <span class="term">테일러 다항식</span><span class="en">(Taylor Polynomial)</span>입니다.</p>
+    <div class="formula">$$f(x) = \underbrace{\sum_{k=0}^{n}\frac{f^{(k)}(a)}{k!}(x-a)^k}_{T_n(x)} + R_n(x), \qquad R_n(x) = \frac{f^{(n+1)}(\xi)}{(n+1)!}(x-a)^{n+1}$$
+      <div class="where">\(R_n\)은 라그랑주 형태의 나머지, \(\xi\)는 a와 x 사이의 어떤 점. sin과 cos은 모든 도함수의 크기가 1 이하이므로 \(|R_n| \le |x-a|^{n+1}/(n+1)!\)라는 <b>보장된 상한</b>을 준다. 계승 \((n+1)!\)이 거듭제곱보다 훨씬 빨리 자라므로 꼬리는 기하급수보다도 빨리 사라진다.</div>
+    </div>
+    <p>sin 0.5에 적용하면 \(0.5^{15}/15! \approx 2.3\times10^{-17}\)이므로 \(x^{13}\)항까지, 즉 0이 아닌 항 7개면 상대 오차가 \(2^{-53}\) 아래로 내려갑니다. 덧셈과 곱셈 십여 번이면 됩니다. 아래 시뮬레이터에서 직접 확인해 보세요.</p>
+
+    <div class="sim" id="sim-lim-taylor">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>테일러 다항식 실험실</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view lim-stack">
+          <canvas id="cv-lim-tay"></canvas>
+          <canvas id="cv-lim-tayerr"></canvas>
+          <div class="lim-legend" id="lim-tay-legend"></div>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>함수 f(x)</span><select id="lim-tay-f">
+            <option value="sin">sin x</option>
+            <option value="cos">cos x</option>
+            <option value="exp">eˣ</option>
+            <option value="ln">ln(1 + x)</option>
+            <option value="geo">1 / (1 − x)</option>
+            <option value="lor">1 / (1 + x²)</option>
+          </select></label>
+          <label class="ctrl"><span>차수 n <output id="lim-tay-n-out"></output></span><input type="range" id="lim-tay-n" min="0" max="30" value="3" step="1"></label>
+          <label class="ctrl"><span>전개점 a <output id="lim-tay-a-out"></output></span><input type="range" id="lim-tay-a" min="-2" max="2" value="0" step="0.1"></label>
+          <div class="btn-row"><button class="btn primary" id="lim-tay-calc">sin 0.5 계산기</button><button class="btn" id="lim-tay-far">sin 8 (먼 곳)</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">x₀에서 f / Tₙ</span><span class="v" id="lim-tay-v">—</span></div>
+        <div class="stat"><span class="k">|오차|</span><span class="v" id="lim-tay-e">—</span></div>
+        <div class="stat"><span class="k">수렴 반경 R</span><span class="v" id="lim-tay-r">—</span></div>
+        <div class="stat"><span class="k">배정밀도에 필요한 차수</span><span class="v" id="lim-tay-k">—</span></div>
+      </div>
+      <div class="sim-note">위 그래프의 점 x₀를 좌우로 끌어 평가 위치를 바꿉니다. 아래 그래프는 |f − Tₙ|의 로그 눈금이고, 빨간 띠는 수렴 반경 밖입니다. 해볼 것: ① sin에서 n을 1, 3, 5, …로 올리며 근사가 맞는 구간이 넓어지는 것을 본다. ② ln(1+x)에서 n을 아무리 올려도 x &gt; 1 쪽은 오히려 더 망가진다. 1/(1−x)도 같다. ③ 1/(1+x²)는 실수 축 어디에도 특이점이 없는데 a = 0이면 |x| &gt; 1에서 발산한다. a를 옮기면 반경 √(1+a²)가 어떻게 변하는지 본다. · 모델: Tₙ은 배정밀도 호너법으로 계산. "필요한 차수"는 |f − Tₙ| ≤ 2.3×10⁻¹⁶·|f|를 처음 만족하는 차수(최대 150차)다.</div>
+    </div>
+
+    <h3>수렴 반경: 왜 ln(1+x)는 x &gt; 1에서 망가지나</h3>
+    <p>sin, cos, eˣ의 테일러 급수는 모든 x에서 수렴합니다(n을 충분히 키우면 됩니다). 반면 \(\ln(1+x) = x - x^2/2 + x^3/3 - \cdots\)의 항은 \(x^k/k\)이므로 \(|x|&gt;1\)이면 \(x^k\)가 k보다 훨씬 빨리 자라 항이 0으로 가지 않고, 급수는 발산합니다. 전개점 a 주위에서 급수가 수렴하는 최대 거리를 <span class="term">수렴 반경</span><span class="en">(Radius of Convergence)</span> R이라 합니다. ln(1+x)는 x = −1에서 무한대로 발산하므로 a = 0에서 R = 1입니다. 급수는 특이점까지의 거리만큼만 수렴하는데, 이 거리는 반대쪽(x = +1 방향)에도 똑같이 적용됩니다.</p>
+    <p>더 이상한 예가 \(1/(1+x^2)\)입니다. 실수 축 위에서는 어디서나 매끄럽고 유계인데, 0에서 전개한 급수 \(1 - x^2 + x^4 - \cdots\)는 \(|x|&gt;1\)에서 발산합니다. 실수만 보면 이유가 없습니다. 복소평면으로 나가면 답이 보입니다. \(x = \pm i\)에서 분모가 0이 되고, 원점에서 \(\pm i\)까지의 거리가 정확히 1입니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 260" role="img" aria-label="1/(1+x²)의 복소 특이점과 수렴 원">
+        <line x1="120" y1="130" x2="680" y2="130" class="s-axis"/>
+        <line x1="400" y1="20" x2="400" y2="240" class="s-axis"/>
+        <text x="688" y="134" class="t-mono">Re</text><text x="406" y="28" class="t-mono">Im</text>
+        <circle cx="400" cy="130" r="90" class="f-acc-soft" style="stroke-width:2"/>
+        <line x1="310" y1="130" x2="490" y2="130" class="s-acc" style="stroke-width:5"/>
+        <g style="stroke:var(--bad);stroke-width:3"><line x1="392" y1="32" x2="408" y2="48"/><line x1="408" y1="32" x2="392" y2="48"/><line x1="392" y1="212" x2="408" y2="228"/><line x1="408" y1="212" x2="392" y2="228"/></g>
+        <text x="414" y="44" class="t" style="fill:var(--bad)">+i (분모 = 0)</text>
+        <text x="414" y="226" class="t" style="fill:var(--bad)">−i</text>
+        <text x="310" y="152" class="t-mono" text-anchor="middle">−1</text><text x="490" y="152" class="t-mono" text-anchor="middle">+1</text>
+        <line x1="400" y1="130" x2="400" y2="40" class="s-line" style="stroke-dasharray:4 4"/>
+        <text x="376" y="92" class="t-acc" text-anchor="end">R = 1</text>
+        <text x="560" y="96" class="t-dim">실수 축의 굵은 선:</text>
+        <text x="560" y="114" class="t-dim">급수가 수렴하는 구간</text>
+        <text x="40" y="96" class="t-dim">수렴 영역은 언제나</text>
+        <text x="40" y="114" class="t-dim">복소평면의 원(disk)이다</text>
+      </svg>
+      <figcaption><b>그림 1-4.</b> \(1/(1+x^2)\)를 0에서 전개한 급수의 수렴 원. 실수 축에는 아무 문제가 없지만 복소평면의 \(\pm i\)에 극(pole)이 있고, 수렴 반경은 가장 가까운 특이점까지의 거리 1이다. 전개점을 실수 a로 옮기면 반경은 \(|a - i| = \sqrt{1+a^2}\)가 된다(시뮬레이터에서 확인). 테일러 급수의 수렴은 복소수 세계가 결정한다(<a href="complex.html">2장</a>).</figcaption>
+    </figure>
+
+    <h3>계산기로 돌아가기: 범위 축소 + 다항식</h3>
+    <p>시뮬레이터에서 "sin 8"을 눌러 보면 sin의 급수가 모든 x에서 수렴하는데도 배정밀도에 도달하지 못합니다. \(8^k/k!\)는 k = 7, 8 근처에서 400을 넘는 큰 항이 되고, 이 큰 항들이 서로 상쇄되어 약 1 크기의 답을 만드는 과정에서 반올림 오차가 살아남기 때문입니다. 수렴한다는 것과 계산에 쓸 만하다는 것은 다른 문제입니다. 그래서 실제 수학 라이브러리는 다음 순서로 계산합니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 170" role="img" aria-label="sin 계산 파이프라인">
+        <rect x="10" y="50" width="140" height="64" rx="10" class="f-elev"/><text x="80" y="78" class="t" text-anchor="middle">입력 x</text><text x="80" y="98" class="t-mono" text-anchor="middle">예: 100</text>
+        <rect x="190" y="50" width="180" height="64" rx="10" class="f-acc-soft"/><text x="280" y="76" class="t-acc" text-anchor="middle">① 범위 축소</text><text x="280" y="98" class="t-mono" text-anchor="middle">r = x − k·π/2, |r| ≤ π/4</text>
+        <rect x="410" y="50" width="180" height="64" rx="10" class="f-acc-soft"/><text x="500" y="76" class="t-acc" text-anchor="middle">② 다항식</text><text x="500" y="98" class="t-mono" text-anchor="middle">r에 대한 sin·cos 근사</text>
+        <rect x="630" y="50" width="160" height="64" rx="10" class="f-acc2-soft"/><text x="710" y="76" class="t" text-anchor="middle">③ 복원</text><text x="710" y="98" class="t-mono" text-anchor="middle">k mod 4로 ±sin/±cos</text>
+        <line x1="150" y1="82" x2="186" y2="82" class="s-line"/><line x1="370" y1="82" x2="406" y2="82" class="s-line"/><line x1="590" y1="82" x2="626" y2="82" class="s-line"/>
+        <text x="280" y="140" class="t-dim" text-anchor="middle">큰 x에서는 π를 수백 비트로 저장해 정확히 뺀다</text>
+        <text x="500" y="140" class="t-dim" text-anchor="middle">13차 정도의 minimax 다항식</text>
+        <text x="710" y="140" class="t-dim" text-anchor="middle">주기성·대칭 이용</text>
+        <text x="400" y="26" class="t-dim" text-anchor="middle">sin x = sin(r + k·π/2) → k에 따라 sin r, cos r, −sin r, −cos r 중 하나</text>
+      </svg>
+      <figcaption><b>그림 1-5.</b> 소프트웨어 수학 라이브러리의 sin 계산 흐름(fdlibm 계열을 단순화). 주기성으로 인수를 \(|r|\le\pi/4\)로 줄인 뒤, 그 구간 전체에서 최대 오차가 가장 작도록 계수를 다시 맞춘 다항식(minimax 근사)을 계산한다. 테일러 계수는 전개점 근처에서 가장 정확하고 구간 끝에서 오차가 크므로, 같은 차수라면 오차를 구간 전체에 고르게 퍼뜨린 계수가 낫다.</figcaption>
+    </figure>
+    <p>정리하면 계산기의 sin 버튼은 이 장의 도구를 모두 씁니다. 무한급수가 수렴한다는 보장(1절), 나머지 항의 크기를 미리 계산하는 오차 상한(3절의 ε–δ 계약), 상쇄 오차를 피하는 수치 감각(4절), 그리고 수렴 반경 안에서도 전개점 근처로 인수를 가져오는 범위 축소입니다. exp는 \(e^x = 2^k e^r\)로, log는 \(\ln(2^k m) = k\ln2 + \ln m\)으로 같은 방식의 범위 축소를 합니다.</p>
+    <div class="callout tip"><strong>테일러 1차 = 엔지니어의 일상</strong> 작은 각도 근사 \(\sin\theta\approx\theta\)(진자, 근축 광학), 소신호 모델(다이오드 전류 \(e^{V/V_T}\)를 동작점에서 직선화), 오차 전파식 \(\Delta y \approx f'(x)\Delta x\), 뉴턴법은 모두 테일러 급수를 1차에서 자른 것이다. 2차까지 쓰면 최적화의 헤세 행렬(<a href="optimization.html">9장</a>)이 나온다.</div>
+  </section>
+
+  <!-- =============================================================== 8 -->
+  <section id="pi-everywhere">
+    <h2>π는 왜 원과 무관한 곳에 나타나나</h2>
+    <p>이 장에서 π는 원과 관계없어 보이는 자리에 세 번 나왔습니다. 정수 제곱 역수의 합 \(\pi^2/6\), 유리함수의 적분 \(\int_0^1 \frac{dx}{1+x^2} = \pi/4\), 그리고 그 피적분 함수의 테일러 급수를 x = 1에서 적분한 라이프니츠 급수 \(1 - \tfrac13 + \tfrac15 - \cdots = \pi/4\)입니다. 확률에서 가장 유명한 식에도 π가 있습니다.</p>
+    <div class="formula">$$\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}, \qquad \sum_{n=1}^\infty \frac1{n^2} = \frac{\pi^2}{6}, \qquad \int_0^1 \frac{dx}{1+x^2} = \frac{\pi}{4}$$
+    </div>
+    <p>공통점은 π가 <b>숨은 회전이나 주기성</b>의 흔적이라는 것입니다.</p>
+    <div class="cards">
+      <div><b>가우스 적분</b>제곱해서 2차원 적분 \(\iint e^{-(x^2+y^2)}dx\,dy\)로 바꾸면 피적분 함수가 반지름에만 의존해 <b>회전 대칭</b>이다. 극좌표로 바꾸는 순간 원의 둘레 2π가 들어온다. 정규분포의 \(1/\sqrt{2\pi}\)가 여기서 온다(<a href="probability.html">7장</a>).</div>
+      <div><b>바젤 문제</b>오일러는 \(\sin x\)의 근 \(0, \pm\pi, \pm2\pi,\dots\)로 \(\sin x/x\)를 인수분해했다. 근이 π 간격으로 놓인 것은 sin의 <b>주기</b> 때문이다. 정수의 합이 주기 함수를 통해 π와 만난다. 푸리에 급수로도 같은 값을 얻는다(<a href="fourier.html">5장</a>).</div>
+      <div><b>arctan과 1/(1+x²)</b>\(\int dx/(1+x^2) = \arctan x\)는 각도를 돌려주는 함수다. 분모의 근이 \(\pm i\)이고, i를 곱하는 것은 90° <b>회전</b>이다(<a href="complex.html">2장</a>). 그래서 그림 1-4의 수렴 원과 π/4가 같은 뿌리를 가진다.</div>
+    </div>
+    <p>오일러 공식 \(e^{i\theta} = \cos\theta + i\sin\theta\)가 이 모든 것을 묶습니다. e는 "자기 자신이 변화율인 성장"이고, 지수에 i를 곱하면 성장이 회전으로 바뀌며, 한 바퀴를 도는 데 필요한 각도가 2π입니다. 지수(e), 회전(i), 주기(π)는 같은 대상을 다른 방향에서 본 것입니다. 이 연결은 2장 복소수에서 본격적으로 다룹니다.</p>
+    <div class="callout warn"><strong>라이프니츠 급수는 계산에 쓰지 않는다</strong> \(\pi/4 = 1 - 1/3 + 1/5 - \cdots\)는 아름답지만 수렴 반경의 경계(x = 1)에서 전개한 것이라 극도로 느리다. 1000항을 더해도 4배한 값이 3.1406으로, 소수점 셋째 자리에서 틀린다. 실제 π 계산에는 \(\arctan\)을 작은 인수에서 쓰는 마친 공식이나 훨씬 빨리 수렴하는 급수를 쓴다. 7절의 교훈(전개점 근처에서 계산하라)과 같다.</div>
+  </section>
+
+  <!-- =============================================================== 9 -->
+  <section id="uses">
+    <h2>이 도구가 쓰이는 곳</h2>
+    <p>극한, 급수, 미분, 적분, 테일러 근사는 시리즈의 거의 모든 책에서 바탕으로 쓰입니다. 대표적인 곳은 다음과 같습니다.</p>
+    <div class="uses">
+      <a href="https://computerbook.euiyun.com/"><small>COMPUTERBOOK</small>수학 라이브러리와 부동소수점<br><span>범위 축소 + 다항식 근사, 상쇄 오차, ulp 단위 정확도.</span></a>
+      <a href="https://analogbook.euiyun.com/"><small>ANALOGBOOK</small>소신호 모델과 RC 시정수<br><span>지수 특성의 테일러 1차 선형화, e^(−t/RC) 과도 응답.</span></a>
+      <a href="https://devicebook.euiyun.com/"><small>DEVICEBOOK</small>다이오드·트랜지스터 전류식<br><span>e^(V/V_T)와 볼츠만 분포, 동작점 근처 근사.</span></a>
+      <a href="https://opticsbook.euiyun.com/"><small>OPTICSBOOK</small>근축 근사<br><span>sin θ ≈ θ 하나로 렌즈 공식과 광선 행렬이 선형이 된다.</span></a>
+      <a href="https://musicbook.euiyun.com/"><small>MUSICBOOK</small>급수로 만드는 소리<br><span>배음 급수의 수렴, 깁스 현상, 디지털 필터의 기하급수.</span></a>
+      <a href="https://sensorbook.euiyun.com/"><small>SENSORBOOK</small>적분과 노출<br><span>광전류의 시간 적분 = 신호, 오차 전파와 감도.</span></a>
+      <a href="https://aibook.euiyun.com/"><small>AIBOOK</small>기울기와 softmax<br><span>도함수로 내려가는 학습, exp·log의 수치 안정 기법.</span></a>
+      <a href="https://moneybook.euiyun.com/"><small>MONEYBOOK</small>복리와 연속 복리<br><span>(1 + r/n)ⁿ → eʳ, 72의 법칙 = ln 2의 근사.</span></a>
+      <a href="https://carbook.euiyun.com/"><small>CARBOOK</small>추측 항법과 적분 오차<br><span>가속도를 두 번 적분하면 오차가 시간에 따라 커진다.</span></a>
+    </div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>핵심 정리</h2>
+    <ol>
+      <li>무한급수의 합은 "부분합의 극한"이다. 기하급수 \(\sum r^k\)는 \(|r|&lt;1\)에서 \(1/(1-r)\)로 수렴하고, n항에서 자른 오차 \(r^n/(1-r)\)를 미리 알 수 있다.</li>
+      <li>항이 0으로 가는 것은 수렴의 필요조건일 뿐이다. 조화급수는 \(\ln n\)처럼 느리게 발산하고(블록 오버행 \(H_n/2\)에 상한이 없다), \(\sum1/n^2\)는 \(\pi^2/6\)으로 수렴한다.</li>
+      <li>극한의 ε–δ 정의는 공차 계약이다. 어떤 출력 공차 ε에도 입력 공차 δ로 답할 수 있으면 극한이 존재하고, 매끄러운 함수에서 \(\delta/\varepsilon \to 1/|f'(a)|\)는 감도다.</li>
+      <li>미분은 할선 → 접선, 적분은 리만 합의 극한이다. 수치 미분은 절단 오차와 상쇄 오차의 균형 때문에 최적 h가 있고, 적분 공식은 오차 차수(1/n, 1/n², …)로 비용이 갈린다.</li>
+      <li>e는 복리 극한 \((1+1/n)^n\)이자 \((b^x)' = (\ln b)\,b^x\)에서 \(\ln b = 1\)이 되는 밑이다. 그래서 \(y'=ky\) 꼴의 모든 성장·감쇠는 e로 쓴다.</li>
+      <li>테일러 급수는 함수를 다항식으로 바꾸고 나머지 항으로 오차를 보장한다. 수렴 반경은 복소평면에서 가장 가까운 특이점까지의 거리이고, 실제 계산은 범위 축소 + (minimax) 다항식으로 한다.</li>
+    </ol>
+  </section>
+
+  <section class="quiz-sec" id="quiz">
+    <h2>확인 퀴즈</h2>
+    <div class="quiz">
+      <div class="quiz-q"><p>1. 같은 블록을 한 층에 하나씩 쌓아 탁자 밖으로 내밀 때, 블록 수를 늘리면 맨 위 블록의 최대 오버행은?</p><div class="opts">
+        <button class="opt">블록 길이 1에 수렴한다</button>
+        <button class="opt">블록 길이의 2배를 넘지 못한다</button>
+        <button class="opt" data-correct>상한 없이 커지지만 블록 수의 로그 정도로 아주 느리게 커진다</button>
+        <button class="opt">블록 수에 비례해 커진다</button>
+      </div><div class="quiz-exp">오버행은 \(H_n/2 \approx (\ln n + 0.577)/2\)이다. 조화급수가 발산하므로 상한은 없지만, 오버행 3에 227개, 5에 약 1만 2천 개가 필요할 만큼 느리다.</div></div>
+
+      <div class="quiz-q"><p>2. 계단 함수(x &lt; 1이면 0.5, x ≥ 1이면 1.5)의 a = 1에서 "lim f(x) = 1.5"라는 계약이 깨지는 이유는?</p><div class="opts">
+        <button class="opt">ε를 크게 잡으면 δ가 없기 때문</button>
+        <button class="opt" data-correct>ε &lt; 1이면 아무리 작은 δ를 잡아도 왼쪽 점들의 함숫값 0.5가 띠 밖에 있기 때문</button>
+        <button class="opt">f(1)이 정의되지 않았기 때문</button>
+        <button class="opt">함수가 미분 가능하지 않으면 극한이 항상 없기 때문</button>
+      </div><div class="quiz-exp">ε–δ 계약은 "모든 ε에 대해" δ가 있어야 한다. 점프 크기 1보다 작은 ε를 요구받으면 a의 왼쪽 근처 모든 점이 \(|f(x) - 1.5| = 1 \ge \varepsilon\)이라 어떤 δ로도 답할 수 없다. (|x|처럼 미분 불가능해도 연속인 함수는 많다.)</div></div>
+
+      <div class="quiz-q"><p>3. 배정밀도에서 전진 차분 \((\sin(1+h) - \sin 1)/h\)의 오차가 h = 10⁻¹⁵에서 h = 10⁻⁸일 때보다 큰 이유는?</p><div class="opts">
+        <button class="opt">sin의 테일러 급수가 h가 작으면 발산하므로</button>
+        <button class="opt">절단 오차가 h에 반비례하므로</button>
+        <button class="opt" data-correct>거의 같은 두 수를 빼며 유효 숫자가 사라지는 상쇄 오차가 ε_mach/h 정도로 커지므로</button>
+        <button class="opt">sin 1을 정확히 계산할 수 없으므로</button>
+      </div><div class="quiz-exp">절단 오차는 \(\propto h\)로 줄지만 반올림·상쇄 오차는 \(\propto \epsilon_{\text{mach}}/h\)로 커진다. 합이 최소인 곳은 \(h\approx\sqrt{\epsilon_{\text{mach}}}\approx10^{-8}\)이다.</div></div>
+
+      <div class="quiz-q"><p>4. 매끄러운 함수의 적분을 중점 합으로 계산할 때 조각 수 n을 2배로 늘리면 오차는 대략?</p><div class="opts">
+        <button class="opt">1/2로 준다</button>
+        <button class="opt" data-correct>1/4로 준다</button>
+        <button class="opt">1/8로 준다</button>
+        <button class="opt">변하지 않는다</button>
+      </div><div class="quiz-exp">중점 합(과 사다리꼴 합)의 오차는 \(\propto 1/n^2\)이다. 왼쪽·오른쪽 끝 합은 \(\propto 1/n\)이라 1/2로 준다. 단 √x처럼 끝점에서 도함수가 무한대인 함수는 이 차수를 따르지 않는다.</div></div>
+
+      <div class="quiz-q"><p>5. \(1/(1+x^2)\)를 x = 0에서 테일러 전개한 급수가 x = 1.5에서 발산하는 이유는?</p><div class="opts">
+        <button class="opt">x = 1.5에서 함수가 정의되지 않으므로</button>
+        <button class="opt">항의 계수가 계승으로 커지므로</button>
+        <button class="opt" data-correct>복소평면의 x = ±i에 특이점이 있어 수렴 반경이 1이기 때문</button>
+        <button class="opt">다항식으로는 유계 함수를 근사할 수 없으므로</button>
+      </div><div class="quiz-exp">수렴 반경은 복소평면에서 가장 가까운 특이점까지의 거리다. 실수 축에는 특이점이 없지만 ±i까지의 거리가 1이므로 |x| &gt; 1에서 발산한다. 전개점을 a로 옮기면 반경은 \(\sqrt{1+a^2}\)이다.</div></div>
+
+      <div class="quiz-q"><p>6. 모든 지수 함수 \(b^x\)에 대해 (기울기) ÷ (높이)가 일정하다. 이 값과 e의 관계는?</p><div class="opts">
+        <button class="opt">값은 b − 1이고, b = 2일 때 1이 된다</button>
+        <button class="opt" data-correct>값은 ln b이고, 이것이 1이 되는 밑이 e다</button>
+        <button class="opt">값은 x에 따라 변하고, x = 0에서만 1이다</button>
+        <button class="opt">값은 1/b이고, b = e일 때 1/e이다</button>
+      </div><div class="quiz-exp">\((b^x)' = b^x \lim_{h\to0}(b^h-1)/h = (\ln b)\,b^x\). ln b = 1인 b = e에서 \(e^x\)는 자기 자신이 도함수가 되어 \(y' = y\)를 푼다.</div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ---------------------------------------------------------------- 공통 도우미 */
+const LIM = (function () {
+  const fact = [1];
+  for (let i = 1; i <= 170; i++) fact[i] = fact[i - 1] * i;
+  const alpha = (ctx, a, fn) => { ctx.save(); ctx.globalAlpha = a; fn(); ctx.restore(); };
+  const sci = (x, d = 2) => (!isFinite(x) ? "—" : x === 0 ? "0" : Math.abs(x) < 1e-3 || Math.abs(x) >= 1e5 ? x.toExponential(d).replace("e-", "×10⁻").replace("e+", "×10^").replace(/×10⁻(\d+)/, (m, p) => "×10⁻" + p.split("").map((c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("")) : String(+x.toPrecision(d + 1)));
+  const font = (px, w) => `${w || 400} ${px}px ` + getComputedStyle(document.body).getPropertyValue("--font");
+  return { fact, alpha, sci, font };
+})();
+
+/* ---------------------------------------------------------------- 1. 제논 */
+(function () {
+  let n = 5, timer = 0;
+  const fmtLen = (m) => m >= 1 ? "1 m" : m >= 1e-3 ? +(m * 1e3).toPrecision(3) + " mm" : m >= 1e-6 ? +(m * 1e6).toPrecision(3) + " µm" : m >= 1e-9 ? +(m * 1e9).toPrecision(3) + " nm" : +(m * 1e12).toPrecision(3) + " pm";
+  const cv = MB.canvas("#cv-lim-zeno", draw, { aspect: (w) => (w < 560 ? 1.15 : 0.46), maxHeight: 520 });
+  function draw(ctx, w, h) {
+    const P = MB.palette(), narrow = w < 560;
+    let sq, box;
+    if (narrow) { const s = Math.min(w - 40, h * 0.5 - 20); sq = { x: (w - s) / 2, y: 14, s }; box = { x: 52, y: sq.y + s + 22, w: w - 52 - 16, h: h - (sq.y + s + 22) - 46 }; }
+    else { const s = h - 36; sq = { x: 18, y: 18, s }; box = { x: 18 + s + 64, y: 16, w: w - (18 + s + 64) - 18, h: h - 16 - 46 }; }
+    let r = { x: sq.x, y: sq.y, w: sq.s, h: sq.s };
+    for (let k = 1; k <= Math.min(n, 24); k++) {
+      let piece;
+      if (k % 2) { piece = { x: r.x, y: r.y, w: r.w / 2, h: r.h }; r = { x: r.x + r.w / 2, y: r.y, w: r.w / 2, h: r.h }; }
+      else { piece = { x: r.x, y: r.y, w: r.w, h: r.h / 2 }; r = { x: r.x, y: r.y + r.h / 2, w: r.w, h: r.h / 2 }; }
+      const col = k % 2 ? P.accent : P.accent2;
+      LIM.alpha(ctx, 0.22, () => { ctx.fillStyle = col; ctx.fillRect(piece.x, piece.y, piece.w, piece.h); });
+      ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.strokeRect(piece.x + 0.5, piece.y + 0.5, piece.w - 1, piece.h - 1);
+      if (Math.min(piece.w, piece.h) > 30) { ctx.fillStyle = P.text; ctx.font = LIM.font(Math.min(18, piece.h / 3, piece.w / 3.2), 700); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("1/" + Math.pow(2, k), piece.x + piece.w / 2, piece.y + piece.h / 2); }
+    }
+    ctx.strokeStyle = P.axis; ctx.lineWidth = 1.5; ctx.strokeRect(sq.x, sq.y, sq.s, sq.s);
+    if (n < 24 && r.w > 6) { ctx.setLineDash([4, 3]); ctx.strokeStyle = P.bad; ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2); ctx.setLineDash([]); if (Math.min(r.w, r.h) > 36) { ctx.fillStyle = P.bad; ctx.font = LIM.font(12, 600); ctx.textAlign = "center"; ctx.fillText("남은 것", r.x + r.w / 2, r.y + r.h / 2); } }
+    const xmax = Math.max(8, n), data = [];
+    for (let k = 0; k <= n; k++) data.push([k, 1 - Math.pow(2, -k)]);
+    MB.chart(ctx, box, { x: [0, xmax], y: [0, 1.1], xLabel: "더한 조각 수 n", series: [{ data, color: P.accent, width: 2 }], hlines: [{ y: 1, color: P.accent2, label: "극한 1" }], points: data.map(([x, y]) => ({ x, y, r: n > 20 ? 2 : 3.5, color: P.accent })) });
+  }
+  const out = () => {
+    const rem = Math.pow(2, -n);
+    MB.stat("lim-zeno-s", n <= 16 ? `1 − 1/${Math.pow(2, n)} = ${(1 - rem).toFixed(Math.min(8, Math.max(1, n)))}` : (1 - rem).toPrecision(16));
+    MB.stat("lim-zeno-rem", fmtLen(rem));
+    MB.stat("lim-zeno-cmp", rem >= 1e-3 ? "눈에 보인다" : rem >= 1e-6 ? "머리카락 굵기 이하" : rem >= 1e-7 ? "세균 크기" : rem >= 1e-10 ? "바이러스·분자 크기" : "원자 지름(0.1 nm)보다 작다");
+    cv.redraw();
+  };
+  const nS = MB.range("lim-zeno-n", (v) => v, (v) => { n = v; out(); });
+  const stop = () => { clearInterval(timer); timer = 0; };
+  const pb = MB.playButton("lim-zeno-play", () => { if (n >= 40) nS.set(0); timer = setInterval(() => { if (n >= 40) { stop(); pb.set(false); return; } nS.set(n + 1); }, 420); }, stop, ["▶ 한 걸음씩", "■ 멈춤"]);
+  document.getElementById("lim-zeno-reset").addEventListener("click", () => { stop(); pb.set(false); nS.set(0); });
+  out();
+})();
+
+/* ---------------------------------------------------------------- 2. 블록 쌓기 */
+(function () {
+  const list = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 31, 40, 50, 75, 100, 150, 227, 300, 500, 1000];
+  let n = 4, showCom = true;
+  // n = 10^6까지의 부분합을 로그 간격으로 저장
+  const hs = [], bs = [];
+  { let H = 0, B = 0, j = 0, next = 1; for (let k = 1; k <= 1e6; k++) { H += 1 / k; B += 1 / (k * k); if (k >= next) { hs.push([k, H]); bs.push([k, B]); j++; next = Math.max(k + 1, Math.round(Math.pow(10, j / 24))); } } }
+  const harm = (m) => { let s = 0; for (let k = m; k >= 1; k--) s += 1 / k; return s; };
+  const basel = (m) => { let s = 0; for (let k = m; k >= 1; k--) s += 1 / (k * k); return s; };
+  const stack = MB.canvas("#cv-lim-stack", (ctx, w, h) => {
+    const P = MB.palette();
+    const d = new Array(n + 2).fill(0);
+    for (let k = n; k >= 1; k--) d[k] = d[k + 1] + 1 / (2 * k);
+    const over = d[1];
+    const xmin = -1.2, xmax = Math.max(1.4, over + 0.3);
+    const sx = (w - 20) / (xmax - xmin), X = (x) => 10 + (x - xmin) * sx;
+    const tableTop = h - 30, avail = tableTop - 72;
+    const bh = Math.min(26, sx * 0.24, avail / n);
+    // 탁자
+    LIM.alpha(ctx, 1, () => { ctx.fillStyle = P.surface; ctx.fillRect(0, tableTop, X(0), h - tableTop); });
+    ctx.strokeStyle = P.dim; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, tableTop); ctx.lineTo(X(0), tableTop); ctx.lineTo(X(0), h); ctx.stroke();
+    ctx.fillStyle = P.dim; ctx.font = LIM.font(12); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("탁자", X(0) / 2, tableTop + 15);
+    // 기준선
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = P.faint; ctx.lineWidth = 1;
+    [0, 1, 2, 3].forEach((v) => { if (v <= xmax) { ctx.beginPath(); ctx.moveTo(X(v), 30); ctx.lineTo(X(v), h); ctx.stroke(); } });
+    ctx.setLineDash([]);
+    ctx.fillStyle = P.faint; ctx.font = LIM.font(11); ctx.textBaseline = "top";
+    [1, 2, 3].forEach((v) => { if (v <= xmax - 0.1) ctx.fillText(String(v), X(v), tableTop + 6); });
+    // 블록
+    for (let k = 1; k <= n; k++) {
+      const y = tableTop - (n - k + 1) * bh, x0 = X(d[k] - 1), x1 = X(d[k]);
+      const outside = d[k] - 1 >= 0;
+      LIM.alpha(ctx, outside ? 0.45 : 0.22 + 0.1 * (k % 2), () => { ctx.fillStyle = outside ? P.accent2 : P.accent; ctx.fillRect(x0, y, x1 - x0, bh); });
+      if (bh > 3) { ctx.strokeStyle = outside ? P.accent2 : P.accent; ctx.lineWidth = 1; ctx.strokeRect(x0 + 0.5, y + 0.5, x1 - x0 - 1, bh - 1); }
+    }
+    // 무게중심
+    if (showCom && n <= 40) {
+      let sum = 0;
+      for (let k = 1; k <= n; k++) {
+        sum += d[k] - 0.5; const com = sum / k, y = tableTop - (n - k) * bh;
+        ctx.beginPath(); ctx.arc(X(com), y, Math.max(2, Math.min(4, bh / 3)), 0, Math.PI * 2); ctx.fillStyle = P.bg; ctx.fill(); ctx.strokeStyle = P.text; ctx.lineWidth = 1.2; ctx.stroke();
+      }
+    }
+    // 오버행 화살표
+    const ty = tableTop - n * bh - 16;
+    ctx.strokeStyle = P.accent2; ctx.fillStyle = P.accent2; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(0), ty); ctx.lineTo(X(over), ty); ctx.stroke();
+    [[X(0), 1], [X(over), -1]].forEach(([px, s]) => { ctx.beginPath(); ctx.moveTo(px, ty); ctx.lineTo(px + 7 * s, ty - 4); ctx.lineTo(px + 7 * s, ty + 4); ctx.closePath(); ctx.fill(); });
+    ctx.font = LIM.font(13, 700); ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+    ctx.fillText("오버행 " + over.toFixed(3), Math.min(w - 50, Math.max(50, (X(0) + X(over)) / 2)), ty - 5);
+  }, { aspect: 0.82, maxHeight: 380, minHeight: 240 });
+  const sums = MB.canvas("#cv-lim-hsum", (ctx, w, h) => {
+    const P = MB.palette(), H = harm(n), B = basel(n);
+    const c = MB.chart(ctx, { x: 40, y: 30, w: w - 40 - 14, h: h - 30 - 44 }, { x: [1, 1e6], logX: true, y: [0, 15], xLabel: "항의 개수 n", series: [{ data: hs, color: P.accent, width: 2.2 }, { data: bs, color: P.accent2, width: 2.2 }], hlines: [{ y: Math.PI * Math.PI / 6, color: P.accent2, label: "π²/6" }], vlines: [{ x: n, color: P.faint }], points: [{ x: n, y: H, color: P.accent, r: 5 }, { x: n, y: B, color: P.accent2, r: 5 }] });
+    ctx.font = LIM.font(12, 700); ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+    ctx.fillStyle = P.accent; ctx.fillText("Σ 1/k → ∞", c.X(2e5), c.Y(12.8));
+    ctx.fillStyle = P.accent2; ctx.fillText("Σ 1/k² → π²/6", c.X(1e3), c.Y(2.4));
+  }, { aspect: 0.82, maxHeight: 380, minHeight: 240 });
+  const out = () => {
+    const H = harm(n), B = basel(n);
+    MB.stat("lim-ov-over", (H / 2).toFixed(4) + " <small>블록</small>");
+    MB.stat("lim-ov-h", H.toFixed(4));
+    MB.stat("lim-ov-b", B.toFixed(6));
+    MB.stat("lim-ov-rem", (Math.PI * Math.PI / 6 - B).toExponential(2));
+    stack.redraw(); sums.redraw();
+  };
+  MB.steps("lim-ov-n", list, (v) => v + "개", 4, (v) => { n = v; out(); });
+  MB.check("lim-ov-com", (v) => { showCom = v; stack.redraw(); });
+  out();
+})();
+
+/* ---------------------------------------------------------------- 3. ε–δ */
+(function () {
+  const FN = {
+    sq:    { f: (x) => x * x, x: [-1, 2.6], y: [-0.6, 4.6], a: 1.5, amin: -0.9, amax: 2.05, eps: 0.5, grid: 1 },
+    sqrt:  { f: (x) => (x >= 0 ? Math.sqrt(x) : NaN), x: [-0.4, 4], y: [-0.6, 2.4], a: 1, amin: 0, amax: 3.6, eps: 0.3, grid: 1, from: 0 },
+    recip: { f: (x) => 1 / x, x: [-0.2, 3], y: [-0.5, 5], a: 1, amin: 0.25, amax: 2.7, eps: 0.5, grid: 1, from: 0.18 },
+    step:  { f: (x) => (x < 1 - 1e-12 ? 0.5 : 1.5), x: [-0.5, 2.5], y: [-0.3, 2.3], a: 1, amin: -0.3, amax: 2.2, eps: 0.3, grid: 0.5, jump: 1 },
+    wig:   { f: (x) => (x === 0 ? 0 : x * Math.sin(1 / x)), x: [-0.6, 0.6], y: [-0.4, 0.4], a: 0, amin: -0.5, amax: 0.5, eps: 0.08, grid: 0.1 },
+  };
+  let cur = "sq", eps = 0.5, delta = 0, fail = false, capped = false;
+  function findDelta(F, a, L) {
+    const span = F.x[1] - F.x[0], dmin = span * 1e-7, N = 1200;
+    let best = span; capped = true;
+    for (const s of [1, -1]) {
+      let ok = 0, bad = null;
+      for (let i = 0; i <= N; i++) {
+        const d = dmin * Math.pow(span / dmin, i / N), x = a + s * d, y = F.f(x);
+        if (!isFinite(y)) continue;
+        if (!(Math.abs(y - L) < eps)) { bad = d; break; }
+        ok = d;
+      }
+      if (bad !== null) {
+        let lo = ok, hi = bad;
+        for (let it = 0; it < 50; it++) { const m = (lo + hi) / 2, y = F.f(a + s * m); if (!isFinite(y) || Math.abs(y - L) < eps) lo = m; else hi = m; }
+        if (lo < best) { best = lo; capped = false; }
+      }
+    }
+    return best;
+  }
+  const A = { x: 1.5, y: 2.25, color: null, label: "a", snap: 0.01, constrain(p) { const F = FN[cur]; p.x = MB.clamp(p.x, F.amin, F.amax); p.y = F.f(p.x); } };
+  const E = { x: 2.4, y: 2.75, color: null, label: "ε", lock: "x", constrain(p) { const L = FN[cur].f(A.x); p.y = Math.max(L + 0.01, p.y); } };
+  const opts = {
+    x: FN.sq.x, y: FN.sq.y, aspect: 0.66, gridStep: 1, points: [A, E],
+    draw(P, api) {
+      const F = FN[cur], a = api.points[0].x, L = F.f(a), ctx = P.ctx, pal = P.P;
+      api.points[0].color = pal.accent; api.points[1].color = pal.accent2;
+      delta = findDelta(F, a, L); fail = delta < (F.x[1] - F.x[0]) * 1e-6;
+      // 출력 공차 띠
+      LIM.alpha(ctx, 0.14, () => { ctx.fillStyle = pal.accent2; ctx.fillRect(0, P.Y(L + eps), P.w, P.Y(L - eps) - P.Y(L + eps)); });
+      P.line(P.x0, L + eps, P.x1, L + eps, { color: pal.accent2, width: 1.2, dash: [5, 4] });
+      P.line(P.x0, L - eps, P.x1, L - eps, { color: pal.accent2, width: 1.2, dash: [5, 4] });
+      P.line(P.x0, L, P.x1, L, { color: pal.accent2, width: 0.8, alpha: 0.5 });
+      // 입력 공차 띠
+      if (!fail) {
+        const xa = Math.max(P.x0, a - delta), xb = Math.min(P.x1, a + delta);
+        LIM.alpha(ctx, 0.14, () => { ctx.fillStyle = pal.accent; ctx.fillRect(P.X(xa), 0, P.X(xb) - P.X(xa), P.h); });
+        P.line(xa, P.y0, xa, P.y1, { color: pal.accent, width: 1.2, dash: [5, 4] });
+        P.line(xb, P.y0, xb, P.y1, { color: pal.accent, width: 1.2, dash: [5, 4] });
+        P.text("a−δ", xa, P.y0, { color: pal.accent, align: "right", baseline: "bottom", dx: -3, dy: -4, size: 12, bold: true });
+        P.text("a+δ", xb, P.y0, { color: pal.accent, align: "left", baseline: "bottom", dx: 3, dy: -4, size: 12, bold: true });
+      }
+      // 곡선
+      if (F.jump) {
+        P.line(P.x0, 0.5, F.jump, 0.5, { color: pal.text, width: 2.2 });
+        P.line(F.jump, 1.5, P.x1, 1.5, { color: pal.text, width: 2.2 });
+        P.dot(F.jump, 0.5, { r: 5, color: pal.bg, stroke: pal.text });
+        P.dot(F.jump, 1.5, { r: 4, color: pal.text });
+        if (!fail) {
+          const xa = a - delta, xb = a + delta, yv = a < F.jump ? 0.5 : 1.5;
+          P.line(Math.max(P.x0, xa), yv, Math.min(P.x1, xb), yv, { color: pal.accent, width: 4.5 });
+        }
+      } else {
+        P.curve(F.f, { color: pal.text, width: 2, from: F.from != null ? F.from : P.x0, n: cur === "wig" ? 2400 : undefined });
+        if (!fail) P.curve(F.f, { color: pal.accent, width: 4.5, from: Math.max(a - delta, F.from != null ? F.from : P.x0), to: a + delta, n: 600 });
+      }
+      P.text("L+ε", P.x0, L + eps, { color: pal.accent2, baseline: "bottom", dx: 4, dy: -2, size: 12, bold: true });
+      P.text("L−ε", P.x0, L - eps, { color: pal.accent2, baseline: "top", dx: 4, dy: 2, size: 12, bold: true });
+      if (fail) P.text("이 ε에는 어떤 δ도 통하지 않는다", (P.x0 + P.x1) / 2, P.y1, { color: pal.bad, align: "center", baseline: "top", dy: 8, bold: true, size: 14 });
+      api.points[1].x = P.x1 - 0.07 * (P.x1 - P.x0); api.points[1].y = L + eps;
+      readout(F, a);
+    },
+    onDrag(p, i) { if (i === 1) { eps = MB.clamp(p.y - FN[cur].f(A.x), 0.01, 1.5); epsR.set(eps, false); } },
+  };
+  let epsR = null;
+  const pl = MB.plane("#cv-lim-ed", opts);
+  function readout(F, a) {
+    MB.stat("lim-ed-e", eps.toFixed(3));
+    MB.stat("lim-ed-d", fail ? "없음" : (capped ? "≥ " : "") + LIM.sci(delta, 3));
+    MB.stat("lim-ed-r", fail ? "—" : capped ? "—" : (delta / eps).toFixed(3));
+    const h = 1e-6, dv = (F.f(a + h) - F.f(a - h)) / (2 * h);
+    MB.stat("lim-ed-k", F.jump && Math.abs(a - F.jump) < 1e-9 ? "f′ 없음" : cur === "wig" && a === 0 ? "f′ 없음" : Math.abs(dv) < 1e-9 ? "∞" : (1 / Math.abs(dv)).toFixed(3));
+    const msg = document.getElementById("lim-ed-msg");
+    if (!msg) return;
+    msg.className = "sim-msg " + (fail ? "bad" : "ok");
+    msg.textContent = fail ? "계약 불가: a 바로 옆에도 함숫값이 L ± ε 띠 밖으로 튀는 점이 있다. 이 점에서 f는 L로 수렴하지 않는다(불연속)."
+      : capped ? "δ가 화면 범위를 넘는다: 이 ε는 넉넉해서 보이는 구간 전체가 계약을 만족한다. ε를 줄여 보자."
+      : `계약 성립: |x − a| < ${LIM.sci(delta, 3)}이면 |f(x) − L| < ${eps.toFixed(3)}. 굵게 칠한 곡선 조각이 상자 안에 들어 있다.`;
+  }
+  epsR = MB.range("lim-ed-eps", (v) => v.toFixed(2), (v) => { eps = v; pl.redraw(); });
+  const sel = document.getElementById("lim-ed-f");
+  sel.addEventListener("change", () => {
+    cur = sel.value; const F = FN[cur];
+    A.x = F.a; A.y = F.f(F.a); eps = F.eps; epsR.set(eps, false);
+    opts.gridStep = F.grid;
+    pl.view({ x: F.x, y: F.y });
+  });
+  pl.redraw();
+})();
+
+/* ---------------------------------------------------------------- 4. 할선 → 접선 */
+(function () {
+  const SF = {
+    sin: { f: Math.sin, d: Math.cos, x: [-1, 5], y: [-1.8, 1.8], a: 1 },
+    sq:  { f: (x) => x * x, d: (x) => 2 * x, x: [-1.5, 2.5], y: [-0.6, 4], a: 1 },
+    exp: { f: Math.exp, d: Math.exp, x: [-2, 2], y: [-0.5, 4.5], a: 0 },
+    abs: { f: Math.abs, d: (x) => (x === 0 ? NaN : Math.sign(x)), x: [-2, 2], y: [-0.6, 2], a: 0 },
+  };
+  const HL = [1.5, 1, 0.7, 0.5, 0.3, 0.2, 0.1, 0.05, 0.02, 0.01, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11, 1e-12, 1e-13, 1e-14, 1e-15];
+  let cur = "sin", hv = 0.7, left = false, timer = 0;
+  const A = { x: 1, y: Math.sin(1), label: "a", snap: 0.01, constrain(p) { const F = SF[cur]; p.x = MB.clamp(p.x, F.x[0] + 0.2, F.x[1] - 0.2); p.y = F.f(p.x); } };
+  const slope = (F, a, h) => (F.f(a + h) - F.f(a)) / h;
+  const opts = {
+    x: SF.sin.x, y: SF.sin.y, aspect: 0.8, points: [A],
+    draw(P, api) {
+      const F = SF[cur], pal = P.P, a = api.points[0].x, h = left ? -hv : hv, fa = F.f(a), fb = F.f(a + h);
+      api.points[0].color = pal.accent;
+      const m = slope(F, a, h), d = F.d(a);
+      P.curve(F.f, { color: pal.text, width: 2 });
+      if (isFinite(d)) P.line(P.x0, fa + d * (P.x0 - a), P.x1, fa + d * (P.x1 - a), { color: pal.ok, width: 2, dash: [7, 5] });
+      if (isFinite(m)) P.line(P.x0, fa + m * (P.x0 - a), P.x1, fa + m * (P.x1 - a), { color: pal.accent2, width: 2.2 });
+      if (Math.abs(h) * P.unit > 10) {
+        P.line(a, fa, a + h, fa, { color: pal.dim, width: 1.2, dash: [3, 3] });
+        P.line(a + h, fa, a + h, fb, { color: pal.dim, width: 1.2, dash: [3, 3] });
+        P.text("h", a + h / 2, fa, { color: pal.dim, align: "center", baseline: "top", dy: 4, size: 12 });
+      }
+      P.dot(a + h, fb, { r: 5, color: pal.accent2 });
+    },
+  };
+  const pl = MB.plane("#cv-lim-sec", opts);
+  const errCv = MB.canvas("#cv-lim-secerr", (ctx, w, h) => {
+    const P = MB.palette(), F = SF[cur], a = A.x, d = F.d(a), box = { x: 48, y: 30, w: w - 48 - 14, h: h - 30 - 44 };
+    if (!isFinite(d)) {
+      MB.chart(ctx, box, { x: [1e-16, 1], logX: true, y: [1e-16, 10], logY: true, xLabel: "h", xTicks: [1e-16, 1e-12, 1e-8, 1e-4, 1], yTicks: [1e-16, 1e-12, 1e-8, 1e-4, 1], series: [] });
+      ctx.fillStyle = P.bad; ctx.font = LIM.font(14, 700); ctx.textAlign = "center"; ctx.fillText("이 점에서는 접선이 없다", box.x + box.w / 2, box.y + box.h / 2);
+      return;
+    }
+    const data = [];
+    for (let j = 0; j <= 64; j++) { const hh = Math.pow(10, -j / 4); const e = Math.abs(slope(F, a, left ? -hh : hh) - d); data.push([hh, Math.max(e, 1e-17)]); }
+    const e0 = Math.abs(slope(F, a, left ? -hv : hv) - d);
+    MB.chart(ctx, box, { x: [1e-16, 1], logX: true, y: [1e-16, 10], logY: true, xLabel: "h (← 작아짐)", xTicks: [1e-16, 1e-12, 1e-8, 1e-4, 1], yTicks: [1e-16, 1e-12, 1e-8, 1e-4, 1], series: [{ data, color: P.accent, width: 2 }], vlines: [{ x: 1e-8, color: P.faint, label: "√ε_mach" }], points: [{ x: hv, y: Math.max(e0, 1e-16), color: P.accent2, r: 5 }] });
+  }, { aspect: 0.8, maxHeight: 400, minHeight: 240 });
+  const out = () => {
+    const F = SF[cur], a = A.x, m = slope(F, a, left ? -hv : hv), d = F.d(a);
+    MB.stat("lim-sec-m", m.toPrecision(12));
+    MB.stat("lim-sec-d", isFinite(d) ? d.toPrecision(12) : "없음 (꺾임)");
+    MB.stat("lim-sec-e", isFinite(d) ? LIM.sci(Math.abs(m - d), 2) : "—");
+    errCv.redraw();
+  };
+  opts.onDrag = () => out();
+  const H = MB.steps("lim-sec-h", HL, (v) => (v >= 0.01 ? String(v) : "10" + "⁻" + String(Math.round(-Math.log10(v))).split("").map((c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("")), 0.7, (v) => { hv = v; pl.redraw(); out(); });
+  MB.check("lim-sec-left", (v) => { left = v; pl.redraw(); out(); });
+  const sel = document.getElementById("lim-sec-f");
+  sel.addEventListener("change", () => { cur = sel.value; const F = SF[cur]; A.x = F.a; A.y = F.f(F.a); pl.view({ x: F.x, y: F.y }); out(); });
+  const stop = () => { clearInterval(timer); timer = 0; };
+  const pb = MB.playButton("lim-sec-play", () => { H.index.set(0); timer = setInterval(() => { const i = H.index(); if (i >= HL.length - 1) { stop(); pb.set(false); return; } H.index.set(i + 1); }, 380); }, stop, ["▶ h를 줄이기", "■ 멈춤"]);
+  out();
+})();
+
+/* ---------------------------------------------------------------- 5. 리만 합 */
+(function () {
+  const RF = {
+    sin:  { f: Math.sin, a: 0, b: Math.PI, I: 2, y: [-0.1, 1.2], lab: "∫₀^π sin x dx" },
+    sq:   { f: (x) => x * x, a: 0, b: 2, I: 8 / 3, y: [-0.2, 4.4], lab: "∫₀² x² dx" },
+    exp:  { f: Math.exp, a: 0, b: 1, I: Math.E - 1, y: [0, 2.9], lab: "∫₀¹ eˣ dx" },
+    sqrt: { f: Math.sqrt, a: 0, b: 1, I: 2 / 3, y: [0, 1.15], lab: "∫₀¹ √x dx" },
+    atan: { f: (x) => 1 / (1 + x * x), a: 0, b: 1, I: Math.PI / 4, y: [0, 1.15], lab: "∫₀¹ dx/(1+x²)" },
+  };
+  const METHODS = ["left", "right", "mid", "trap"], NAMES = { left: "왼쪽", right: "오른쪽", mid: "중점", trap: "사다리꼴" };
+  let cur = "sin", m = "left", n = 6, errData = null;
+  const rsum = (F, n, m) => {
+    const dx = (F.b - F.a) / n; let s = 0;
+    for (let i = 0; i < n; i++) {
+      const x0 = F.a + i * dx;
+      s += m === "left" ? F.f(x0) : m === "right" ? F.f(x0 + dx) : m === "mid" ? F.f(x0 + dx / 2) : (F.f(x0) + F.f(x0 + dx)) / 2;
+    }
+    return s * dx;
+  };
+  const NS = [...new Set(Array.from({ length: 31 }, (_, i) => Math.round(Math.pow(1000, i / 30))))];
+  const colors = (P) => ({ left: P.accent, right: P.warn, mid: P.accent2, trap: P.ok });
+  const build = () => { const F = RF[cur]; errData = {}; METHODS.forEach((mm) => { errData[mm] = NS.map((k) => [k, Math.abs(rsum(F, k, mm) - F.I)]); }); };
+  build();
+  const area = MB.canvas("#cv-lim-rs", (ctx, w, h) => {
+    const P = MB.palette(), F = RF[cur], col = colors(P)[m];
+    const c = MB.chart(ctx, { x: 40, y: 30, w: w - 40 - 14, h: h - 30 - 30 }, { x: [F.a, F.b], y: F.y, series: [] });
+    const dx = (F.b - F.a) / n;
+    for (let i = 0; i < n; i++) {
+      const x0 = F.a + i * dx, x1 = x0 + dx;
+      ctx.beginPath();
+      if (m === "trap") { ctx.moveTo(c.X(x0), c.Y(0)); ctx.lineTo(c.X(x0), c.Y(F.f(x0))); ctx.lineTo(c.X(x1), c.Y(F.f(x1))); ctx.lineTo(c.X(x1), c.Y(0)); }
+      else { const hgt = m === "left" ? F.f(x0) : m === "right" ? F.f(x1) : F.f(x0 + dx / 2); ctx.rect(c.X(x0), c.Y(hgt), c.X(x1) - c.X(x0), c.Y(0) - c.Y(hgt)); }
+      ctx.closePath();
+      LIM.alpha(ctx, 0.25, () => { ctx.fillStyle = col; ctx.fill(); });
+      if (n <= 60) { ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.stroke(); }
+    }
+    ctx.strokeStyle = P.text; ctx.lineWidth = 2.2; ctx.beginPath();
+    for (let i = 0; i <= 300; i++) { const x = F.a + (F.b - F.a) * i / 300, px = c.X(x), py = c.Y(F.f(x)); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.stroke();
+  }, { aspect: 0.8, maxHeight: 400, minHeight: 240 });
+  const errCv = MB.canvas("#cv-lim-rerr", (ctx, w, h) => {
+    const P = MB.palette(), C = colors(P), F = RF[cur];
+    const series = METHODS.map((mm) => ({ data: errData[mm], color: C[mm], width: mm === m ? 3 : 1.4, dash: mm === m ? [] : [5, 4] }));
+    MB.chart(ctx, { x: 48, y: 30, w: w - 48 - 14, h: h - 30 - 44 }, { x: [1, 1000], logX: true, y: [1e-12, 10], logY: true, xLabel: "조각 수 n", yTicks: [1e-12, 1e-9, 1e-6, 1e-3, 1], series, vlines: [{ x: n, color: P.faint }], points: [{ x: n, y: Math.max(1e-12, Math.abs(rsum(F, n, m) - F.I)), color: C[m], r: 5 }] });
+  }, { aspect: 0.8, maxHeight: 400, minHeight: 240 });
+  const legend = () => {
+    const C = colors(MB.palette());
+    document.getElementById("lim-rs-legend").innerHTML = METHODS.map((mm) => `<span><i style="background:${C[mm]}"></i>${NAMES[mm]}</span>`).join("");
+  };
+  const out = () => {
+    const F = RF[cur], s = rsum(F, n, m), e = Math.abs(s - F.I), e2 = Math.abs(rsum(F, 2 * n, m) - F.I);
+    document.getElementById("lim-rs-cap").textContent = F.lab + " · " + NAMES[m] + " 합";
+    MB.stat("lim-rs-s", s.toPrecision(9));
+    MB.stat("lim-rs-i", F.I.toPrecision(9));
+    MB.stat("lim-rs-e", LIM.sci(e, 2));
+    MB.stat("lim-rs-q", e2 > 1e-15 && e > 1e-15 ? (e / e2).toFixed(2) : "—");
+    area.redraw(); errCv.redraw();
+  };
+  MB.range("lim-rs-n", (v) => v, (v) => { n = v; out(); });
+  MB.seg("lim-rs-m", (v) => { m = v; out(); });
+  const sel = document.getElementById("lim-rs-f");
+  sel.addEventListener("change", () => { cur = sel.value; build(); out(); });
+  MB.onTheme(legend);
+  legend(); out();
+})();
+
+/* ---------------------------------------------------------------- 6. e */
+(function () {
+  let b = 2;
+  const Y1 = 6;
+  const pt = { x: 1, y: 2, label: "", constrain(p) { const xm = Math.log(Y1 - 0.2) / Math.log(b); p.x = Math.min(p.x, xm); p.y = Math.pow(b, p.x); } };
+  const pl = MB.plane("#cv-lim-e", {
+    x: [-2.5, 2.5], y: [-0.7, Y1], aspect: 0.66, points: [pt],
+    draw(P, api) {
+      const pal = P.P, lb = Math.log(b), p = api.points[0];
+      p.color = pal.ok;
+      P.curve(Math.exp, { color: pal.faint, width: 1.4, dash: [3, 4] });
+      P.curve((x) => lb * Math.pow(b, x), { color: pal.accent2, width: 2.4, dash: [8, 5] });
+      P.curve((x) => Math.pow(b, x), { color: pal.accent, width: 2.6 });
+      const x0 = p.x, y0 = Math.pow(b, x0), s = lb * y0;
+      P.line(P.x0, y0 + s * (P.x0 - x0), P.x1, y0 + s * (P.x1 - x0), { color: pal.ok, width: 1.6 });
+      P.poly([[x0, y0], [x0 + 1, y0], [x0 + 1, y0 + s]], { color: pal.ok, fill: "transparent", width: 1.4 });
+      P.poly([[x0, y0], [x0 + 1, y0], [x0 + 1, y0 + s]], { color: pal.ok, fill: pal.ok, stroke: false, alpha: 0.16 });
+      P.text("1", x0 + 0.5, y0, { color: pal.ok, align: "center", baseline: "top", dy: 3, size: 12, bold: true });
+      const edge = P.X(x0 + 1) + 90 > P.w;
+      P.text("기울기 " + s.toFixed(2), x0 + 1, Math.min(y0 + s / 2, P.y1 - 0.4), { color: pal.ok, dx: edge ? -6 : 5, align: edge ? "right" : "left", size: 12, bold: true });
+      P.line(x0, 0, x0, y0, { color: pal.dim, width: 1, dash: [3, 3] });
+      P.text("높이 " + y0.toFixed(2), x0, y0 / 2, { color: pal.dim, align: "right", dx: -5, size: 12 });
+      P.text("y = bˣ", -2.4, 5.6, { color: pal.accent, bold: true, size: 13 });
+      P.text("y = (ln b)·bˣ  (기울기 곡선)", -2.4, 5.1, { color: pal.accent2, bold: true, size: 13 });
+      P.text("eˣ (비교)", -2.4, 4.6, { color: pal.dim, size: 12 });
+      out(p);
+    },
+    onDrag() {},
+  });
+  function out(p) {
+    const lb = Math.log(b), y0 = Math.pow(b, p.x);
+    MB.stat("lim-e-ln", lb.toFixed(4));
+    MB.stat("lim-e-y", y0.toFixed(3));
+    MB.stat("lim-e-s", (lb * y0).toFixed(3));
+    const msg = document.getElementById("lim-e-msg");
+    if (!msg) return;
+    const close = Math.abs(b - Math.E) < 0.006;
+    msg.className = "sim-msg " + (close ? "ok" : "");
+    msg.textContent = close ? `b = ${b.toFixed(4)} ≈ e: 함수와 기울기 곡선이 겹친다. 어느 점에서나 기울기 = 높이.`
+      : lb < 1 ? `ln b = ${lb.toFixed(3)} < 1: 기울기가 높이보다 작다. 기울기 곡선이 아래에 있다. b를 키워 보자.`
+      : `ln b = ${lb.toFixed(3)} > 1: 기울기가 높이보다 크다. 기울기 곡선이 위에 있다. b를 줄여 보자.`;
+  }
+  const setB = (v) => { b = v; pt.y = Math.pow(b, pt.x); pt.constrain(pt); pl.redraw(); };
+  const R = MB.range("lim-e-b", (v) => v.toFixed(2), (v) => setB(v));
+  document.getElementById("lim-e-snap").addEventListener("click", () => { R.set(Math.E, false); setB(Math.E); });
+  document.getElementById("lim-e-two").addEventListener("click", () => { R.set(2, false); setB(2); });
+  document.getElementById("lim-e-ten").addEventListener("click", () => { R.set(4, false); setB(4); });
+  pl.redraw();
+})();
+
+/* ---------------------------------------------------------------- 7. 테일러 */
+(function () {
+  const fact = LIM.fact;
+  const TF = {
+    sin: { f: Math.sin, c: (k, a) => [Math.sin(a), Math.cos(a), -Math.sin(a), -Math.cos(a)][k % 4] / fact[k], R: () => Infinity, x: [-9, 9], y: [-2.6, 2.6], x0: 2 },
+    cos: { f: Math.cos, c: (k, a) => [Math.cos(a), -Math.sin(a), -Math.cos(a), Math.sin(a)][k % 4] / fact[k], R: () => Infinity, x: [-9, 9], y: [-2.6, 2.6], x0: 2 },
+    exp: { f: Math.exp, c: (k, a) => Math.exp(a) / fact[k], R: () => Infinity, x: [-5, 4], y: [-3, 14], x0: 2 },
+    ln:  { f: (x) => (x > -1 ? Math.log1p(x) : NaN), c: (k, a) => (k === 0 ? Math.log1p(a) : ((k % 2 ? 1 : -1) / (k * Math.pow(1 + a, k)))), R: (a) => 1 + a, x: [-1.6, 3.6], y: [-3.5, 2.5], x0: 0.5, amin: -0.8 },
+    geo: { f: (x) => 1 / (1 - x), c: (k, a) => 1 / Math.pow(1 - a, k + 1), R: (a) => Math.abs(1 - a), x: [-3, 3], y: [-5, 6], x0: 0.5, avoid: 1 },
+    lor: { f: (x) => 1 / (1 + x * x), c: (k, a) => { const r = Math.hypot(a, 1), th = Math.atan2(-1, a); const v = (k % 2 ? -1 : 1) * Math.pow(r, -(k + 1)) * Math.sin(-(k + 1) * th); return Math.abs(v) < 1e-12 * Math.pow(r, -(k + 1)) ? 0 : v; }, R: (a) => Math.hypot(a, 1), x: [-3.5, 3.5], y: [-1, 2], x0: 0.5 },
+  };
+  let cur = "sin", n = 3, aRaw = 0, coefs = [];
+  const effA = () => { const F = TF[cur]; let a = aRaw; if (F.amin != null) a = Math.max(F.amin, a); if (F.avoid != null && Math.abs(a - F.avoid) < 0.1) a = a < F.avoid ? F.avoid - 0.1 : F.avoid + 0.1; return a; };
+  const build = () => { const F = TF[cur], a = effA(); coefs = []; for (let k = 0; k <= n; k++) coefs.push(F.c(k, a)); };
+  const T = (x) => { const t = x - effA(); let s = 0; for (let k = coefs.length - 1; k >= 0; k--) s = s * t + coefs[k]; return s; };
+  build();
+  const probe = { x: 2, y: 0, label: "x₀", lock: null, constrain(p) { const F = TF[cur]; p.x = MB.clamp(p.x, F.x[0] + 0.05, F.x[1] - 0.05); const v = T(p.x); p.y = MB.clamp(isFinite(v) ? v : 0, F.y[0], F.y[1]); } };
+  const view = () => ({ x: TF[cur].x, y: TF[cur].y });
+  const pl = MB.plane("#cv-lim-tay", {
+    x: TF.sin.x, y: TF.sin.y, aspect: (w) => (w < 500 ? 0.75 : 0.5), maxHeight: 420, gridStep: 1, points: [probe],
+    draw(P, api) {
+      const F = TF[cur], pal = P.P, a = effA(), R = F.R(a), ctx = P.ctx;
+      api.points[0].color = pal.accent2;
+      if (isFinite(R)) {
+        LIM.alpha(ctx, 0.09, () => { ctx.fillStyle = pal.bad; const l = P.X(a - R), r = P.X(a + R); if (l > 0) ctx.fillRect(0, 0, l, P.h); if (r < P.w) ctx.fillRect(r, 0, P.w - r, P.h); });
+        P.line(a - R, P.y0, a - R, P.y1, { color: pal.bad, width: 1.2, dash: [5, 4] });
+        P.line(a + R, P.y0, a + R, P.y1, { color: pal.bad, width: 1.2, dash: [5, 4] });
+      }
+      P.curve(F.f, { color: pal.text, width: 2.2, n: 900 });
+      P.curve(T, { color: pal.accent, width: 2.6, n: 900 });
+      P.line(a, P.y0, a, P.y1, { color: pal.accent, width: 1, dash: [2, 4] });
+      P.dot(a, F.f(a), { r: 4, color: pal.accent });
+      P.text("a", a, P.y0, { color: pal.accent, baseline: "bottom", dx: 4, dy: -4, bold: true });
+      const p = api.points[0], v = T(p.x); p.y = MB.clamp(isFinite(v) ? v : 0, P.y0, P.y1);
+      if (isFinite(F.f(p.x))) P.dot(p.x, F.f(p.x), { r: 4, color: pal.text });
+      P.line(p.x, P.y0, p.x, P.y1, { color: pal.accent2, width: 1, dash: [3, 3] });
+    },
+    onDrag() { out(); },
+  });
+  const errCv = MB.canvas("#cv-lim-tayerr", (ctx, w, h) => {
+    const P = MB.palette(), F = TF[cur], a = effA(), R = F.R(a), [x0, x1] = F.x;
+    const X = (x) => ((x - x0) / (x1 - x0)) * w, LO = -17, HI = 3, pad = 8;
+    const Y = (L) => pad + ((HI - L) / (HI - LO)) * (h - 2 * pad);
+    ctx.font = "10px " + getComputedStyle(document.body).getPropertyValue("--mono");
+    [-15, -10, -5, 0].forEach((L) => { ctx.strokeStyle = P.grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, Y(L)); ctx.lineTo(w, Y(L)); ctx.stroke(); ctx.fillStyle = P.faint; ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("1e" + L, 4, Y(L) - 1); });
+    const yE = Y(Math.log10(2.2e-16));
+    ctx.strokeStyle = P.ok; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(0, yE); ctx.lineTo(w, yE); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = P.ok; ctx.textAlign = "right"; ctx.textBaseline = "top"; ctx.fillText("배정밀도 한계 2.2e-16", w - 4, yE + 2);
+    if (isFinite(R)) {
+      LIM.alpha(ctx, 0.09, () => { ctx.fillStyle = P.bad; const l = X(a - R), r = X(a + R); if (l > 0) ctx.fillRect(0, 0, l, h); if (r < w) ctx.fillRect(r, 0, w - r, h); });
+    }
+    ctx.strokeStyle = P.accent; ctx.lineWidth = 2; ctx.beginPath(); let st = false;
+    for (let i = 0; i <= 600; i++) {
+      const x = x0 + (x1 - x0) * i / 600, fv = F.f(x), tv = T(x);
+      if (!isFinite(fv) || !isFinite(tv)) { st = false; continue; }
+      const L = MB.clamp(Math.log10(Math.max(Math.abs(fv - tv), 1e-17)), LO, HI);
+      st ? ctx.lineTo(X(x), Y(L)) : ctx.moveTo(X(x), Y(L)); st = true;
+    }
+    ctx.stroke();
+    ctx.strokeStyle = P.accent2; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(X(probe.x), 0); ctx.lineTo(X(probe.x), h); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = P.dim; ctx.font = LIM.font(12, 600); ctx.textAlign = "right"; ctx.textBaseline = "top"; ctx.fillText("log |f − Tₙ|", w - 6, 6);
+  }, { aspect: (w) => (w < 500 ? 0.42 : 0.26), maxHeight: 240, minHeight: 120 });
+  const legend = () => {
+    const P = MB.palette();
+    document.getElementById("lim-tay-legend").innerHTML = `<span><i style="background:${P.text}"></i>f(x)</span><span><i style="background:${P.accent}"></i>Tₙ(x)</span><span><i class="dash" style="color:${P.bad};background:${P.bad}"></i>수렴 반경 경계</span><span><i class="dash" style="color:${P.accent2};background:${P.accent2}"></i>평가점 x₀</span>`;
+  };
+  function needDeg(F, a, x) {
+    const fx = F.f(x); if (!isFinite(fx)) return { msg: "f가 정의되지 않음" };
+    if (Math.abs(x - a) > F.R(a) + 1e-12) return { msg: "반경 밖: 발산" };
+    let t = 0, p = 1, best = Infinity, nz = 0;
+    for (let k = 0; k <= 150; k++) {
+      const c = F.c(k, a); if (Math.abs(c) > 1e-300) nz++;
+      t += c * p; p *= x - a;
+      const e = Math.abs(t - fx); if (e < best) best = e;
+      if (e <= 2.3e-16 * Math.abs(fx) || (fx === 0 && e === 0)) return { msg: `${k}차 <small>(항 ${nz}개)</small>` };
+    }
+    const rel = best / Math.abs(fx || 1);
+    return { msg: rel < 1e-9 ? `반올림 바닥에 막힘 (최선 ${LIM.sci(rel, 1)})` : "150차로도 부족 (느린 수렴)" };
+  }
+  const out = () => {
+    const F = TF[cur], a = effA(), x = probe.x, fv = F.f(x), tv = T(x), R = F.R(a);
+    MB.stat("lim-tay-v", `${isFinite(fv) ? fv.toPrecision(6) : "—"} <small>/</small> ${isFinite(tv) ? (Math.abs(tv) > 1e6 ? tv.toExponential(2) : tv.toPrecision(6)) : "발산"}`);
+    MB.stat("lim-tay-e", isFinite(fv) && isFinite(tv) ? LIM.sci(Math.abs(fv - tv), 2) : "—");
+    MB.stat("lim-tay-r", isFinite(R) ? R.toFixed(3) : "∞");
+    MB.stat("lim-tay-k", needDeg(F, a, x).msg);
+    document.getElementById("lim-tay-a-out").textContent = a.toFixed(1) + (Math.abs(a - aRaw) > 1e-9 ? " (보정)" : "");
+    errCv.redraw();
+  };
+  const refresh = () => { build(); probe.constrain(probe); pl.redraw(); out(); };
+  const nR = MB.range("lim-tay-n", (v) => v, (v) => { n = v; refresh(); });
+  const aR = MB.range("lim-tay-a", (v) => v.toFixed(1), (v) => { aRaw = v; refresh(); });
+  const sel = document.getElementById("lim-tay-f");
+  const setFn = (v) => { cur = v; sel.value = v; probe.x = TF[v].x0; pl.view(view()); refresh(); };
+  sel.addEventListener("change", () => setFn(sel.value));
+  document.getElementById("lim-tay-calc").addEventListener("click", () => { aR.set(0, false); aRaw = 0; nR.set(13, false); n = 13; setFn("sin"); probe.x = 0.5; refresh(); });
+  document.getElementById("lim-tay-far").addEventListener("click", () => { aR.set(0, false); aRaw = 0; nR.set(30, false); n = 30; setFn("sin"); probe.x = 8; refresh(); });
+  MB.onTheme(legend);
+  legend(); refresh();
+})();
+</script>
+</body>
+</html>
