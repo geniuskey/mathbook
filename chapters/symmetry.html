@@ -1,0 +1,1462 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<title>대칭의 대수 · MathBook</title>
+<meta name="description" content="실리콘이 KOH에서 54.74° 경사로 깎이는 이유부터 정사각형의 대칭 8개, 15 퍼즐의 불가능한 상태, 벽지 무늬 17종, 5회 대칭 결정이 없는 이유, 밀러 지수와 뇌터 정리까지 군론으로 푼다.">
+<link rel="canonical" href="https://mathbook.euiyun.com/chapters/symmetry.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="MathBook">
+<meta property="og:title" content="대칭의 대수 · MathBook">
+<meta property="og:description" content="실리콘이 KOH에서 54.74° 경사로 깎이는 이유부터 정사각형의 대칭 8개, 15 퍼즐의 불가능한 상태, 벽지 무늬 17종, 5회 대칭 결정이 없는 이유, 밀러 지수와 뇌터 정리까지 군론으로 푼다.">
+<meta property="og:url" content="https://mathbook.euiyun.com/chapters/symmetry.html">
+<meta property="og:image" content="https://mathbook.euiyun.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"대칭의 대수","name":"대칭의 대수 · MathBook","url":"https://mathbook.euiyun.com/chapters/symmetry.html","mainEntityOfPage":"https://mathbook.euiyun.com/chapters/symmetry.html","inLanguage":"ko","isAccessibleForFree":true,"learningResourceType":"interactive textbook chapter","position":12,"image":"https://mathbook.euiyun.com/og.png","dateModified":"2026-10-05","isPartOf":{"@type":"Book","@id":"https://mathbook.euiyun.com/#book","name":"MathBook — 문제에서 출발하는 수학 교과서","url":"https://mathbook.euiyun.com/"},"publisher":{"@type":"Organization","name":"MathBook","url":"https://mathbook.euiyun.com/"},"description":"실리콘이 KOH에서 54.74° 경사로 깎이는 이유부터 정사각형의 대칭 8개, 15 퍼즐의 불가능한 상태, 벽지 무늬 17종, 5회 대칭 결정이 없는 이유, 밀러 지수와 뇌터 정리까지 군론으로 푼다."},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"MathBook","item":"https://mathbook.euiyun.com/"},{"@type":"ListItem","position":2,"name":"12 대칭의 대수","item":"https://mathbook.euiyun.com/chapters/symmetry.html"}]}]}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<script src="../js/common.js"></script>
+<style>
+  svg .s-acc2 { stroke: var(--accent-2); fill: none; stroke-width: 2; }
+  svg .s-ok { stroke: var(--ok); fill: none; stroke-width: 2; }
+  svg .s-bad { stroke: var(--bad); fill: none; stroke-width: 2; }
+  svg .t-acc2 { fill: var(--accent-2); font-family: var(--font); font-size: 13px; font-weight: 700; }
+  svg .t-bad { fill: var(--bad); font-family: var(--font); font-size: 13px; font-weight: 700; }
+  svg .f-c0 { fill: var(--accent); } svg .f-c1 { fill: var(--accent-2); } svg .f-c2 { fill: var(--ok); } svg .f-c3 { fill: var(--warn); }
+  svg .f-si { fill: var(--surface-2); stroke: var(--text-faint); stroke-width: 1; }
+  svg .f-mask { fill: var(--text-faint); }
+  svg .f-text { fill: var(--text); }
+  .sym-tablewrap { margin: 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: var(--bg-elev); padding: 12px; }
+  table.sym-cayley { border-collapse: separate; border-spacing: 3px; margin: 0 auto; font-family: var(--mono); font-size: 13px; }
+  table.sym-cayley th, table.sym-cayley td { width: 36px; height: 30px; text-align: center; padding: 0; border-radius: 6px; border: 1px solid transparent; }
+  table.sym-cayley th { color: var(--text-dim); font-weight: 600; background: var(--surface); }
+  table.sym-cayley td { cursor: pointer; color: var(--text); }
+  table.sym-cayley td.rot { background: var(--accent-soft); }
+  table.sym-cayley td.ref { background: var(--accent-2-soft); }
+  table.sym-cayley td.nc { border-color: var(--bad); border-style: dashed; }
+  table.sym-cayley td.hl { outline: 2.5px solid var(--text); outline-offset: -1px; font-weight: 700; }
+  table.sym-cayley th.hl { background: var(--text); color: var(--bg); }
+  .sym-word { font-family: var(--mono); font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; min-height: 34px; overflow-wrap: anywhere; }
+  .btn.op { font-family: var(--mono); font-weight: 700; min-width: 54px; }
+  canvas.sym-draw { touch-action: none; cursor: crosshair; }
+  canvas.sym-click { cursor: pointer; }
+  .sym-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--text-dim); padding: 8px 14px; border-top: 1px solid var(--border); background: var(--bg-elev); }
+  .sym-legend b { font-weight: 600; color: var(--text); }
+</style>
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3d6151a0abc94ede89285d462527fa80"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</head>
+<body data-chapter="symmetry">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">Chapter 12</div>
+    <h1>대칭의 대수</h1>
+    <p class="lead">"대칭"은 보통 미술 시간의 단어입니다. 그런데 반도체 공장에서는 이것이 계산의 단어가 됩니다. 실리콘 결정은 어느 방향으로 돌리면 똑같아 보이고 어느 방향으로 돌리면 달라지는지에 따라 깎이는 속도, 쪼개지는 방향, 전자가 달리는 속도까지 달라지기 때문입니다. 이 장은 대칭을 <b>"모양을 그대로 두는 조작들의 모임"</b>으로 보고, 그 조작들을 곱하고 되돌리는 규칙, 곧 <span class="term">군</span><span class="en">(Group)</span>을 손으로 만지며 익힙니다.</p>
+    <ul class="objectives">
+      <li>대칭을 '조작'으로 보고, 정사각형의 대칭 8개로 곱셈표(케일리 표)를 만들어 비가환성을 확인한다.</li>
+      <li>군의 네 공리(닫힘·결합·항등·역원)를 "되돌릴 수 있는 조작의 규칙"으로 이해하고 궤도–안정자 공식으로 대칭을 센다.</li>
+      <li>치환의 짝홀성이라는 불변량으로 15 퍼즐의 불가능한 상태를 증명하고, 교환자로 루빅스 큐브를 "조금만" 바꾸는 법을 안다.</li>
+      <li>평면 반복 무늬의 대칭이 정확히 17종이고, 격자와 공존하는 회전은 1·2·3·4·6회뿐인 이유를 설명한다.</li>
+      <li>밀러 지수로 결정면을 이름 붙이고, (100)과 (111) 사이 54.74°로 KOH 식각 V홈의 깊이를 설계한다.</li>
+    </ul>
+    <div class="origin">
+      <div class="o-head"><small>이 수식이 없었다면</small><b>실리콘 웨이퍼의 V홈과 역피라미드 구멍</b></div>
+      <div class="o-body"><p>실리콘 웨이퍼 가장자리에는 잘라 낸 직선(플랫)이나 작은 홈(노치)이 있습니다. 결정의 방향을 표시하는 눈금입니다. 이 방향이 중요한 이유는 수산화칼륨(KOH) 용액 때문입니다. KOH는 실리콘의 (100) 면은 빠르게 녹이지만 (111) 면은 수십~수백 배 느리게 녹입니다. 그래서 (100) 웨이퍼에 사각 구멍을 열고 담가 두면 저절로 <b>54.74°</b> 경사의 역피라미드가 파이고, 긴 띠 모양 구멍은 단면이 정확한 V자인 홈이 됩니다. 광섬유를 µm 정밀도로 줄 세우는 V홈, 압력 센서의 얇은 막, 태양전지 표면의 피라미드 텍스처가 모두 이렇게 만들어집니다.</p>
+        <p>54.74°는 측정해서 맞춘 값이 아닙니다. 결정이 가진 대칭에서 바로 계산되는 값입니다. 어떤 방향과 어떤 방향이 "같은지", 서로 같은 방향이 몇 개인지 정확히 세는 언어가 군론입니다.</p>
+        <div class="o-chain"><span>웨이퍼 이방성 식각</span><i>→</i><span>방향마다 다른 결정</span><i>→</i><span class="tool">군: 대칭의 대수</span><i>→</i><span>54.74°를 설계로 예측</span></div></div>
+    </div>
+  </header>
+
+  <!-- =============================================================== 1 -->
+  <section id="square">
+    <h2>대칭은 '제자리에 되돌려 놓는 조작'이다</h2>
+    <div class="problem"><strong>둥근 웨이퍼의 방향을 어떻게 알까</strong>
+      <p>웨이퍼는 둥글지만 그 안의 결정은 둥글지 않습니다. (100) 웨이퍼를 위에서 보면 원자 배열은 90°마다 똑같아집니다. 둥근 원판은 아무리 돌려도 같아 보이고 결정은 90°마다만 같아 보이니, 웨이퍼만 봐서는 결정이 어느 쪽을 향하는지 알 수 없습니다. 그래서 일부러 가장자리를 깎아(플랫·노치) <b>대칭을 깨뜨립니다</b>. 그러려면 먼저 "결정을 어떻게 돌리거나 뒤집어야 똑같아 보이는가"를 정확히 셀 수 있어야 합니다.</p>
+    </div>
+    <p>가장 간단한 경우부터 봅시다. 바닥에 정사각형 모양의 홈이 있고 정사각형 판이 그 안에 들어가 있습니다. 판을 들어 올렸다가 다시 홈에 끼워 넣는 방법은 몇 가지일까요? 90°씩 돌려서 넣는 방법이 4가지(0°, 90°, 180°, 270°), 뒤집어서 넣는 방법이 4가지(세로축, 가로축, 두 대각선)이므로 모두 <b>8가지</b>입니다. 홈만 보면 8가지 모두 "아무 일도 없었던 것처럼" 보이지만, 꼭짓점에 1~4 번호를 써 두면 서로 구별됩니다.</p>
+    <p>여기서 생각의 방향을 바꿉니다. 대칭을 모양이 가진 '성질'로 보지 말고, 모양을 제자리에 되돌려 놓는 <b>조작</b><span class="en">(Operation)</span>으로 봅니다. 조작은 연달아 할 수 있습니다. 90° 돌리고 또 90° 돌리면 180° 회전이라는 다른 조작이 됩니다. 조작을 연달아 하는 것을 조작의 "곱셈"으로 보면, 대칭은 곱셈표를 가진 <b>대수</b>가 됩니다. 이 장의 제목이 '대칭의 대수'인 이유입니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 270" role="img" aria-label="정사각형의 대칭축과 웨이퍼의 플랫">
+        <defs><marker id="sym-ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8z" style="fill:var(--axis)"/></marker></defs>
+        <rect x="100" y="55" width="160" height="160" class="f-surface"/>
+        <line x1="180" y1="30" x2="180" y2="240" class="s-acc2" stroke-dasharray="6 5"/>
+        <line x1="75" y1="135" x2="285" y2="135" class="s-acc2" stroke-dasharray="6 5"/>
+        <line x1="82" y1="37" x2="278" y2="233" class="s-acc2" stroke-dasharray="6 5"/>
+        <line x1="278" y1="37" x2="82" y2="233" class="s-acc2" stroke-dasharray="6 5"/>
+        <rect x="173" y="128" width="14" height="14" class="f-acc"/>
+        <circle cx="100" cy="55" r="9" class="f-c0"/><circle cx="260" cy="55" r="9" class="f-c1"/><circle cx="260" cy="215" r="9" class="f-c2"/><circle cx="100" cy="215" r="9" class="f-c3"/>
+        <text x="116" y="78" class="t">1</text><text x="236" y="78" class="t">2</text><text x="236" y="203" class="t">3</text><text x="116" y="203" class="t">4</text>
+        <text x="180" y="262" text-anchor="middle" class="t-dim">거울축 4개(점선) + 4회 회전 중심(■)</text>
+        <circle cx="520" cy="130" r="105" class="f-elev" stroke-width="1.5"/>
+        <g class="s-line" opacity=".55">
+          <rect x="484" y="52" width="34" height="34"/><rect x="522" y="52" width="34" height="34"/><rect x="484" y="90" width="34" height="34"/><rect x="522" y="90" width="34" height="34"/>
+        </g>
+        <line x1="455" y1="218" x2="585" y2="218" class="s-acc" stroke-width="4"/>
+        <text x="520" y="160" text-anchor="middle" class="t-dim">(100) 결정</text>
+        <text x="520" y="180" text-anchor="middle" class="t-dim">90°마다 같음</text>
+        <text x="520" y="252" text-anchor="middle" class="t-acc">플랫 = 일부러 깬 대칭</text>
+        <circle cx="715" cy="130" r="55" class="f-elev" stroke-width="1.5"/>
+        <path d="M708,185 L715,176 L722,185" class="s-acc" stroke-width="3"/>
+        <text x="715" y="134" text-anchor="middle" class="t-dim">노치</text>
+        <text x="715" y="215" text-anchor="middle" class="t-mono">200·300 mm</text>
+      </svg>
+      <figcaption><b>그림 12-1.</b> 왼쪽: 정사각형을 제자리에 되돌려 놓는 조작은 회전 4개와 뒤집기 4개, 합쳐서 8개다. 오른쪽: (100) 웨이퍼의 결정은 90° 회전에 대해 대칭이라 둥근 원판만 봐서는 방향을 알 수 없다. 그래서 가장자리에 플랫(작은 웨이퍼)이나 노치(200 mm 이상)를 만들어 대칭을 일부러 깬다. (100) 웨이퍼의 주 플랫은 보통 &lt;110&gt; 방향을 따라 깎는다.</figcaption>
+    </figure>
+    <p>아래 시뮬레이터에서 <code>r</code>(반시계 90° 회전)와 <code>s</code>(세로축 기준 뒤집기)를 눌러 정사각형을 움직여 보세요. 누른 순서는 다르더라도 꼭짓점 배치가 같으면 <b>같은 원소</b>입니다. 예를 들어 <code>r r r r</code>는 아무것도 안 한 것(<code>e</code>)과 같고, <code>s s</code>도 <code>e</code>입니다. 버튼을 아무리 길게 눌러도 결과는 8개 중 하나로 정리되고, 그 8개끼리의 곱셈 결과가 오른쪽 아래 표에 모두 들어 있습니다.</p>
+
+    <div class="sim" id="sim-sym-d4">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>정사각형의 대칭 8개와 케일리 표</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-sym-sq"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>조작 (누른 순서대로 실행)</span>
+            <div class="btn-row"><button class="btn op primary" id="sym-d4-r">r</button><button class="btn op" id="sym-d4-ri">r⁻¹</button><button class="btn op primary" id="sym-d4-s">s</button></div></div>
+          <div class="ctrl"><span>기록</span><div class="sym-word" id="sym-d4-word">(아직 없음)</div></div>
+          <div class="ctrl"><span>순서 바꿔 보기</span>
+            <div class="btn-row"><button class="btn" id="sym-d4-rs">r 다음 s</button><button class="btn" id="sym-d4-sr">s 다음 r</button></div></div>
+          <label class="check"><input type="checkbox" id="sym-d4-nc"> 순서를 바꾸면 결과가 달라지는 칸 표시</label>
+          <div class="btn-row"><button class="btn" id="sym-d4-undo">한 단계 되돌리기</button><button class="btn" id="sym-d4-reset">처음으로</button></div>
+        </div>
+      </div>
+      <div class="table-wrap sym-tablewrap"><div id="sym-cayley"></div></div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">지금 상태 = 원소</span><span class="v" id="sym-d4-el">e</span></div>
+        <div class="stat"><span class="k">기하학적 의미</span><span class="v" id="sym-d4-geo" style="font-size:15px">항등</span></div>
+        <div class="stat"><span class="k">누른 횟수</span><span class="v" id="sym-d4-len">0</span></div>
+        <div class="stat"><span class="k">만나 본 원소</span><span class="v" id="sym-d4-seen">1 / 8</span></div>
+      </div>
+      <div class="sim-note">표 읽는 법: 행의 원소를 먼저 하고 열의 원소를 나중에 한 결과. 파란 칸은 회전, 주황 칸은 뒤집기. 표의 칸을 누르면 처음부터 그 두 조작을 차례로 보여 준다. 해볼 것: ① <code>r 다음 s</code>와 <code>s 다음 r</code>을 차례로 눌러 서로 다른 대각선으로 뒤집히는 것을 확인. ② 아무렇게나 15번 눌러 본 뒤 기록이 8개 중 어느 원소로 정리됐는지 보기. ③ 표의 모든 행과 열에 8개 원소가 정확히 한 번씩 나오는지 확인(왜 그런지는 다음 절). 모델: 정사각형은 평면 안에서만 움직이고(뒤집기는 거울 반사로 본다), 축 s는 판이 아니라 공간에 고정되어 있다.</div>
+    </div>
+
+    <p>표에서 가장 먼저 눈에 띄는 것은 <b>대각선에 대해 대칭이 아니라는 점</b>입니다. <code>r 다음 s</code>는 ↗ 대각선 뒤집기인데 <code>s 다음 r</code>은 ↖ 대각선 뒤집기입니다. 곱하는 순서를 바꾸면 결과가 달라지는 대수, 즉 <span class="term">비가환</span><span class="en">(Non-commutative)</span> 대수입니다. 3장에서 행렬 곱 \(AB \ne BA\)를 본 적이 있다면 놀랄 일은 아닙니다. 평면의 회전과 반사는 모두 2×2 직교 행렬이고, 연달아 하기는 행렬 곱이기 때문입니다.</p>
+    <div class="formula">$$r = \begin{bmatrix}0&-1\\1&0\end{bmatrix},\quad s = \begin{bmatrix}-1&0\\0&1\end{bmatrix},\qquad r^4 = s^2 = e,\quad s\,r\,s = r^{-1}$$
+      <div class="where">이 세 관계식만 있으면 8개 원소와 곱셈표 전체가 정해진다. 이 군을 <b>이면체군</b> \(D_4\)<span class="en">(Dihedral group, 문헌에 따라 \(D_8\))</span>라 부른다. 정 n각형의 대칭군 \(D_n\)은 원소가 \(2n\)개다.</div>
+    </div>
+    <div class="callout warn"><strong>곱하는 순서의 관례</strong> 이 장에서는 "왼쪽부터 순서대로 실행"으로 읽는다. <code>rs</code> = r을 먼저, s를 나중에. 루빅스 큐브 기호도 이렇게 읽는다. 함수 합성 \((f\circ g)(x) = f(g(x))\)를 쓰는 수학 교과서는 반대로 오른쪽부터 읽으므로 같은 기호가 다른 원소를 가리킬 수 있다. 행렬로 쓰면 "a 다음 b"는 \(B A\)다. 식 \(srs = r^{-1}\)는 좌우가 대칭인 단어라서 어느 관례로 읽어도 맞다.</div>
+  </section>
+
+  <!-- =============================================================== 2 -->
+  <section id="group-axioms">
+    <h2>군: 되돌릴 수 있는 조작들의 규칙</h2>
+    <div class="problem"><strong>곱셈표가 왜 스도쿠처럼 생겼나</strong>
+      <p>앞의 케일리 표에서 모든 행과 열에는 8개 원소가 정확히 한 번씩 나옵니다(라틴 방진). 우연일까요? 정육면체, 결정, 루빅스 큐브, 부호어처럼 모양이 전혀 다른 대상에서도 같은 일이 일어날까요? 표를 일일이 확인하지 않고 공통 규칙만으로 답하고 싶습니다.</p>
+    </div>
+    <p>대칭 조작들이 공통으로 가진 성질은 네 가지뿐입니다. 이 네 가지를 만족하는 모임이면 무엇이든 <span class="term">군</span><span class="en">(Group)</span>이라 부르고, 그 대상이 정사각형이든 결정이든 큐브든 같은 정리를 쓸 수 있습니다.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>공리</th><th>수학적 표현</th><th>조작의 언어</th><th>정사각형에서</th></tr></thead>
+      <tbody>
+        <tr><td><b>닫힘</b></td><td>\(a, b \in G \Rightarrow ab \in G\)</td><td>대칭 조작 두 개를 연달아 해도 대칭 조작이다</td><td>버튼을 몇 번 눌러도 8개 중 하나</td></tr>
+        <tr><td><b>결합</b></td><td>\((ab)c = a(bc)\)</td><td>세 조작을 할 때 묶는 방법은 상관없다(순서는 상관있다)</td><td>행렬 곱의 결합법칙</td></tr>
+        <tr><td><b>항등</b></td><td>\(ea = ae = a\)</td><td>"아무것도 안 하기"도 조작이다</td><td><code>e</code> = 0° 회전</td></tr>
+        <tr><td><b>역원</b></td><td>\(a a^{-1} = a^{-1} a = e\)</td><td>모든 조작은 되돌릴 수 있다</td><td>\(r^{-1} = r^3\), \(s^{-1} = s\)</td></tr>
+      </tbody>
+    </table></div>
+    <p>라틴 방진은 <b>역원</b>에서 바로 나옵니다. 어떤 행 \(g\)에서 두 칸이 같다면 \(gh_1 = gh_2\)인데, 양쪽 앞에 \(g^{-1}\)을 곱하면 \(h_1 = h_2\)가 됩니다. 그러니 한 행에 같은 원소가 두 번 나올 수 없고, 칸이 8개이니 8개 원소가 한 번씩 나옵니다. 되돌릴 수 있는 조작이라면 같은 결과로 가는 길이 둘일 수 없다는 뜻입니다. 공학적으로 말하면 군의 원소를 곱하는 것은 <b>정보를 잃지 않는 변환</b>입니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 250" role="img" aria-label="정사각형 대칭군의 8개 원소"><g id="sym-fig-d4"></g></svg>
+      <figcaption><b>그림 12-2.</b> \(D_4\)의 8개 원소를 꼭짓점 번호 배치로 그렸다. 윗줄은 회전(방향 보존, 행렬식 +1), 아랫줄은 뒤집기(방향 반전, 행렬식 −1). 안쪽의 깃발 모양을 보면 아랫줄은 모두 거울상이다. 회전끼리 곱하면 회전이고 뒤집기 두 번은 회전이다. 행렬식의 부호가 곱해지기 때문이다.</figcaption>
+    </figure>
+    <p>군은 생각보다 흔합니다. 이 책의 다른 장에서 이미 여러 번 나왔습니다.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>군</th><th>원소</th><th>연산</th><th>나오는 곳</th></tr></thead>
+      <tbody>
+        <tr><td>\(\mathbb{Z}\)</td><td>정수</td><td>덧셈 (항등 0, 역원 −n)</td><td>격자 위의 평행이동</td></tr>
+        <tr><td>\(\mathbb{Z}_n\)</td><td>0 … n−1</td><td>mod n 덧셈</td><td>시계, 위상 누산기, 순환 버퍼</td></tr>
+        <tr><td>단위원 \(U(1)\)</td><td>\(e^{i\theta}\)</td><td>복소수 곱 = 회전</td><td><a href="complex.html">2장</a> 페이저</td></tr>
+        <tr><td>\(GL(n)\)</td><td>가역 행렬</td><td>행렬 곱</td><td><a href="linalg.html">3장</a> 선형 변환</td></tr>
+        <tr><td>\((\mathbb{Z}_2)^n\)</td><td>n비트 문자열</td><td>XOR</td><td><a href="information.html">8장</a> 선형 부호의 부호어</td></tr>
+        <tr><td>\(S_n\)</td><td>n개의 순서 바꾸기(치환)</td><td>연달아 섞기</td><td>15 퍼즐, 큐브(다음 절)</td></tr>
+      </tbody>
+    </table></div>
+    <p>군이 쓸모 있는 이유는 공리 네 개만으로도 강력한 <b>세는 법</b>이 나오기 때문입니다. 그중 가장 자주 쓰는 것이 궤도–안정자 정리입니다. 정사각형의 꼭짓점 1은 대칭 조작으로 네 꼭짓점 어디로든 갈 수 있고(<b>궤도</b> 크기 4), 꼭짓점 1을 제자리에 두는 조작은 항등과 그 꼭짓점을 지나는 대각선 뒤집기 2개뿐입니다(<b>안정자</b> 크기 2).</p>
+    <div class="formula">$$|G| = |\text{궤도}(x)| \times |\text{안정자}(x)| \qquad 8 = 4 \times 2$$
+      <div class="where">정육면체의 회전 대칭을 세어 보면: 윗면이 6개 면 중 어디로든 갈 수 있고(궤도 6), 윗면을 고정하는 회전은 4개 → \(6\times4 = 24\)개. 뒤집기(거울)까지 넣으면 48개다. 이 48이 7절에서 실리콘 결정의 "같은 방향"을 세는 데 쓰인다. 또 부분군의 크기는 항상 전체 군 크기의 약수다(라그랑주 정리).</div>
+    </div>
+    <div class="callout"><strong>역사 한 줄</strong> 군이라는 생각은 1830년경 갈루아가 5차 방정식에 근의 공식이 없다는 것을 설명하면서 쓴 근의 치환에서 시작했다. 공리로 정리된 추상적 정의는 그 뒤 수십 년에 걸쳐 케일리 등이 다듬었다. 그러니 "대칭을 다루는 언어"는 처음부터 <b>치환</b>, 곧 다음 절의 15 퍼즐과 같은 대상에서 나온 셈이다.</div>
+  </section>
+
+  <!-- =============================================================== 3 -->
+  <section id="parity">
+    <h2>불가능한 상태: 15 퍼즐과 치환의 짝홀성</h2>
+    <div class="problem"><strong>1000달러짜리 문제</strong>
+      <p>4×4 판에 1~15번 타일과 빈칸 하나가 있고, 빈칸 옆 타일을 밀어 순서대로 맞추는 15 퍼즐은 1880년 미국과 유럽에서 크게 유행했습니다. 퍼즐 작가 샘 로이드는 나중에 자기가 이 퍼즐을 발명했고, 14와 15만 바뀐 상태를 푸는 사람에게 1000달러를 주겠다고 했다고 주장했습니다(실제 발명자는 1870년대의 우체국장 노이스 채프먼으로 알려져 있고 로이드의 이야기는 상당 부분 과장으로 본다). 상금을 받아 간 사람은 없습니다. 아무리 오래 밀어도 안 되는 걸까요, 아니면 아직 방법을 못 찾은 걸까요?</p>
+    </div>
+    <p>"몇 시간 해 봤는데 안 된다"는 증명이 아닙니다. 가능한 배치는 \(16! \approx 2.1\times10^{13}\)개라서 컴퓨터로 전부 확인하기도 쉽지 않습니다. 필요한 것은 <b>어떤 이동을 해도 변하지 않는 양</b>, 곧 <span class="term">불변량</span><span class="en">(Invariant)</span>입니다. 시작 상태와 목표 상태의 불변량이 다르면 그 사이에 길은 없습니다.</p>
+    <p>도구는 <span class="term">치환</span><span class="en">(Permutation)</span>입니다. 판 위의 배치는 16개 칸에 16개 기호(빈칸 포함)를 늘어놓은 순서 바꾸기이고, 모든 치환은 두 개만 맞바꾸는 <span class="term">호환</span><span class="en">(Transposition)</span>을 여러 번 해서 만들 수 있습니다. 놀라운 사실은 같은 치환을 호환 몇 번으로 만들든 그 횟수의 <b>홀짝은 항상 같다</b>는 것입니다. 그래서 치환마다 부호 \(\operatorname{sgn}\sigma = \pm1\)이 정해집니다(뒤바뀐 쌍의 개수, 즉 반전 수의 홀짝과 같다).</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 230" role="img" aria-label="15 퍼즐의 한 번 밀기는 호환이고 빈칸은 체스판 색을 바꾼다"><g id="sym-fig-15"></g></svg>
+      <figcaption><b>그림 12-3.</b> 왼쪽: 로이드의 14–15 상태. 가운데: 타일 하나를 미는 것은 그 타일과 빈칸의 호환이다. 오른쪽: 판을 체스판처럼 칠하면 한 번 밀 때마다 빈칸이 반대 색 칸으로 간다. 그래서 치환의 홀짝과 빈칸 위치의 홀짝이 <b>항상 같이</b> 바뀐다.</figcaption>
+    </figure>
+    <div class="formula">$$I = \operatorname{sgn}(\sigma)\cdot(-1)^{d},\qquad \text{한 번 밀 때마다 } \operatorname{sgn}\to-\operatorname{sgn},\ (-1)^d\to-(-1)^d \ \Rightarrow\ I \text{ 불변}$$
+      <div class="where">\(\sigma\): 빈칸을 16번 타일로 본 16개 기호의 치환. \(d\): 빈칸과 오른쪽 아래 구석 사이의 맨해튼 거리. 완성 상태는 \(I=+1\)이다. 14와 15만 바꾸면 호환 하나이므로 \(\operatorname{sgn}=-1\), 빈칸은 제자리라 \(d=0\), 따라서 \(I=-1\). <b>어떤 순서로 밀어도 완성 상태에 갈 수 없다.</b></div>
+    </div>
+
+    <div class="sim" id="sim-sym-fifteen">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>15 퍼즐과 패리티 계기판</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-sym-15" class="sym-click"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>합법적인 이동</span>
+            <div class="btn-row"><button class="btn primary" id="sym-15-shuffle">무작위로 200번 밀기</button></div></div>
+          <div class="ctrl"><span>반칙 (타일을 뽑아 바꿔 끼우기)</span>
+            <div class="btn-row"><button class="btn" id="sym-15-swap">14 ↔ 15 바꾸기</button><button class="btn" id="sym-15-swap2">1 ↔ 2 바꾸기</button></div></div>
+          <div class="btn-row"><button class="btn" id="sym-15-reset">완성 상태로</button></div>
+          <div class="kbd-hint">빈칸과 같은 줄의 타일을 누르면 그 사이 타일이 한꺼번에 밀린다(각각 한 번으로 센다).</div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">이동 수</span><span class="v" id="sym-15-moves">0</span></div>
+        <div class="stat"><span class="k">반전 수 (1–15)</span><span class="v" id="sym-15-inv">0</span></div>
+        <div class="stat"><span class="k">sgn σ · (−1)<sup>d</sup></span><span class="v" id="sym-15-sig">+1 · +1</span></div>
+        <div class="stat"><span class="k">불변량 I</span><span class="v" id="sym-15-I">+1</span></div>
+      </div>
+      <div class="sim-msg ok" id="sym-15-msg">완성 상태. 불변량 I = +1.</div>
+      <div class="sim-note">해볼 것: ① 무작위로 여러 번 섞으며 sgn과 (−1)<sup>d</sup>가 매번 같이 뒤집혀 I가 +1로 남는지 확인. ② 완성 상태에서 14 ↔ 15를 누르면 I = −1. 이제 어떻게 밀어도 I는 −1이라 완성은 불가능하다. ③ 반칙을 한 번 더(1 ↔ 2) 하면 다시 I = +1이 되어 풀 수 있는 상태로 돌아온다. 모델: 판 위 배치 = 16개 기호의 치환. 반전 수는 빈칸을 뺀 1–15의 읽기 순서로 셌다.</div>
+    </div>
+    <p>1879년 존슨과 스토리는 <i>American Journal of Mathematics</i>에 이 불변량으로 정확히 절반의 배치(\(16!/2 \approx 1.05\times10^{13}\)개)는 도달할 수 없고, 나머지 절반은 모두 도달할 수 있음을 증명했습니다. 짝치환들은 그 자체로 군(교대군 \(A_{16}\))을 이루고, 판의 상태 공간은 두 덩어리로 정확히 나뉩니다.</p>
+    <div class="callout tip"><strong>엔지니어의 눈으로</strong> "불변량으로 불가능을 증명한다"는 이 퍼즐만의 요령이 아니다. 상태 기계가 절대 들어가면 안 되는 상태를 검증할 때, 보존 법칙으로 어떤 반응이 일어날 수 없음을 보일 때, 패리티 비트로 비트 하나가 뒤집힌 것을 잡을 때(<a href="information.html">8장</a>) 모두 같은 논리를 쓴다. 9절의 뇌터 정리는 이 생각을 물리 법칙 전체로 넓힌다.</div>
+  </section>
+
+  <!-- =============================================================== 4 -->
+  <section id="rubik">
+    <h2>루빅스 큐브: 4.3×10<sup>19</sup>과 교환자</h2>
+    <div class="problem"><strong>한 조각만 바꾸고 싶다</strong>
+      <p>큐브의 한 면을 돌리면 조각 20개 중 8개가 한꺼번에 움직입니다. 거의 다 맞춘 큐브에서 모서리 조각 세 개만 자리를 바꾸고 싶다면, 나머지를 흐트러뜨리지 않는 동작을 어떻게 찾을까요? 공장의 정렬 장비나 로봇 팔에서도 같은 문제가 생깁니다. 한 축을 움직이면 여러 곳이 같이 변하는데, 한 곳만 조금 고치고 싶을 때입니다.</p>
+    </div>
+    <p>먼저 크기를 봅시다. 1974년 루비크 에르뇌가 만든 3×3×3 큐브를 분해해 아무렇게나 다시 조립하면 \(8!\cdot3^8\cdot12!\cdot2^{12} \approx 5.19\times10^{20}\)가지가 나옵니다(꼭짓점 조각 8개의 배치와 비틀림, 모서리 조각 12개의 배치와 뒤집힘). 그런데 면 돌리기만으로 갈 수 있는 상태는 그중 <b>정확히 1/12</b>입니다. 15 퍼즐과 같은 이유로 생기는 불변량이 세 개 있기 때문입니다.</p>
+    <div class="formula">$$|G_{\text{큐브}}| = \frac{8!\cdot3^8\cdot12!\cdot2^{12}}{3\cdot2\cdot2} = 43{,}252{,}003{,}274{,}489{,}856{,}000 \approx 4.3\times10^{19}$$
+      <div class="where">÷3: 꼭짓점 비틀림의 합은 항상 0 (mod 3). ÷2: 모서리 뒤집힘의 합은 항상 짝수. ÷2: 꼭짓점 치환과 모서리 치환의 홀짝이 항상 같다(면 하나를 돌리면 꼭짓점 4-순환과 모서리 4-순환이 동시에 생기고, 4-순환은 둘 다 홀치환). 2010년 컴퓨터 탐색으로 어떤 상태든 20수(반 바퀴 돌리기도 한 수로 셈) 안에 풀린다는 것이 증명되었다.</div>
+    </div>
+    <p>큐브를 푸는 사람들의 핵심 도구가 <span class="term">교환자</span><span class="en">(Commutator)</span>입니다.</p>
+    <div class="formula">$$[A, B] = A\,B\,A^{-1}B^{-1}$$
+      <div class="where">A를 하고, B를 하고, A를 되돌리고, B를 되돌린다. A와 B가 가환이면(\(AB=BA\)) 결과는 \(e\), 아무 일도 없다. 그러니 \([A,B]\)는 <b>A와 B가 얼마나 서로 간섭하는지</b>만 남기는 조작이다. A와 B가 건드리는 조각이 거의 겹치지 않으면 결과도 겹치는 곳 근처만 조금 바꾼다.</div>
+    </div>
+    <p>아래 5×5 판에서 A는 가운데 가로줄을 오른쪽으로 한 칸 순환시키고, B는 가운데 세로줄을 아래로 한 칸 순환시킵니다. 둘 다 5개 타일을 움직이지만, 교환자 \([A,B]\)는 <b>단 3개</b>만 돌립니다. 두 순환이 한 칸에서만 겹치기 때문입니다.</p>
+
+    <div class="sim" id="sim-sym-comm">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>교환자 [A, B]는 조금만 바꾼다</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-sym-comm"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>B가 움직이는 줄</span><div class="seg" id="sym-comm-mode"><button data-value="cross" class="on">세로줄 (A와 1칸 겹침)</button><button data-value="apart">맨 윗줄 (안 겹침)</button></div></div>
+          <div class="ctrl"><span>조작</span>
+            <div class="btn-row"><button class="btn op" id="sym-comm-a">A</button><button class="btn op" id="sym-comm-ai">A⁻¹</button><button class="btn op" id="sym-comm-b">B</button><button class="btn op" id="sym-comm-bi">B⁻¹</button></div></div>
+          <div class="btn-row"><button class="btn primary" id="sym-comm-run">[A,B] = A B A⁻¹ B⁻¹</button><button class="btn" id="sym-comm-conj">A [A,B] A⁻¹ (켤레)</button></div>
+          <div class="btn-row"><button class="btn" id="sym-comm-reset">처음으로</button></div>
+          <div class="ctrl"><span>기록</span><div class="sym-word" id="sym-comm-word">(아직 없음)</div></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">제자리가 아닌 타일</span><span class="v" id="sym-comm-moved">0</span></div>
+        <div class="stat"><span class="k">현재 치환(순환 표기)</span><span class="v" id="sym-comm-cyc" style="font-size:15px">e</span></div>
+        <div class="stat"><span class="k">치환의 홀짝</span><span class="v" id="sym-comm-par">짝</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① [A,B]를 한 번 실행하면 테두리가 굵은(제자리가 아닌) 타일이 정확히 3개인 3-순환이 남는다. 세 번 하면 다시 제자리(3-순환의 차수는 3). ② B를 맨 윗줄로 바꾸면 A와 B가 가환이 되어 [A,B] = e. ③ 켤레 A[A,B]A⁻¹는 같은 3-순환을 다른 위치로 옮긴다. 큐브 풀이의 "셋업 동작"이 바로 이것이다. 모델: 5-순환 두 개가 한 원소를 공유하면 교환자는 3-순환이 된다. 큐브 공식도 같은 구조다.</div>
+    </div>
+    <p>A와 B는 각각 5-순환(짝치환)이므로 교환자도 짝치환입니다. 짝치환 중 가장 작은 변화가 3-순환이고, 실제로 그것이 나왔습니다. 큐브 풀이 공식 대부분은 "A로 목표 조각을 한 층에 모으고, B로 그 층만 돌리고, A와 B를 되돌린다"는 교환자이고, 원하는 위치로 옮기는 것은 켤레 \(XYX^{-1}\)입니다.</p>
+    <div class="callout deep"><strong>교환자는 비가환성의 크기</strong> 행렬에서는 \(AB-BA\)를 교환자라 부르고, 이것이 0이 아니면 두 변환의 순서가 중요하다. 양자역학의 \([x, p] = i\hbar\)(위치와 운동량은 동시에 정확히 잴 수 없다)와 로봇 공학에서 "앞으로–돌기–뒤로–되돌기"로 옆으로 움직이는 평행 주차 동작도 같은 구조다. 작은 조작 두 개의 교환자는 두 조작 어느 쪽에도 없던 새로운 방향의 움직임을 만든다.</div>
+  </section>
+
+  <!-- =============================================================== 5 -->
+  <section id="wallpaper">
+    <h2>벽지 무늬는 17종뿐이다</h2>
+    <div class="problem"><strong>반복 무늬는 몇 종류인가</strong>
+      <p>타일 바닥, 직물, 웨이퍼 위의 다이 배치, 디스플레이의 서브픽셀 배열, 이미지 센서의 컬러 필터처럼 평면에서 반복되는 무늬는 끝없이 다양해 보입니다. 하지만 무늬 모양이 아니라 <b>대칭 구조</b>만 보면 서로 다른 것은 몇 가지뿐일까요? 무한히 많다면 분류는 포기해야 하고, 유한하다면 그 목록이 설계의 선택지 전체가 됩니다.</p>
+    </div>
+    <p>평면에서 거리를 보존하는 변환은 네 종류뿐입니다. <b>평행이동</b>, <b>회전</b>, <b>거울 반사</b>, 그리고 반사한 뒤 그 축을 따라 미는 <b>미끄럼 반사</b><span class="en">(Glide reflection)</span>입니다. 모래 위 발자국이 왼발, 오른발 번갈아 찍히는 것이 미끄럼 반사입니다. 반복 무늬의 대칭군은 두 방향 평행이동(격자)에 이 변환들을 섞은 것이고, 섞을 수 있는 방법이 <b>정확히 17가지</b>라는 것이 <span class="term">벽지군</span><span class="en">(Wallpaper groups)</span>의 분류입니다. 1891년 페도로프가 처음 증명한 것으로 알려져 있고, 1924년 폴리아가 다시 정리해 널리 알려졌습니다.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>기호</th><th>격자</th><th class="num">최대 회전</th><th>거울</th><th>미끄럼</th><th>기호</th><th>격자</th><th class="num">최대 회전</th><th>거울</th><th>미끄럼</th></tr></thead>
+      <tbody>
+        <tr><td>p1</td><td>평행사변형</td><td class="num">1</td><td>–</td><td>–</td><td>p4</td><td>정사각</td><td class="num">4</td><td>–</td><td>–</td></tr>
+        <tr><td>p2</td><td>평행사변형</td><td class="num">2</td><td>–</td><td>–</td><td>p4m</td><td>정사각</td><td class="num">4</td><td>○</td><td>○</td></tr>
+        <tr><td>pm</td><td>직사각</td><td class="num">1</td><td>○</td><td>–</td><td>p4g</td><td>정사각</td><td class="num">4</td><td>○</td><td>○</td></tr>
+        <tr><td>pg</td><td>직사각</td><td class="num">1</td><td>–</td><td>○</td><td>p3</td><td>육각</td><td class="num">3</td><td>–</td><td>–</td></tr>
+        <tr><td>cm</td><td>마름모(중심)</td><td class="num">1</td><td>○</td><td>○</td><td>p3m1</td><td>육각</td><td class="num">3</td><td>○</td><td>○</td></tr>
+        <tr><td>pmm</td><td>직사각</td><td class="num">2</td><td>○</td><td>–</td><td>p31m</td><td>육각</td><td class="num">3</td><td>○</td><td>○</td></tr>
+        <tr><td>pmg</td><td>직사각</td><td class="num">2</td><td>○</td><td>○</td><td>p6</td><td>육각</td><td class="num">6</td><td>–</td><td>–</td></tr>
+        <tr><td>pgg</td><td>직사각</td><td class="num">2</td><td>–</td><td>○</td><td>p6m</td><td>육각</td><td class="num">6</td><td>○</td><td>○</td></tr>
+        <tr><td>cmm</td><td>마름모(중심)</td><td class="num">2</td><td>○</td><td>○</td><td colspan="5" style="color:var(--text-dim)">p = 기본 격자, c = 중심 격자, m = 거울, g = 미끄럼. 숫자 = 최대 회전 차수.</td></tr>
+      </tbody>
+    </table></div>
+    <p>아래 판에 아무 획이나 그려 보세요. 획 하나가 선택한 군의 모든 원소로 복사되어 평면 전체를 채웁니다. 대칭 요소 표시를 켜면 회전 중심(◆ 2회, ▲ 3회, ■ 4회, ⬢ 6회), 거울선(실선), 미끄럼 반사축(점선)이 나타납니다. 이 표시들은 미리 그려 둔 그림이 아니라, 군의 원소를 하나하나 분석해서 계산한 것입니다.</p>
+
+    <div class="sim" id="sim-sym-wallpaper">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>17가지 벽지군 그리기판</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-sym-wp" class="sym-draw"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>벽지군</span><select id="sym-wp-group">
+            <optgroup label="평행사변형 격자"><option value="p1">p1 — 평행이동만</option><option value="p2">p2 — 2회 회전</option></optgroup>
+            <optgroup label="직사각·마름모 격자"><option value="pm">pm — 거울</option><option value="pg">pg — 미끄럼(발자국)</option><option value="cm">cm — 거울 + 미끄럼</option><option value="pmm">pmm — 직교 거울</option><option value="pmg">pmg — 거울 + 미끄럼 + 2회</option><option value="pgg">pgg — 직교 미끄럼</option><option value="cmm">cmm — 중심 격자 직교 거울</option></optgroup>
+            <optgroup label="정사각 격자"><option value="p4">p4 — 4회 회전</option><option value="p4m" selected>p4m — 정사각 + 거울 (바둑판)</option><option value="p4g">p4g — 4회 + 엇갈린 거울</option></optgroup>
+            <optgroup label="육각 격자"><option value="p3">p3 — 3회 회전</option><option value="p3m1">p3m1 — 3회, 중심이 모두 거울 위</option><option value="p31m">p31m — 3회, 일부 중심은 거울 밖</option><option value="p6">p6 — 6회 회전</option><option value="p6m">p6m — 눈송이 (12개 원소)</option></optgroup>
+          </select></label>
+          <label class="check"><input type="checkbox" id="sym-wp-elems" checked> 대칭 요소 표시</label>
+          <label class="check"><input type="checkbox" id="sym-wp-cell" checked> 단위 세포 표시</label>
+          <label class="check"><input type="checkbox" id="sym-wp-mirror" checked> 거울상 복사본을 다른 색으로</label>
+          <div class="btn-row"><button class="btn" id="sym-wp-undo">획 지우기</button><button class="btn" id="sym-wp-clear">모두 지우기</button><button class="btn" id="sym-wp-demo">예시 모티프</button></div>
+        </div>
+      </div>
+      <div class="sym-legend"><span><b>◆▲■⬢</b> 2·3·4·6회 회전 중심</span><span><b>━</b> 거울선</span><span><b>┅</b> 미끄럼 반사축</span><span><b>파랑</b> 원본과 같은 방향 / <b>주황</b> 거울상</span></div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">격자</span><span class="v" id="sym-wp-lat" style="font-size:15px">—</span></div>
+        <div class="stat"><span class="k">최대 회전 차수</span><span class="v" id="sym-wp-rot">—</span></div>
+        <div class="stat"><span class="k">거울 / 미끄럼</span><span class="v" id="sym-wp-mg">—</span></div>
+        <div class="stat"><span class="k">점군 크기</span><span class="v" id="sym-wp-n">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① pm과 pg에서 같은 획을 그려 거울과 "발자국" 미끄럼의 차이를 비교. ② p3m1과 p31m을 번갈아 보며 3회 중심(▲)이 모두 거울 위에 있는지, 일부는 거울 밖에 있는지 확인. ③ p4m에서 모티프를 한 칸(직각이등변삼각형 1/8 영역) 안에만 그려 보면 바둑판·타일 바닥이 된다. 모델: 각 군의 원소는 국제 결정학 표(ITA)의 표준 일반 위치를 따랐고, 대칭 요소는 원소마다 고정점·축을 계산해 그렸다. 점군 크기는 기본 격자 기준 원소 수(c 격자는 2로 나눔).</div>
+    </div>
+    <div class="callout warn"><strong>알함브라 궁전과 17종</strong> 그라나다의 알함브라 궁전 타일에 17종이 모두 있다는 이야기가 널리 퍼져 있다. 하지만 어떤 무늬를 어느 군으로 볼지(색을 따질지, 작은 결함을 무시할지)에 따라 판정이 달라서, 몇 종이 확인되는지는 연구자마다 의견이 갈린다. 확실한 것은 이슬람 장식 미술이 수학적 분류보다 수백 년 앞서 많은 군을 실제로 쓰고 있었다는 점이다. 장식 무늬와 대칭의 미술적 측면은 집필 예정인 ArtBook에서 다룬다.</div>
+    <p>3차원 결정에서도 같은 분류를 할 수 있습니다. 공간을 채우는 반복 구조의 대칭군인 <span class="term">공간군</span><span class="en">(Space groups)</span>은 230종이고, 1890년대 초 페도로프와 쇤플리스가 각자 분류를 완성했습니다. 모든 결정 구조 데이터베이스는 결정마다 이 230개 중 하나의 번호를 붙여 둡니다. 실리콘의 다이아몬드 구조는 227번(\(Fd\bar{3}m\))입니다.</p>
+  </section>
+
+  <!-- =============================================================== 6 -->
+  <section id="crystallographic-restriction">
+    <h2>5회 대칭 결정은 없다: 결정학적 제약</h2>
+    <div class="problem"><strong>메뉴에 5가 없다</strong>
+      <p>앞의 17종 목록에서 회전 차수는 1, 2, 3, 4, 6뿐이었습니다. 정오각형이나 정팔각형 모양의 대칭을 가진 반복 무늬는 왜 없을까요? 결정을 설계하거나 분석할 때 "5회 대칭인 결정 구조"를 찾아봐야 할까요, 아니면 처음부터 불가능할까요?</p>
+    </div>
+    <p>직관부터 봅시다. 정삼각형, 정사각형, 정육각형은 평면을 빈틈없이 채우지만 정오각형은 한 꼭짓점 둘레에 3개를 붙이면 36°가 남고 4개는 겹칩니다. 다만 이것은 "정오각형 타일"이 안 된다는 것일 뿐이고, 진짜 이유는 <b>격자</b>에 있습니다.</p>
+    <p>반복 무늬에는 격자가 있고, 격자 기저 \(\mathbf{a}, \mathbf{b}\)로 쓰면 모든 대칭 회전은 격자점을 격자점으로 보냅니다. 그러면 그 회전을 격자 기저로 쓴 행렬의 성분은 모두 <b>정수</b>여야 합니다. 행렬의 대각합(trace)은 기저를 바꿔도 변하지 않으므로, 직교 좌표에서 계산한 회전 행렬의 대각합도 정수여야 합니다.</p>
+    <div class="formula">$$\operatorname{tr}\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix} = 2\cos\theta \in \{-2,-1,0,1,2\}\ \Rightarrow\ \theta \in \{180°, 120°, 90°, 60°, 360°\}\ \Rightarrow\ n \in \{2, 3, 4, 6, 1\}$$
+      <div class="where">\(\theta = 2\pi/n\)일 때 \(2\cos 72° = 0.618\cdots\)는 정수가 아니므로 5회 대칭은 불가능하다. 7회 이상도 마찬가지. 3차원에서도 회전 행렬의 대각합은 \(1+2\cos\theta\)라서 결론이 같다. 이것이 <span class="term">결정학적 제약 정리</span><span class="en">(Crystallographic restriction theorem)</span>다.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 260" role="img" aria-label="최단 격자 벡터를 이용한 5회 대칭 불가능 증명">
+        <line x1="300" y1="220" x2="500" y2="220" class="s-line" stroke-width="2"/>
+        <path d="M500,220 A200,200 0 0 0 361.8,29.8" class="s-acc" stroke-dasharray="5 5" stroke-width="1.5"/>
+        <path d="M300,220 A200,200 0 0 1 438.2,29.8" class="s-acc2" stroke-dasharray="5 5" stroke-width="1.5"/>
+        <line x1="300" y1="220" x2="361.8" y2="29.8" class="s-axis"/>
+        <line x1="500" y1="220" x2="438.2" y2="29.8" class="s-axis"/>
+        <line x1="361.8" y1="29.8" x2="438.2" y2="29.8" class="s-bad" stroke-width="3"/>
+        <circle cx="300" cy="220" r="7" class="f-text"/><circle cx="500" cy="220" r="7" class="f-text"/>
+        <circle cx="361.8" cy="29.8" r="7" class="f-c0"/><circle cx="438.2" cy="29.8" r="7" class="f-c1"/>
+        <text x="288" y="244" class="t">P</text><text x="504" y="244" class="t">Q</text>
+        <text x="338" y="24" class="t-acc">Q′</text><text x="446" y="24" class="t-acc2">P′</text>
+        <text x="400" y="240" text-anchor="middle" class="t-dim">최단 격자 간격 d</text>
+        <text x="400" y="16" text-anchor="middle" class="t-bad">0.382 d</text>
+        <text x="322" y="196" class="t-mono">72°</text><text x="455" y="196" class="t-mono">72°</text>
+        <text x="560" y="100" class="t">P를 중심으로 Q를 +72° → Q′</text>
+        <text x="560" y="122" class="t">Q를 중심으로 P를 −72° → P′</text>
+        <text x="560" y="150" class="t-dim">Q′P′ ∥ PQ 이고 둘 다 격자점</text>
+        <text x="560" y="172" class="t-dim">|Q′P′| = d·|1 − 2cos θ|</text>
+        <text x="560" y="200" class="t-bad">= 0.382 d &lt; d → 모순!</text>
+        <text x="20" y="100" class="t-dim">n = 6이면 Q′ = P′ (길이 0)</text>
+        <text x="20" y="122" class="t-dim">n = 4이면 길이 d</text>
+        <text x="20" y="144" class="t-dim">n = 3이면 길이 2d</text>
+      </svg>
+      <figcaption><b>그림 12-4.</b> 기하학적 증명. 격자점 P, Q가 가장 가까운 두 격자점이고 모든 격자점이 n회 회전 중심이라 하자. 회전으로 만든 Q′, P′도 격자점인데, 그 거리 \(d\,|1-2\cos\theta|\)는 0이거나 d 이상이어야 한다. n = 5에서는 0.382d가 되어 "가장 가까운 두 점"이라는 가정과 모순이다.</figcaption>
+    </figure>
+
+    <div class="sim" id="sim-sym-restrict">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>정다각형 채우기 vs 격자 논증</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-sym-rest"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>보기</span><div class="seg" id="sym-rest-mode"><button data-value="tile" class="on">한 꼭짓점 채우기</button><button data-value="lattice">격자 논증</button></div></div>
+          <label class="ctrl"><span>회전 차수 n <output id="sym-rest-n-out"></output></span><input type="range" id="sym-rest-n" min="3" max="12" value="5" step="1"></label>
+          <div class="btn-row"><button class="btn" id="sym-rest-anim">▶ n = 3 … 12 훑기</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">회전각 2π/n</span><span class="v" id="sym-rest-ang">—</span></div>
+        <div class="stat"><span class="k">대각합 2cos θ</span><span class="v" id="sym-rest-tr">—</span></div>
+        <div class="stat"><span class="k">|1 − 2cos θ|</span><span class="v" id="sym-rest-len">—</span></div>
+        <div class="stat"><span class="k">격자와 공존?</span><span class="v" id="sym-rest-ok">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① n = 5에서 한 꼭짓점을 채우면 36° 틈이 남는다. 격자 논증 보기에서는 빨간 선분이 d보다 짧아진다. ② n = 6에서 Q′과 P′이 정확히 겹치는 것 확인. ③ n = 8, 12도 대각합이 정수가 아니라 불가능. 단, 정팔각형과 정사각형을 섞으면 평면이 채워진다. 그 무늬의 대칭은 4회(p4m)다. 모델: 왼쪽 보기는 정n각형을 한 꼭짓점 둘레에 겹치지 않게 최대한 붙인 것. 오른쪽 보기는 그림 12-4의 논증을 n에 따라 다시 그린 것.</div>
+    </div>
+    <div class="callout deep"><strong>준결정: 격자 없는 질서</strong> 1982년 셰흐트만은 급랭한 알루미늄–망가니즈 합금의 전자 회절 무늬에서 5회 대칭축을 발견했다(회절 무늬는 늘 중심 대칭이라 사진에서는 10회 대칭으로 보였다. 회절이 결정의 푸리에 변환이라는 점은 <a href="fourier.html">5장</a> 참고). 정리를 어긴 것이 아니라 <b>주기적 격자가 없는</b> 새로운 고체였다. 당시에는 강한 반대를 받았지만 결국 "준결정"으로 인정받았고, 셰흐트만은 2011년 노벨 화학상을 받았다. 수학 쪽에는 이미 펜로즈가 1970년대에 두 종류의 마름모로 평면을 비주기적으로 채우면서 5회 대칭의 흔적을 보이는 펜로즈 타일링을 만들어 두었다. 2023년에는 타일 한 종류만으로 비주기적 채우기를 강제하는 '모자(hat)' 타일이 발견되었다.</div>
+  </section>
+
+  <!-- =============================================================== 7 -->
+  <section id="miller">
+    <h2>결정 구조와 밀러 지수: 면에 이름 붙이기</h2>
+    <div class="problem"><strong>"(100) 웨이퍼"는 정확히 무엇인가</strong>
+      <p>공정 레시피와 데이터시트에는 (100), (110), (111), &lt;110&gt; 같은 기호가 끝없이 나옵니다. 결정 안의 무한히 많은 평면 중 어느 것을 가리키는지, 그리고 "(100)과 (010)은 같은 면인가"를 정확히 말할 수 있어야 식각 각도를 계산하고 웨이퍼를 어느 방향으로 자를지 정할 수 있습니다.</p>
+    </div>
+    <p>금속과 반도체에 흔한 결정 격자는 정육면체 단위 세포를 쌓은 <b>입방 격자</b>입니다. 꼭짓점에만 원자가 있으면 <b>단순 입방</b>(SC), 몸 중심에 하나 더 있으면 <b>체심 입방</b>(BCC, 철·텅스텐), 면 중심마다 있으면 <b>면심 입방</b>(FCC, 구리·알루미늄)입니다. 실리콘은 FCC 격자의 각 점에 원자 두 개((0,0,0)과 (¼,¼,¼))를 놓은 <span class="term">다이아몬드 구조</span><span class="en">(Diamond cubic)</span>입니다. 모든 원자가 이웃 4개와 정사면체 모양으로 결합합니다. 단위 세포 한 변의 길이(격자 상수)는 \(a = 5.431\) Å입니다.</p>
+    <p>결정면은 <span class="term">밀러 지수</span><span class="en">(Miller indices)</span> \((hkl)\)로 이름 붙입니다. 평면이 x, y, z축을 자르는 절편을 격자 상수 단위로 구하고(평행이면 ∞), 역수를 취해 가장 작은 정수비로 만듭니다. 절편 (1, ∞, ∞) → (100), (1, 1, ∞) → (110), (1, 1, 1) → (111), 음수는 \((1\bar{1}0)\)처럼 위에 줄을 긋습니다. 입방 격자에서는 \((hkl)\) 면의 법선이 바로 방향 \([hkl]\)이라는 점이 편리합니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 250" role="img" aria-label="단위 정육면체 안의 (100), (110), (111) 면">
+        <polygon points="150,190 200.4,154 200.4,34 150,70" class="f-acc-soft" stroke-width="2"/><line x1="30" y1="190" x2="150" y2="190" class="s-line"/><line x1="150" y1="190" x2="200.4" y2="154" class="s-line"/><line x1="200.4" y1="154" x2="80.4" y2="154" class="s-line" stroke-dasharray="4 4" opacity=".6"/><line x1="80.4" y1="154" x2="30" y2="190" class="s-line" stroke-dasharray="4 4" opacity=".6"/><line x1="30" y1="70" x2="150" y2="70" class="s-line"/><line x1="150" y1="70" x2="200.4" y2="34" class="s-line"/><line x1="200.4" y1="34" x2="80.4" y2="34" class="s-line"/><line x1="80.4" y1="34" x2="30" y2="70" class="s-line"/><line x1="30" y1="190" x2="30" y2="70" class="s-line"/><line x1="150" y1="190" x2="150" y2="70" class="s-line"/><line x1="200.4" y1="154" x2="200.4" y2="34" class="s-line"/><line x1="80.4" y1="154" x2="80.4" y2="34" class="s-line" stroke-dasharray="4 4" opacity=".6"/><line x1="30" y1="190" x2="180" y2="190" class="s-axis" marker-end="url(#sym-ar)"/><text x="184" y="186" class="t-mono">x</text><line x1="30" y1="190" x2="98" y2="141.4" class="s-axis" marker-end="url(#sym-ar)"/><text x="102" y="137.4" class="t-mono">y</text><line x1="30" y1="190" x2="30" y2="43.6" class="s-axis" marker-end="url(#sym-ar)"/><text x="34" y="39.6" class="t-mono">z</text><text x="114" y="224" text-anchor="middle" class="t-acc">(100)</text><text x="114" y="242" text-anchor="middle" class="t-dim">x=1 면, y·z와 평행</text>
+        <polygon points="420,190 350.4,154 350.4,34 420,70" class="f-acc-soft" stroke-width="2"/><line x1="300" y1="190" x2="420" y2="190" class="s-line"/><line x1="420" y1="190" x2="470.4" y2="154" class="s-line"/><line x1="470.4" y1="154" x2="350.4" y2="154" class="s-line" stroke-dasharray="4 4" opacity=".6"/><line x1="350.4" y1="154" x2="300" y2="190" class="s-line" stroke-dasharray="4 4" opacity=".6"/><line x1="300" y1="70" x2="420" y2="70" class="s-line"/><line x1="420" y1="70" x2="470.4" y2="34" class="s-line"/><line x1="470.4" y1="34" x2="350.4" y2="34" class="s-line"/><line x1="350.4" y1="34" x2="300" y2="70" class="s-line"/><line x1="300" y1="190" x2="300" y2="70" class="s-line"/><line x1="420" y1="190" x2="420" y2="70" class="s-line"/><line x1="470.4" y1="154" x2="470.4" y2="34" class="s-line"/><line x1="350.4" y1="154" x2="350.4" y2="34" class="s-line" stroke-dasharray="4 4" opacity=".6"/><line x1="300" y1="190" x2="450" y2="190" class="s-axis" marker-end="url(#sym-ar)"/><text x="454" y="186" class="t-mono">x</text><line x1="300" y1="190" x2="368" y2="141.4" class="s-axis" marker-end="url(#sym-ar)"/><text x="372" y="137.4" class="t-mono">y</text><line x1="300" y1="190" x2="300" y2="43.6" class="s-axis" marker-end="url(#sym-ar)"/><text x="304" y="39.6" class="t-mono">z</text><text x="384" y="224" text-anchor="middle" class="t-acc">(110)</text><text x="384" y="242" text-anchor="middle" class="t-dim">x+y=1, z와 평행</text>
+        <polygon points="690,190 620.4,154 570,70" class="f-acc-soft" stroke-width="2"/><line x1="570" y1="190" x2="690" y2="190" class="s-line"/><line x1="690" y1="190" x2="740.4" y2="154" class="s-line"/><line x1="740.4" y1="154" x2="620.4" y2="154" class="s-line" stroke-dasharray="4 4" opacity=".6"/><line x1="620.4" y1="154" x2="570" y2="190" class="s-line" stroke-dasharray="4 4" opacity=".6"/><line x1="570" y1="70" x2="690" y2="70" class="s-line"/><line x1="690" y1="70" x2="740.4" y2="34" class="s-line"/><line x1="740.4" y1="34" x2="620.4" y2="34" class="s-line"/><line x1="620.4" y1="34" x2="570" y2="70" class="s-line"/><line x1="570" y1="190" x2="570" y2="70" class="s-line"/><line x1="690" y1="190" x2="690" y2="70" class="s-line"/><line x1="740.4" y1="154" x2="740.4" y2="34" class="s-line"/><line x1="620.4" y1="154" x2="620.4" y2="34" class="s-line" stroke-dasharray="4 4" opacity=".6"/><line x1="570" y1="190" x2="720" y2="190" class="s-axis" marker-end="url(#sym-ar)"/><text x="724" y="186" class="t-mono">x</text><line x1="570" y1="190" x2="638" y2="141.4" class="s-axis" marker-end="url(#sym-ar)"/><text x="642" y="137.4" class="t-mono">y</text><line x1="570" y1="190" x2="570" y2="43.6" class="s-axis" marker-end="url(#sym-ar)"/><text x="574" y="39.6" class="t-mono">z</text><text x="654" y="224" text-anchor="middle" class="t-acc">(111)</text><text x="654" y="242" text-anchor="middle" class="t-dim">x+y+z=1, 세 축을 1에서 자름</text>
+      </svg>
+      <figcaption><b>그림 12-5.</b> 단위 정육면체 안의 대표적인 세 면. 웨이퍼 표면으로는 (100)이 가장 흔하고(MOSFET 계면 결함이 적다), (111)은 원자가 가장 빽빽한 면이자 KOH가 가장 느리게 깎는 면이다.</figcaption>
+    </figure>
+    <p>여기서 대칭이 다시 등장합니다. 입방 결정의 대칭군(점군 \(O_h\))은 원소가 48개입니다(정육면체의 회전 24개 × 반전 유무 2). 대칭으로 서로 겹쳐지는 면들은 물리적으로 구별되지 않으므로 중괄호로 묶어 <b>면족</b> \(\{hkl\}\)이라 부릅니다(방향은 \(\langle hkl\rangle\)). 면족에 면이 몇 개인지는 궤도–안정자 정리로 바로 셉니다.</p>
+    <div class="formula">$$|\{100\}| = \frac{48}{8} = 6,\qquad |\{110\}| = \frac{48}{4} = 12,\qquad |\{111\}| = \frac{48}{6} = 8$$
+      <div class="where">분모는 그 면의 법선 방향을 고정하는 대칭 조작 수(안정자). [100] 축은 4회 회전축이라 안정자가 크고, [111] 축은 3회 회전축이다. 정육면체의 면 6개, 모서리 방향 12개, 꼭짓점 방향 8개와 정확히 같다.</div>
+    </div>
+    <div class="formula">$$d_{hkl} = \frac{a}{\sqrt{h^2+k^2+l^2}},\qquad \cos\varphi = \frac{h_1h_2+k_1k_2+l_1l_2}{\sqrt{h_1^2+k_1^2+l_1^2}\,\sqrt{h_2^2+k_2^2+l_2^2}}$$
+      <div class="where">\(d_{hkl}\): 같은 지수를 가진 이웃 평행 격자면 사이 거리(입방 격자). \(\varphi\): 두 면 사이 각 = 두 법선 벡터 사이 각(벡터 내적). 실리콘에서 \(d_{111} = 5.431/\sqrt3 = 3.136\) Å.</div>
+    </div>
+
+    <div class="sim" id="sim-sym-miller">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>밀러 지수 평면 단면 (드래그로 회전)</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-sym-mil" class="sym-draw" style="cursor:grab"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>자주 쓰는 면</span>
+            <div class="btn-row"><button class="btn" data-hkl="1,0,0">(100)</button><button class="btn" data-hkl="1,1,0">(110)</button><button class="btn" data-hkl="1,1,1">(111)</button><button class="btn" data-hkl="1,-1,1">(11̄1)</button><button class="btn" data-hkl="2,1,1">(211)</button><button class="btn" data-hkl="2,0,0">(200)</button></div></div>
+          <label class="ctrl"><span>h <output id="sym-mil-h-out"></output></span><input type="range" id="sym-mil-h" min="-2" max="2" step="1" value="1"></label>
+          <label class="ctrl"><span>k <output id="sym-mil-k-out"></output></span><input type="range" id="sym-mil-k" min="-2" max="2" step="1" value="1"></label>
+          <label class="ctrl"><span>l <output id="sym-mil-l-out"></output></span><input type="range" id="sym-mil-l" min="-2" max="2" step="1" value="1"></label>
+          <label class="ctrl"><span>원자 배치</span><select id="sym-mil-lat"><option value="none">없음 (평면만)</option><option value="sc">단순 입방 (SC)</option><option value="bcc">체심 입방 (BCC)</option><option value="fcc">면심 입방 (FCC)</option><option value="dia" selected>다이아몬드 (Si)</option></select></label>
+          <label class="check"><input type="checkbox" id="sym-mil-family"> 같은 지수의 평행 격자면 모두</label>
+          <label class="check"><input type="checkbox" id="sym-mil-spin" checked> 천천히 자동 회전</label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">면 (hkl)</span><span class="v" id="sym-mil-name">—</span></div>
+        <div class="stat"><span class="k">면간 거리 d (Si)</span><span class="v" id="sym-mil-d">—</span></div>
+        <div class="stat"><span class="k">(100)과의 각</span><span class="v" id="sym-mil-a100">—</span></div>
+        <div class="stat"><span class="k">면 위 원자</span><span class="v" id="sym-mil-atoms">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① (111)을 고르고 (100)과의 각이 54.74°인지 확인. 다음 절 V홈의 각도다. ② 다이아몬드 구조에서 (111) 면에 놓이는 원자를 보고 회전시켜 정삼각형 그물(3회 대칭)인지 확인. ③ (200)과 (100)은 같은 방향의 면이지만 "평행 격자면 모두"를 켜면 간격이 절반이다. 모델: 정사영(원근 없음). 평면은 hx+ky+lz = n(격자 상수 단위)이고, 기본 평면은 절편이 1/h, 1/k, 1/l이 되도록 원점을 잡았다. 면간 거리는 단순 입방 격자 공식 a/√(h²+k²+l²), a = 5.431 Å. 면 위 원자는 그린 평면들 위의 원자 수.</div>
+    </div>
+  </section>
+
+  <!-- =============================================================== 8 -->
+  <section id="koh-etch">
+    <h2>54.74°: 실리콘이 스스로 정하는 각도</h2>
+    <div class="problem"><strong>광섬유를 웨이퍼 위에 줄 세우기</strong>
+      <p>지름 125 µm 광섬유 여러 가닥을 1 µm 오차 안에서 나란히 놓아 광 칩과 맞대야 합니다. 기계로 홈을 파면 이 정밀도가 나오지 않습니다. 그런데 실리콘을 KOH에 담그면 홈의 옆면이 결정면 하나에 딱 맞춰 멈추고, 그 각도는 원자 배열이 정합니다. 그렇다면 홈 깊이와 광섬유가 놓일 높이를 <b>마스크 폭 하나로</b> 설계할 수 있을 것입니다.</p>
+    </div>
+    <p>KOH나 TMAH 같은 알칼리 식각액은 실리콘을 결정 방향에 따라 매우 다른 속도로 녹입니다. 대략 \(R_{110} \gtrsim R_{100} \gg R_{111}\)이고, {111}은 (100)보다 수십~수백 배 느립니다(농도·온도·첨가제에 따라 다름). 흔히 드는 설명은 {111} 면의 표면 원자가 결정 안쪽으로 결합 3개를 가지고 있어 떼어 내기 어렵다는 것입니다. 이유야 어떻든 결과는 기하학으로 정해집니다. 식각이 진행되면 빨리 녹는 면은 사라지고 <b>가장 느린 면들만 남아 구멍의 벽이 됩니다.</b></p>
+    <p>(100) 웨이퍼에서 표면과 만나는 {111} 면은 네 개이고(\((111), (\bar1\bar11), (1\bar11), (\bar111)\)), 표면과 만나는 선은 모두 &lt;110&gt; 방향입니다. 그래서 마스크 가장자리를 웨이퍼 플랫(&lt;110&gt;)에 나란히 맞춰야 합니다. 벽의 경사각은 7절의 공식에 넣으면 바로 나옵니다.</p>
+    <div class="formula">$$\cos\varphi = \frac{(1,0,0)\cdot(1,1,1)}{1\cdot\sqrt3} = \frac{1}{\sqrt3}\ \Rightarrow\ \varphi = \arccos\frac{1}{\sqrt3} = 54.7356\ldots° \approx 54.74°,\qquad \tan\varphi = \sqrt2$$
+      <div class="where">\(\tan\varphi = \sqrt{2}\)이므로, 폭 \(W\)인 띠 모양 구멍은 깊이 \(D = \tfrac{W}{2}\tan\varphi = W/\sqrt2 \approx 0.707\,W\)에서 두 벽이 만나 V홈이 되고 식각이 <b>저절로 멈춘다</b>(자기 정지). 정사각 구멍은 네 벽이 만나 역피라미드가 된다.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 260" role="img" aria-label="KOH 식각으로 만든 V홈 단면과 역피라미드 윗면도">
+        <rect x="20" y="60" width="460" height="180" class="f-si"/>
+        <polygon points="150,60 350,60 250,201.4" style="fill:var(--canvas-bg)"/>
+        <line x1="150" y1="60" x2="250" y2="201.4" class="s-acc2" stroke-width="2.5"/>
+        <line x1="350" y1="60" x2="250" y2="201.4" class="s-acc2" stroke-width="2.5"/>
+        <rect x="20" y="50" width="130" height="10" class="f-mask"/><rect x="350" y="50" width="130" height="10" class="f-mask"/>
+        <path d="M190,60 A40,40 0 0 1 173.1,92.7" class="s-acc" stroke-width="1.5"/>
+        <text x="196" y="88" class="t-acc">54.74°</text>
+        <line x1="150" y1="34" x2="350" y2="34" class="s-axis" marker-end="url(#sym-ar)"/><line x1="350" y1="34" x2="150" y2="34" class="s-axis" marker-end="url(#sym-ar)"/>
+        <text x="250" y="28" text-anchor="middle" class="t">W</text>
+        <line x1="380" y1="60" x2="380" y2="201.4" class="s-axis" stroke-dasharray="3 3"/>
+        <line x1="250" y1="201.4" x2="392" y2="201.4" class="s-axis" stroke-dasharray="3 3"/>
+        <text x="390" y="135" class="t">D = W/√2</text>
+        <text x="70" y="44" text-anchor="middle" class="t-mono">마스크 (SiN)</text>
+        <text x="60" y="230" class="t-dim">Si (100) 웨이퍼</text>
+        <text x="300" y="160" class="t-acc2">{111}</text>
+        <rect x="580" y="60" width="150" height="150" class="f-elev" stroke-width="1.5"/>
+        <rect x="560" y="40" width="190" height="190" fill="none" class="s-line" stroke-dasharray="4 4" opacity=".5"/>
+        <line x1="580" y1="60" x2="730" y2="210" class="s-acc2"/><line x1="730" y1="60" x2="580" y2="210" class="s-acc2"/>
+        <circle cx="655" cy="135" r="4" class="f-acc"/>
+        <text x="655" y="250" text-anchor="middle" class="t-dim">윗면도: 역피라미드, 벽 4개 = {111}</text>
+        <line x1="580" y1="228" x2="730" y2="228" class="s-acc" marker-end="url(#sym-ar)"/>
+        <text x="742" y="232" class="t-mono">&lt;110&gt;</text>
+      </svg>
+      <figcaption><b>그림 12-6.</b> 왼쪽: &lt;110&gt;에 맞춘 띠 모양 구멍의 단면. 옆벽은 {111}면이고 표면과 54.74°를 이룬다. 두 벽이 만나면 식각이 거의 멈춘다. 오른쪽: 정사각 구멍은 네 {111}면으로 둘러싸인 역피라미드가 된다. 마스크 모양이 어떻든 오래 식각하면 구멍은 그 모양을 감싸는 가장 작은 &lt;110&gt; 방향 직사각형으로 커진다.</figcaption>
+    </figure>
+    <p>이제 문제의 광섬유로 돌아갑시다. V홈의 꼭짓점 반각은 \(90° - 54.74° = 35.26°\)이고 \(\sin 35.26° = 1/\sqrt3\)입니다. 반지름 \(\rho\)인 광섬유가 두 벽에 닿으면 중심은 꼭짓점에서 \(\rho/\sin35.26° = \sqrt3\,\rho\) 위에 있습니다. 광섬유 중심을 정확히 웨이퍼 표면 높이에 두고 싶다면</p>
+    <div class="formula">$$\frac{W}{\sqrt2} = \sqrt3\,\rho \ \Rightarrow\ W = \sqrt6\,\rho = 2.449 \times 62.5\ \mu\text{m} \approx 153.1\ \mu\text{m}$$
+      <div class="where">지름 125 µm 단일 모드 광섬유 기준. 마스크 폭을 1 µm 잘못 그리면 중심 높이는 \(1/\sqrt2 \approx 0.71\) µm 변한다. 실제 설계에서는 마스크 아래로 파고드는 언더컷(아래 시뮬레이터)과 정렬 오차를 보정한다.</div>
+    </div>
+
+    <div class="sim" id="sim-sym-koh">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>KOH 이방성 식각 단면</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-sym-koh"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>웨이퍼</span><div class="seg" id="sym-koh-wafer"><button data-value="100" class="on">(100)</button><button data-value="110">(110)</button></div></div>
+          <label class="ctrl"><span>마스크 개구 폭 W <output id="sym-koh-w-out"></output></span><input type="range" id="sym-koh-w" min="20" max="200" step="1" value="153"></label>
+          <label class="ctrl"><span>식각 시간 <output id="sym-koh-t-out"></output></span><input type="range" id="sym-koh-t" min="0" max="180" step="1" value="60"></label>
+          <label class="ctrl"><span>선택비 R(100)/R(111) <output id="sym-koh-sel-out"></output></span><input type="range" id="sym-koh-sel" min="10" max="400" step="5" value="100"></label>
+          <label class="check"><input type="checkbox" id="sym-koh-fiber" checked> 지름 125 µm 광섬유 놓아 보기</label>
+          <div class="btn-row"><button class="btn primary" id="sym-koh-play">▶ 식각 진행</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">깊이</span><span class="v" id="sym-koh-depth">—</span></div>
+        <div class="stat"><span class="k">바닥 폭</span><span class="v" id="sym-koh-bottom">—</span></div>
+        <div class="stat"><span class="k">언더컷</span><span class="v" id="sym-koh-uc">—</span></div>
+        <div class="stat"><span class="k">광섬유 중심 높이</span><span class="v" id="sym-koh-fc">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① W = 153 µm로 두고 시간을 늘리면 V홈이 완성된 뒤 깊이가 거의 늘지 않는다(자기 정지). 광섬유 중심이 표면 높이(0 µm) 근처에 놓인다. ② 선택비를 10으로 낮추면 언더컷이 커지고 V홈이 넓어진다. ③ (110) 웨이퍼로 바꾸면 수직 {111} 벽 사이로 깊고 좁은 도랑이 파인다. 모델: R(100) = 1 µm/min, (110) 웨이퍼 바닥 R(110) = 1.5 µm/min로 가정(30% 안팎 KOH, 약 80 °C에서 흔한 크기). {111} 벽은 자기 법선 방향으로 R(111) = R(100)/선택비로 후퇴. 마스크는 식각되지 않고, 볼록 모서리 언더컷과 (110)의 비스듬한 끝벽은 무시한 2차원 단면.</div>
+    </div>
+    <p>같은 원리로 (100) 웨이퍼를 마스크 없이 KOH에 담그면 표면 전체에 수 µm 크기의 작은 {111} 피라미드가 무작위로 솟아납니다. 결정질 실리콘 태양전지가 빛 반사를 줄이려고 쓰는 표면 텍스처링입니다. 압력 센서는 웨이퍼 뒷면에서 사각 구멍을 깊게 파서 앞면에 얇은 막만 남기는데, 막의 크기는 뒷면 마스크 폭에서 \(2t/\tan54.74°\)만큼 줄어듭니다(t: 식각 깊이, 2t/tan54.74° = √2·t).</p>
+  </section>
+
+  <!-- =============================================================== 9 -->
+  <section id="noether">
+    <h2>대칭은 법칙을 만든다</h2>
+    <div class="problem"><strong>왜 에너지는 보존될까</strong>
+      <p>지금까지 대칭은 "무엇이 가능하고 무엇이 불가능한가"를 알려 주었습니다. 15 퍼즐의 불가능한 상태, 5회 대칭 결정, 54.74° 각도가 그랬습니다. 물리 법칙에도 같은 일이 일어날까요? 에너지 보존이나 운동량 보존 같은 법칙은 어디서 왔을까요?</p>
+    </div>
+    <p>1918년 에미 뇌터는 다음을 증명했습니다. 물리 법칙(정확히는 작용)이 어떤 <b>연속적인</b> 대칭 변환에 대해 변하지 않으면, 그 대칭마다 시간이 지나도 변하지 않는 양이 하나씩 있습니다. 이것이 <span class="term">뇌터 정리</span><span class="en">(Noether's theorem)</span>입니다.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>대칭 (법칙이 변하지 않는 변환)</th><th>보존되는 양</th><th>공학에서 보이는 곳</th></tr></thead>
+      <tbody>
+        <tr><td>시간 이동: 실험을 내일 해도 같다</td><td>에너지</td><td>회로의 에너지 수지, 열 해석</td></tr>
+        <tr><td>공간 이동: 실험을 옆방에서 해도 같다</td><td>운동량</td><td>로켓, 충돌</td></tr>
+        <tr><td>회전: 실험 장치를 돌려도 같다</td><td>각운동량</td><td>자이로스코프, 위성 자세 제어</td></tr>
+        <tr><td>결정 격자 이동(이산 대칭)</td><td>결정 운동량 \(\hbar\mathbf{k}\) (역격자 벡터만큼의 차이는 같은 것으로 봄)</td><td>밴드 구조, 블로흐 정리</td></tr>
+      </tbody>
+    </table></div>
+    <p>마지막 줄이 반도체와 연결됩니다. 결정은 연속 이동이 아니라 격자 벡터만큼의 이동에 대해서만 대칭이고, 그 결과 전자의 상태는 파수 \(\mathbf{k}\)로 이름 붙고(블로흐 정리) 운동량 보존도 "역격자 벡터를 빼면 보존"으로 약해집니다. 또 실리콘의 입방 대칭 때문에 전도대의 가장 낮은 에너지 골짜기는 &lt;100&gt; 방향마다 하나씩, 정확히 <b>6개</b>가 똑같은 모양으로 있습니다. {100} 면족이 6개인 것과 같은 계산입니다. 실리콘에 인장 변형을 걸면 이 대칭이 깨지고 6개 골짜기가 2개와 4개로 갈라지는데, 이것이 변형 실리콘 트랜지스터에서 전자 이동도가 높아지는 원리 중 하나입니다.</p>
+    <div class="callout deep"><strong>군 표현과 분광 선택 규칙</strong> 분자의 진동 모드는 분자 대칭군의 <b>표현</b>(군의 원소를 행렬로 바꾸는 규칙)에 따라 분류된다. 적외선(IR)을 흡수하는 모드는 x, y, z처럼 변하는 모드뿐이고, 라만 산란에 나타나는 모드는 x², xy처럼 변하는 모드뿐이다. 그래서 CO₂의 대칭 신축 진동은 라만에는 보이지만 IR에는 보이지 않고, 비대칭 신축과 굽힘은 IR에 보인다. 반전 중심이 있는 분자는 IR과 라만에 동시에 나타나는 모드가 없다(상호 배제 규칙). 스펙트럼을 재기 전에 대칭만으로 어떤 봉우리가 있을 수 있는지 예측하는 셈이다. 결정의 라만 분광으로 실리콘의 응력을 재는 기술도 같은 이론 위에 있다.</div>
+    <div class="callout tip"><strong>공학자의 요령: 대칭을 먼저 써라</strong> 대칭이 있으면 문제를 작게 만들 수 있다. 4회 대칭 구조는 1/4만 시뮬레이션하고 경계 조건으로 대칭을 걸며(FEM·FDTD의 대칭 경계, <a href="numerics.html">10장</a>), 주기 구조는 단위 세포 하나와 블로흐 경계로 푼다. 거꾸로 결과가 입력의 대칭을 깨고 있다면 메시나 코드에 버그가 있다는 신호다.</div>
+  </section>
+
+  <!-- =============================================================== uses -->
+  <section id="uses">
+    <h2>이 도구가 쓰이는 곳</h2>
+    <p>군은 "같은 것을 같다고 세는 법"입니다. 시리즈의 다른 책에서는 이렇게 다시 만납니다.</p>
+    <div class="uses">
+      <a href="https://devicebook.euiyun.com/"><small>DEVICEBOOK</small>밴드 구조와 등가 골짜기<br><span>입방 대칭 → 6개 전도대 골짜기, 변형으로 대칭을 깨서 이동도 높이기</span></a>
+      <a href="https://processbook.euiyun.com/"><small>PROCESSBOOK</small>웨이퍼 방향과 플랫·노치<br><span>(100) 웨이퍼, &lt;110&gt; 정렬, 결정 방향에 따른 산화·성장 속도</span></a>
+      <a href="https://etchbook.euiyun.com/"><small>ETCHBOOK</small>KOH·TMAH 이방성 식각<br><span>{111} 자기 정지, V홈·역피라미드·MEMS 다이어프램</span></a>
+      <a href="https://opticsbook.euiyun.com/"><small>OPTICSBOOK</small>결정 광학<br><span>결정의 대칭이 복굴절 여부와 광축을 정한다</span></a>
+      <a href="https://sensorbook.euiyun.com/"><small>SENSORBOOK</small>컬러 필터 배열<br><span>베이어 패턴은 2×2 단위 세포의 격자 무늬, 그 대칭이 디모자이크를 정한다</span></a>
+      <a href="https://displaybook.euiyun.com/"><small>DISPLAYBOOK</small>서브픽셀 배열<br><span>스트라이프·펜타일 배열의 격자와 대칭, 모아레</span></a>
+      <a href="https://tcadbook.euiyun.com/"><small>TCADBOOK</small>결정 방향 의존 모델<br><span>대칭 경계로 시뮬레이션 영역 줄이기, 방향별 이동도·식각 모델</span></a>
+      <a href="https://networkbook.euiyun.com/"><small>NETWORKBOOK</small>공개키 암호<br><span>타원곡선 위 점들의 군, 군 연산을 거꾸로 풀기 어렵다는 것이 보안의 근거</span></a>
+    </div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>핵심 정리</h2>
+    <ol>
+      <li><b>대칭 = 모양을 제자리에 두는 조작.</b> 조작을 연달아 하기를 곱셈으로 보면 대칭은 대수가 된다. 정사각형의 대칭은 8개(\(D_4\))이고 \(rs \ne sr\)인 비가환군이다.</li>
+      <li><b>군의 공리</b>는 닫힘·결합·항등·역원. 역원이 있으니 곱셈표의 각 행과 열에 모든 원소가 한 번씩 나온다. 궤도–안정자 공식 \(|G| = |\text{궤도}|\cdot|\text{안정자}|\)로 대칭을 센다.</li>
+      <li><b>불변량은 불가능을 증명한다.</b> 15 퍼즐의 \(\operatorname{sgn}\sigma\cdot(-1)^d\)는 밀기로 변하지 않으므로 14–15 상태는 풀 수 없다. 큐브의 상태 수 \(4.3\times10^{19}\)도 불변량 세 개로 1/12이 된 값이다.</li>
+      <li><b>교환자</b> \(ABA^{-1}B^{-1}\)는 A와 B가 겹치는 곳만 조금 바꾼다. 비가환성의 크기를 재는 도구다.</li>
+      <li><b>평면 반복 무늬의 대칭은 17종</b>, 3차원 결정은 230종. 격자와 공존하는 회전은 \(2\cos\theta\in\mathbb{Z}\)에서 1·2·3·4·6회뿐이고, 5회 대칭은 격자 없는 준결정에서만 나타난다.</li>
+      <li><b>밀러 지수</b> \((hkl)\)는 절편의 역수. 두 면 사이 각은 법선의 내적으로 구하며, (100)과 (111) 사이 \(\arccos(1/\sqrt3) = 54.74°\)가 KOH V홈 벽의 각도다. V홈 깊이는 \(W/\sqrt2\).</li>
+      <li><b>뇌터 정리</b>: 연속 대칭마다 보존량이 있다(시간 → 에너지, 공간 → 운동량, 회전 → 각운동량). 군의 표현은 분광 선택 규칙과 밴드 구조를 정한다.</li>
+    </ol>
+  </section>
+
+  <section class="quiz-sec" id="quiz">
+    <h2>확인 퀴즈</h2>
+    <div class="quiz">
+      <div class="quiz-q"><p>정삼각형을 제자리에 되돌려 놓는 대칭 조작(회전과 뒤집기)은 모두 몇 개인가?</p><div class="opts">
+        <button class="opt">3개</button><button class="opt" data-correct>6개</button><button class="opt">8개</button><button class="opt">무한히 많다</button>
+      </div><div class="quiz-exp">회전 3개(0°, 120°, 240°)와 꼭짓점을 지나는 거울 3개, 합쳐서 \(D_3\)의 6개다. 궤도–안정자로 세면 꼭짓점 하나가 갈 수 있는 곳 3 × 그 꼭짓점을 고정하는 조작 2(항등, 그 꼭짓점을 지나는 거울) = 6.</div></div>
+      <div class="quiz-q"><p>정사각형에서 "r(90° 회전) 다음 s(세로축 뒤집기)"와 "s 다음 r"의 관계로 옳은 것은?</p><div class="opts">
+        <button class="opt">항상 같은 원소다</button><button class="opt" data-correct>둘 다 대각선 뒤집기지만 서로 다른 대각선이다</button><button class="opt">하나는 회전, 하나는 뒤집기다</button><button class="opt">둘 다 항등원 e다</button>
+      </div><div class="quiz-exp">행렬식을 보면 회전은 +1, 뒤집기는 −1이라 둘 다 −1, 즉 뒤집기다. 그러나 \(SR\)과 \(RS\)는 서로 다른 대각선(↗, ↖) 반사다. \(D_4\)는 비가환군이다.</div></div>
+      <div class="quiz-q"><p>15 퍼즐에서 14와 15만 바뀐 상태를 밀기만으로 풀 수 없는 이유는?</p><div class="opts">
+        <button class="opt">경우의 수가 너무 많아 아직 아무도 찾지 못했다</button><button class="opt">빈칸이 구석에 있기 때문이다</button><button class="opt" data-correct>한 번 밀 때마다 치환의 부호와 빈칸 위치의 홀짝이 함께 뒤집혀 그 곱이 불변인데, 이 상태는 완성 상태와 곱의 값이 다르다</button><button class="opt">타일 14와 15는 서로 이웃하지 않기 때문이다</button>
+      </div><div class="quiz-exp">\(I = \operatorname{sgn}\sigma\cdot(-1)^d\)는 이동마다 보존된다. 완성 상태는 \(I=+1\), 14–15 상태는 호환 하나에 빈칸 제자리라 \(I=-1\)이다. 불변량이 다르면 그 사이에 길은 없다.</div></div>
+      <div class="quiz-q"><p>주기적인 결정(격자가 있는 구조)이 가질 수 <b>없는</b> 회전 대칭은?</p><div class="opts">
+        <button class="opt">2회</button><button class="opt">3회</button><button class="opt" data-correct>5회</button><button class="opt">6회</button>
+      </div><div class="quiz-exp">격자 기저로 쓴 회전 행렬은 정수 행렬이라 대각합 \(2\cos(2\pi/n)\)이 정수여야 한다. \(n=5\)이면 \(2\cos72° \approx 0.618\)이라 불가능하다. 5회 대칭 회절 무늬를 보이는 준결정은 주기적 격자가 없다.</div></div>
+      <div class="quiz-q"><p>(100) 실리콘 웨이퍼에 &lt;110&gt; 방향으로 맞춘 폭 100 µm의 띠 모양 구멍을 KOH로 충분히 식각했다. 언더컷을 무시하면 V홈의 깊이는?</p><div class="opts">
+        <button class="opt">약 50 µm</button><button class="opt" data-correct>약 70.7 µm</button><button class="opt">약 141 µm</button><button class="opt">식각 시간에 비례해 계속 깊어진다</button>
+      </div><div class="quiz-exp">벽은 {111}면이고 표면과 \(\arccos(1/\sqrt3) = 54.74°\)를 이룬다. \(\tan 54.74° = \sqrt2\)이므로 깊이 \(= (W/2)\sqrt2 = W/\sqrt2 \approx 70.7\) µm에서 두 벽이 만나 식각이 거의 멈춘다.</div></div>
+      <div class="quiz-q"><p>뇌터 정리에 따르면 "물리 법칙이 시간에 따라 바뀌지 않는다"(시간 이동 대칭)는 사실에서 나오는 보존량은?</p><div class="opts">
+        <button class="opt">운동량</button><button class="opt" data-correct>에너지</button><button class="opt">각운동량</button><button class="opt">전하</button>
+      </div><div class="quiz-exp">시간 이동 → 에너지, 공간 이동 → 운동량, 회전 → 각운동량. (전하 보존은 전자기학의 게이지 대칭과 연결되는데, 이는 시공간 대칭이 아니다.)</div></div>
+    </div>
+  </section>
+</main>
+<script>
+/* ===================================================== 공통: 2×2 정수 행렬과 D4 */
+const SYM = (function () {
+  const mul = (A, B) => [[A[0][0] * B[0][0] + A[0][1] * B[1][0], A[0][0] * B[0][1] + A[0][1] * B[1][1]], [A[1][0] * B[0][0] + A[1][1] * B[1][0], A[1][0] * B[0][1] + A[1][1] * B[1][1]]];
+  const I = [[1, 0], [0, 1]], R = [[0, -1], [1, 0]], Ri = [[0, 1], [-1, 0]], S = [[-1, 0], [0, 1]];
+  const key = (M) => M.flat().map((v) => Math.round(v) + 0).join(",");
+  // 원소 순서: e r r² r³ s rs r²s r³s (왼쪽부터 실행: "r^k s" = r를 k번 한 뒤 s → 행렬 S·R^k)
+  const names = ["e", "r", "r²", "r³", "s", "rs", "r²s", "r³s"];
+  const words = [[], ["r"], ["r", "r"], ["r", "r", "r"], ["s"], ["r", "s"], ["r", "r", "s"], ["r", "r", "r", "s"]];
+  const els = [];
+  let Rk = I;
+  for (let k = 0; k < 4; k++) { els.push(Rk); Rk = mul(R, Rk); }
+  for (let k = 0; k < 4; k++) els.push(mul(S, els[k]));
+  const idx = (M) => els.findIndex((E) => key(E) === key(M));
+  const det = (M) => M[0][0] * M[1][1] - M[0][1] * M[1][0];
+  function desc(M) {
+    if (det(M) > 0) {
+      const a = Math.round((Math.atan2(M[1][0], M[0][0]) * 180) / Math.PI + 360) % 360;
+      return a === 0 ? "항등 (0°)" : a + "° 회전";
+    }
+    let a = Math.round((Math.atan2(M[1][0], M[0][0]) * 90) / Math.PI + 180) % 180;
+    return { 0: "가로축 — 뒤집기", 45: "대각선 ↗ 뒤집기", 90: "세로축 | 뒤집기", 135: "대각선 ↖ 뒤집기" }[a];
+  }
+  // 곱셈표: table[i][j] = (els[i] 다음 els[j]) = els[j]·els[i]
+  const table = els.map((A) => els.map((B) => idx(mul(B, A))));
+  const font = () => getComputedStyle(document.body).getPropertyValue("--font");
+  const mono = () => getComputedStyle(document.body).getPropertyValue("--mono");
+  function rrect(ctx, x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  return { mul, I, R, Ri, S, key, names, words, els, idx, det, desc, table, font, mono, rrect };
+})();
+
+/* ===================================================== 그림 12-2: D4의 8개 원소 */
+(function () {
+  const g = document.getElementById("sym-fig-d4");
+  if (!g) return;
+  const V = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
+  const flag = [[-0.32, -0.5], [-0.32, 0.5], [0.36, 0.28], [-0.32, 0.08]];
+  let s = "";
+  SYM.els.forEach((M, i) => {
+    const cx = 100 + 200 * (i % 4), cy = i < 4 ? 72 : 180, h = 36;
+    const P = ([x, y]) => { const X = M[0][0] * x + M[0][1] * y, Y = M[1][0] * x + M[1][1] * y; return [cx + h * X, cy - h * Y]; };
+    s += `<rect x="${cx - h}" y="${cy - h}" width="${2 * h}" height="${2 * h}" class="${i < 4 ? "f-acc-soft" : "f-acc2-soft"}" stroke-width="1.5"/>`;
+    const fp = flag.map(P);
+    s += `<path d="M${fp[0].join(",")} L${fp[1].join(",")} L${fp[2].join(",")} L${fp[3].join(",")}" class="s-line" stroke-width="2" stroke-linejoin="round"/>`;
+    V.forEach((v, k) => {
+      const [x, y] = P(v), [lx, ly] = P([v[0] * 0.55, v[1] * 0.55]);
+      s += `<circle cx="${x}" cy="${y}" r="6.5" class="f-c${k}"/><text x="${lx}" y="${ly + 4}" text-anchor="middle" class="t-mono">${k + 1}</text>`;
+    });
+    s += `<text x="${cx}" y="${cy + h + 19}" text-anchor="middle" class="t"><tspan style="font-weight:700">${SYM.names[i]}</tspan>  <tspan class="t-dim">${SYM.desc(M).replace(" 뒤집기", "")}</tspan></text>`;
+  });
+  g.innerHTML = s;
+})();
+
+/* ===================================================== 그림 12-3: 15 퍼즐 */
+(function () {
+  const g = document.getElementById("sym-fig-15");
+  if (!g) return;
+  let s = "";
+  const c = 38, x0 = 20, y0 = 22;
+  const tiles = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 14, 0];
+  tiles.forEach((t, i) => {
+    const x = x0 + (i % 4) * c, y = y0 + Math.floor(i / 4) * c;
+    if (!t) return;
+    const hot = t === 14 || t === 15;
+    s += `<rect x="${x + 2}" y="${y + 2}" width="${c - 4}" height="${c - 4}" rx="6" class="${hot ? "f-acc2-soft" : "f-elev"}"/>`;
+    s += `<text x="${x + c / 2}" y="${y + c / 2 + 5}" text-anchor="middle" class="${hot ? "t-acc2" : "t"}">${t}</text>`;
+  });
+  s += `<text x="${x0 + 2 * c}" y="${y0 + 4 * c + 26}" text-anchor="middle" class="t-dim">14와 15만 바뀐 상태</text>`;
+  // 가운데: 호환
+  const bx = 280, by = 70, bc = 48;
+  const cell = (x, y, t) => `<rect x="${x}" y="${y}" width="${bc - 4}" height="${bc - 4}" rx="7" class="${t ? "f-acc-soft" : "f-surface"}" ${t ? "" : 'stroke-dasharray="4 3"'}/>` + (t ? `<text x="${x + (bc - 4) / 2}" y="${y + bc / 2 + 3}" text-anchor="middle" class="t-acc">${t}</text>` : "");
+  s += cell(bx, by, 7) + cell(bx + bc, by, 0);
+  s += `<line x1="${bx + 2 * bc + 10}" y1="${by + 22}" x2="${bx + 2 * bc + 50}" y2="${by + 22}" class="s-axis" marker-end="url(#sym-ar)"/>`;
+  s += cell(bx + 2 * bc + 62, by, 0) + cell(bx + 3 * bc + 62, by, 7);
+  s += `<text x="${bx + 2 * bc + 30}" y="${by + 80}" text-anchor="middle" class="t">한 번 밀기 = (7 □) 호환</text>`;
+  s += `<text x="${bx + 2 * bc + 30}" y="${by + 102}" text-anchor="middle" class="t-dim">치환의 부호 sgn σ가 뒤집힌다</text>`;
+  // 오른쪽: 체스판
+  const cx0 = 620, cy0 = 22;
+  for (let i = 0; i < 16; i++) {
+    const r = Math.floor(i / 4), q = i % 4;
+    s += `<rect x="${cx0 + q * c}" y="${cy0 + r * c}" width="${c}" height="${c}" class="${(r + q) % 2 ? "f-si" : "f-elev"}"/>`;
+  }
+  s += `<circle cx="${cx0 + 3.5 * c}" cy="${cy0 + 3.5 * c}" r="9" class="f-acc"/>`;
+  s += `<circle cx="${cx0 + 2.5 * c}" cy="${cy0 + 3.5 * c}" r="9" fill="none" class="s-acc" stroke-dasharray="3 3"/>`;
+  s += `<circle cx="${cx0 + 3.5 * c}" cy="${cy0 + 2.5 * c}" r="9" fill="none" class="s-acc" stroke-dasharray="3 3"/>`;
+  s += `<text x="${cx0 + 2 * c}" y="${cy0 + 4 * c + 26}" text-anchor="middle" class="t-dim">빈칸은 매번 반대 색 칸으로</text>`;
+  g.innerHTML = s;
+})();
+
+/* ===================================================== SIM 1: D4 조작과 케일리 표 */
+(function () {
+  const { mul, I, R, Ri, S, els, idx, names, words, desc, table } = SYM;
+  const OPS = { r: R, ri: Ri, s: S };
+  const LABEL = { r: "r", ri: "r⁻¹", s: "s" };
+  let cur = I, hist = [], queue = [], anim = null, prevEl = 0, lastOp = null, seen = new Set([0]);
+  let showNC = false;
+  const flag = [[-0.32, -0.5], [-0.32, 0.5], [0.36, 0.28], [-0.32, 0.08]];
+  const V = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
+
+  function animMatrix() {
+    if (!anim) return cur;
+    const t = MB.smooth(0, 1, anim.t);
+    let A;
+    if (anim.op === "s") A = [[Math.cos(Math.PI * t), 0], [0, 1]];
+    else { const a = (anim.op === "r" ? 1 : -1) * t * Math.PI / 2; A = [[Math.cos(a), -Math.sin(a)], [Math.sin(a), Math.cos(a)]]; }
+    return mul(A, cur);
+  }
+
+  const cv = MB.canvas("#cv-sym-sq", (ctx, w, h) => {
+    const P = MB.palette();
+    const cx = w / 2, cy = h / 2 + 6, hs = Math.min(w, h) * 0.27;
+    const D = animMatrix();
+    const T = ([x, y]) => [cx + hs * (D[0][0] * x + D[0][1] * y), cy - hs * (D[1][0] * x + D[1][1] * y)];
+    // 고정된 틀(홈)과 축
+    ctx.setLineDash([6, 5]); ctx.strokeStyle = P.faint; ctx.lineWidth = 1.5;
+    ctx.strokeRect(cx - hs, cy - hs, 2 * hs, 2 * hs);
+    ctx.strokeStyle = P.accent2; ctx.beginPath(); ctx.moveTo(cx, cy - hs * 1.45); ctx.lineTo(cx, cy + hs * 1.45); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = P.accent2; ctx.font = "12px " + SYM.font(); ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("s 축 (고정)", cx + 6, cy - hs * 1.45);
+    // 판
+    const pts = V.map(T);
+    ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath();
+    const isRef = SYM.det(D) < 0;
+    ctx.fillStyle = MB.isDark() ? "rgba(125,155,255,0.13)" : "rgba(43,84,212,0.08)";
+    ctx.fill(); ctx.strokeStyle = P.text; ctx.lineWidth = 2; ctx.stroke();
+    // 깃발 (거울상 확인용)
+    const fp = flag.map(T);
+    ctx.beginPath(); fp.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+    ctx.strokeStyle = isRef ? P.accent2 : P.accent; ctx.lineWidth = 3; ctx.lineJoin = "round"; ctx.stroke();
+    // 꼭짓점
+    const cols = [P.accent, P.accent2, P.ok, P.warn];
+    pts.forEach(([x, y], k) => {
+      ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fillStyle = cols[k]; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = P.bg; ctx.stroke();
+      ctx.fillStyle = "#fff"; ctx.font = "700 13px " + SYM.font(); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(String(k + 1), x, y + 0.5);
+    });
+    // 회전 중심
+    ctx.fillStyle = P.text; ctx.fillRect(cx - 4, cy - 4, 8, 8);
+    ctx.fillStyle = P.dim; ctx.font = "12px " + SYM.font(); ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+    ctx.fillText("점선 = 고정된 홈. 꼭짓점 색과 깃발로 방향을 구별", 10, h - 8);
+  }, { aspect: 0.82, maxHeight: 400, minHeight: 260 });
+
+  // 케일리 표
+  const host = document.getElementById("sym-cayley");
+  let html = '<table class="sym-cayley"><thead><tr><th title="행 다음 열">↘</th>' + names.map((n, j) => `<th data-c="${j}">${n}</th>`).join("") + "</tr></thead><tbody>";
+  table.forEach((row, i) => {
+    html += `<tr><th data-r="${i}">${names[i]}</th>` + row.map((k, j) => `<td data-i="${i}" data-j="${j}" class="${k < 4 ? "rot" : "ref"}">${names[k]}</td>`).join("") + "</tr>";
+  });
+  host.innerHTML = html + "</tbody></table>";
+  const cells = [...host.querySelectorAll("td")];
+  function paintTable() {
+    cells.forEach((td) => {
+      const i = +td.dataset.i, j = +td.dataset.j;
+      td.classList.toggle("nc", showNC && table[i][j] !== table[j][i]);
+      td.classList.toggle("hl", lastOp != null && i === prevEl && j === lastOp);
+    });
+    host.querySelectorAll("th[data-r]").forEach((th) => th.classList.toggle("hl", lastOp != null && +th.dataset.r === prevEl));
+    host.querySelectorAll("th[data-c]").forEach((th) => th.classList.toggle("hl", lastOp != null && +th.dataset.c === lastOp));
+  }
+
+  function readout() {
+    const k = idx(cur);
+    document.getElementById("sym-d4-word").textContent = hist.length ? hist.map((o) => LABEL[o]).join(" ") + "  =  " + names[k] : "(아직 없음)";
+    MB.stat("sym-d4-el", names[k]);
+    MB.stat("sym-d4-geo", desc(cur));
+    MB.stat("sym-d4-len", String(hist.length));
+    MB.stat("sym-d4-seen", seen.size + " / 8");
+    paintTable();
+  }
+
+  let raf = 0, lastTs = 0;
+  function step(ts) {
+    raf = 0;
+    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016; lastTs = ts;
+    if (!anim && queue.length) anim = { ...queue.shift(), t: 0 };
+    if (anim) {
+      anim.t += dt / 0.42;
+      if (anim.t >= 1) {
+        const before = idx(cur);
+        cur = mul(OPS[anim.op], cur);
+        if (!anim.silent) {
+          hist.push(anim.op);
+          prevEl = before; lastOp = idx(OPS[anim.op]);
+        } else { hist.pop(); lastOp = null; }
+        seen.add(idx(cur));
+        anim = null; readout();
+      }
+    }
+    cv.redraw();
+    if (anim || queue.length) raf = requestAnimationFrame(step); else lastTs = 0;
+  }
+  function kick() { if (!raf) raf = requestAnimationFrame(step); }
+  function push(op, silent) { if (queue.length > 24) return; queue.push({ op, silent }); kick(); }
+  function resetAll() { queue = []; anim = null; cur = I; hist = []; lastOp = null; readout(); cv.redraw(); }
+
+  document.getElementById("sym-d4-r").addEventListener("click", () => push("r"));
+  document.getElementById("sym-d4-ri").addEventListener("click", () => push("ri"));
+  document.getElementById("sym-d4-s").addEventListener("click", () => push("s"));
+  document.getElementById("sym-d4-undo").addEventListener("click", () => {
+    const pending = queue.filter((q) => !q.silent).length + (anim && !anim.silent ? 1 : 0);
+    if (pending || !hist.length) return;
+    const last = hist[hist.length - 1];
+    push(last === "r" ? "ri" : last === "ri" ? "r" : "s", true);
+  });
+  document.getElementById("sym-d4-reset").addEventListener("click", resetAll);
+  const runWord = (a, b) => { resetAll(); a.concat(b).forEach((o) => push(o)); };
+  document.getElementById("sym-d4-rs").addEventListener("click", () => runWord(["r"], ["s"]));
+  document.getElementById("sym-d4-sr").addEventListener("click", () => runWord(["s"], ["r"]));
+  MB.check("sym-d4-nc", (v) => { showNC = v; paintTable(); });
+  host.addEventListener("click", (e) => {
+    const td = e.target.closest("td"); if (!td) return;
+    runWord(words[+td.dataset.i], words[+td.dataset.j]);
+  });
+  readout();
+})();
+
+/* ===================================================== SIM 2: 15 퍼즐 */
+(function () {
+  const SOLVED = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
+  let b = SOLVED.slice(), moves = 0, flash = new Set();
+  const blank = () => b.indexOf(0);
+  function permSign() {
+    const a = b.map((v) => v || 16), seenC = new Array(16).fill(false);
+    let cycles = 0;
+    for (let i = 0; i < 16; i++) { if (seenC[i]) continue; cycles++; let j = i; while (!seenC[j]) { seenC[j] = true; j = a[j] - 1; } }
+    return (16 - cycles) % 2 ? -1 : 1;
+  }
+  function inversions() { const t = b.filter((v) => v); let c = 0; for (let i = 0; i < t.length; i++) for (let j = i + 1; j < t.length; j++) if (t[i] > t[j]) c++; return c; }
+  let geo = null;
+  const cv = MB.canvas("#cv-sym-15", (ctx, w, h) => {
+    const P = MB.palette();
+    const size = Math.min(w - 24, h - 24), c = size / 4, x0 = (w - size) / 2, y0 = (h - size) / 2;
+    geo = { x0, y0, c };
+    for (let i = 0; i < 16; i++) {
+      const r = Math.floor(i / 4), q = i % 4;
+      ctx.fillStyle = (r + q) % 2 ? MB.color("surface-2") : MB.color("surface");
+      ctx.fillRect(x0 + q * c, y0 + r * c, c, c);
+    }
+    ctx.strokeStyle = P.border; ctx.lineWidth = 1; ctx.strokeRect(x0, y0, size, size);
+    b.forEach((t, i) => {
+      if (!t) return;
+      const r = Math.floor(i / 4), q = i % 4, x = x0 + q * c, y = y0 + r * c;
+      const home = t === i + 1;
+      SYM.rrect(ctx, x + 4, y + 4, c - 8, c - 8, Math.max(4, c * 0.12));
+      ctx.fillStyle = flash.has(t) ? (MB.isDark() ? "rgba(255,138,76,0.35)" : "rgba(217,72,15,0.18)") : P.elev;
+      ctx.fill();
+      ctx.lineWidth = home ? 2 : 1.5; ctx.strokeStyle = home ? P.accent : P.border; ctx.stroke();
+      ctx.fillStyle = home ? P.accent : P.text; ctx.font = `700 ${Math.round(c * 0.36)}px ${SYM.font()}`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(t), x + c / 2, y + c / 2 + 1);
+    });
+    const k = blank(), br = Math.floor(k / 4), bq = k % 4;
+    ctx.fillStyle = P.dim; ctx.font = `12px ${SYM.font()}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("빈칸", x0 + bq * c + c / 2, y0 + br * c + c / 2);
+  }, { aspect: 1, maxHeight: 380, minHeight: 240 });
+
+  function update(msg) {
+    const sg = permSign(), k = blank(), d = (3 - Math.floor(k / 4)) + (3 - (k % 4)), pd = d % 2 ? -1 : 1, Iv = sg * pd;
+    MB.stat("sym-15-moves", String(moves));
+    MB.stat("sym-15-inv", String(inversions()));
+    MB.stat("sym-15-sig", `${sg > 0 ? "+1" : "−1"} · ${pd > 0 ? "+1" : "−1"} <small>(d=${d})</small>`);
+    MB.stat("sym-15-I", Iv > 0 ? '<span style="color:var(--ok)">+1</span>' : '<span style="color:var(--bad)">−1</span>');
+    const el = document.getElementById("sym-15-msg");
+    const solved = b.every((v, i) => v === SOLVED[i]);
+    el.className = "sim-msg " + (Iv > 0 ? "ok" : "bad");
+    el.textContent = msg || (solved ? "완성 상태. 불변량 I = +1." : Iv > 0 ? "I = +1: 완성 상태와 같은 쪽. 밀기만으로 풀 수 있다." : "I = −1: 완성 상태(I = +1)와 다른 쪽. 어떤 순서로 밀어도 절대 풀 수 없다.");
+    cv.redraw();
+  }
+  function slideTo(k) {
+    const z = blank(), zr = Math.floor(z / 4), zq = z % 4, r = Math.floor(k / 4), q = k % 4;
+    if (k === z || (r !== zr && q !== zq)) return false;
+    const step = r === zr ? (q > zq ? 1 : -1) : (r > zr ? 4 : -4);
+    flash = new Set();
+    let p = z;
+    while (p !== k) { const n = p + step; flash.add(b[n]); b[p] = b[n]; b[n] = 0; p = n; moves++; }
+    return true;
+  }
+  document.getElementById("cv-sym-15").addEventListener("pointerdown", (e) => {
+    if (!geo) return;
+    const rc = e.currentTarget.getBoundingClientRect(), x = e.clientX - rc.left - geo.x0, y = e.clientY - rc.top - geo.y0;
+    const q = Math.floor(x / geo.c), r = Math.floor(y / geo.c);
+    if (q < 0 || q > 3 || r < 0 || r > 3) return;
+    if (slideTo(r * 4 + q)) update();
+  });
+  document.getElementById("sym-15-shuffle").addEventListener("click", () => {
+    let prev = -1;
+    for (let n = 0; n < 200; n++) {
+      const z = blank(), zr = Math.floor(z / 4), zq = z % 4, cand = [];
+      if (zr > 0) cand.push(z - 4); if (zr < 3) cand.push(z + 4); if (zq > 0) cand.push(z - 1); if (zq < 3) cand.push(z + 1);
+      const opts = cand.filter((c) => c !== prev);
+      const k = opts[Math.floor(Math.random() * opts.length)];
+      prev = z; slideTo(k);
+    }
+    flash = new Set(); update();
+  });
+  const swap = (x, y) => { const i = b.indexOf(x), j = b.indexOf(y); b[i] = y; b[j] = x; flash = new Set([x, y]); update(); };
+  document.getElementById("sym-15-swap").addEventListener("click", () => swap(14, 15));
+  document.getElementById("sym-15-swap2").addEventListener("click", () => swap(1, 2));
+  document.getElementById("sym-15-reset").addEventListener("click", () => { b = SOLVED.slice(); moves = 0; flash = new Set(); update(); });
+  update();
+})();
+
+/* ===================================================== SIM 3: 교환자 */
+(function () {
+  const N = 5;
+  const home = [...Array(N * N).keys()];
+  let st = home.slice(), mode = "cross", queue = [], anim = null, hist = [];
+  // 각 조작: 움직이는 칸 목록(순서대로)과 방향
+  function line(op) {
+    const base = op[0];
+    if (base === "A") return { cells: [0, 1, 2, 3, 4].map((x) => 2 * N + x), dir: [1, 0] };
+    if (mode === "cross") return { cells: [0, 1, 2, 3, 4].map((y) => y * N + 2), dir: [0, 1] };
+    return { cells: [0, 1, 2, 3, 4].map((x) => x), dir: [1, 0] };
+  }
+  function apply(s, op) {
+    const { cells } = line(op), inv = op.length > 1, out = s.slice();
+    for (let i = 0; i < N; i++) {
+      const from = cells[i], to = cells[(i + (inv ? N - 1 : 1)) % N];
+      out[to] = s[from];
+    }
+    return out;
+  }
+  function cyc(s) {
+    // s[pos] = 원래 타일 번호. 타일 t가 home t에서 pos로 → 순환 표기(타일 번호 1부터)
+    const where = new Array(N * N); s.forEach((t, p) => (where[t] = p));
+    const seenC = new Array(N * N).fill(false), parts = [];
+    let transp = 0;
+    for (let t = 0; t < N * N; t++) {
+      if (seenC[t] || where[t] === t) continue;
+      const c = []; let u = t;
+      while (!seenC[u]) { seenC[u] = true; c.push(u + 1); u = where[u]; }
+      transp += c.length - 1; parts.push("(" + c.join(" ") + ")");
+    }
+    return { str: parts.length ? parts.join("") : "e", parity: transp % 2 };
+  }
+  const cv = MB.canvas("#cv-sym-comm", (ctx, w, h) => {
+    const P = MB.palette();
+    const size = Math.min(w - 30, h - 30), c = size / N, x0 = (w - size) / 2, y0 = (h - size) / 2;
+    const cols = [P.accent, P.accent2, P.ok, P.warn, P.blue];
+    // 움직이는 줄 강조
+    const ln = (op) => line(op).cells;
+    ctx.fillStyle = MB.isDark() ? "rgba(125,155,255,0.10)" : "rgba(43,84,212,0.07)";
+    ln("A").forEach((p) => ctx.fillRect(x0 + (p % N) * c, y0 + Math.floor(p / N) * c, c, c));
+    ctx.fillStyle = MB.isDark() ? "rgba(255,138,76,0.10)" : "rgba(217,72,15,0.07)";
+    ln("B").forEach((p) => ctx.fillRect(x0 + (p % N) * c, y0 + Math.floor(p / N) * c, c, c));
+    ctx.strokeStyle = P.grid; ctx.lineWidth = 1;
+    for (let i = 0; i <= N; i++) { ctx.beginPath(); ctx.moveTo(x0 + i * c, y0); ctx.lineTo(x0 + i * c, y0 + size); ctx.moveTo(x0, y0 + i * c); ctx.lineTo(x0 + size, y0 + i * c); ctx.stroke(); }
+    ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, size, size); ctx.clip();
+    const moving = new Map();
+    if (anim) {
+      const { cells, dir } = line(anim.op), inv = anim.op.length > 1, sgn = inv ? -1 : 1;
+      cells.forEach((p) => moving.set(p, [dir[0] * sgn, dir[1] * sgn]));
+    }
+    const t = anim ? MB.smooth(0, 1, anim.t) : 0;
+    const drawTile = (tile, gx, gy, p) => {
+      const x = x0 + gx * c, y = y0 + gy * c;
+      const off = tile !== p; // 제자리 아님?
+      SYM.rrect(ctx, x + 3, y + 3, c - 6, c - 6, 6);
+      ctx.fillStyle = P.elev; ctx.fill();
+      ctx.fillStyle = cols[Math.floor(tile / N)]; ctx.globalAlpha = 0.85;
+      ctx.fillRect(x + 3, y + c - 9, c - 6, 6); ctx.globalAlpha = 1;
+      ctx.lineWidth = off ? 3 : 1; ctx.strokeStyle = off ? P.text : P.border;
+      SYM.rrect(ctx, x + 3, y + 3, c - 6, c - 6, 6); ctx.stroke();
+      ctx.fillStyle = P.text; ctx.font = `600 ${Math.round(c * 0.32)}px ${SYM.font()}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(String(tile + 1), x + c / 2, y + c / 2 - 2);
+    };
+    st.forEach((tile, p) => {
+      const gx = p % N, gy = Math.floor(p / N), mv = moving.get(p);
+      if (!mv) { drawTile(tile, gx, gy, p); return; }
+      drawTile(tile, gx + mv[0] * t, gy + mv[1] * t, p);
+      // 끝에서 넘어가는 타일은 반대편에서 들어온다
+      drawTile(tile, gx + mv[0] * (t - N), gy + mv[1] * (t - N), p);
+    });
+    ctx.restore();
+    ctx.fillStyle = P.accent; ctx.font = `700 12px ${SYM.font()}`; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    const la = ln("A")[0], lb = ln("B")[0];
+    ctx.fillText("A→", x0 - 2, y0 + Math.floor(la / N) * c + c / 2);
+    ctx.fillStyle = P.accent2;
+    if (mode === "cross") { ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillText("B↓", x0 + (lb % N) * c + c / 2, y0 - 1); }
+    else ctx.fillText("B→", x0 - 2, y0 + c / 2);
+  }, { aspect: 1, maxHeight: 380, minHeight: 240 });
+
+  const LBL = { A: "A", Ai: "A⁻¹", B: "B", Bi: "B⁻¹" };
+  function readout() {
+    const moved = st.filter((t, p) => t !== p).length, cy = cyc(st);
+    MB.stat("sym-comm-moved", String(moved));
+    MB.stat("sym-comm-cyc", cy.str);
+    MB.stat("sym-comm-par", cy.parity ? "홀" : "짝");
+    document.getElementById("sym-comm-word").textContent = hist.length ? hist.map((o) => LBL[o]).join(" ") : "(아직 없음)";
+  }
+  let raf = 0, lastTs = 0;
+  function frame(ts) {
+    raf = 0;
+    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016; lastTs = ts;
+    if (!anim && queue.length) anim = { op: queue.shift(), t: 0 };
+    if (anim) {
+      anim.t += dt / 0.32;
+      if (anim.t >= 1) { st = apply(st, anim.op); hist.push(anim.op); if (hist.length > 40) hist = hist.slice(-40); anim = null; readout(); }
+    }
+    cv.redraw();
+    if (anim || queue.length) raf = requestAnimationFrame(frame); else lastTs = 0;
+  }
+  const push = (...ops) => { if (queue.length > 30) return; queue.push(...ops); if (!raf) raf = requestAnimationFrame(frame); };
+  document.getElementById("sym-comm-a").addEventListener("click", () => push("A"));
+  document.getElementById("sym-comm-ai").addEventListener("click", () => push("Ai"));
+  document.getElementById("sym-comm-b").addEventListener("click", () => push("B"));
+  document.getElementById("sym-comm-bi").addEventListener("click", () => push("Bi"));
+  document.getElementById("sym-comm-run").addEventListener("click", () => push("A", "B", "Ai", "Bi"));
+  document.getElementById("sym-comm-conj").addEventListener("click", () => push("A", "A", "B", "Ai", "Bi", "Ai"));
+  const reset = () => { queue = []; anim = null; st = home.slice(); hist = []; readout(); cv.redraw(); };
+  document.getElementById("sym-comm-reset").addEventListener("click", reset);
+  MB.seg("sym-comm-mode", (v) => { mode = v; reset(); });
+  readout();
+})();
+
+/* ===================================================== SIM 4: 벽지군 그리기판 */
+(function () {
+  const S3 = Math.sqrt(3), H = 0.5;
+  // 원소: [m11, m12, m21, m22, tx, ty] — 격자 기저(분수 좌표)에서 x' = M x + t (ITA 표준 일반 위치)
+  const E = [1, 0, 0, 1, 0, 0], I2 = [-1, 0, 0, -1, 0, 0], MX = [-1, 0, 0, 1, 0, 0], MY = [1, 0, 0, -1, 0, 0];
+  const R4 = [0, -1, 1, 0, 0, 0], R4i = [0, 1, -1, 0, 0, 0], D1 = [0, 1, 1, 0, 0, 0], D2 = [0, -1, -1, 0, 0, 0];
+  const R3 = [0, -1, 1, -1, 0, 0], R3b = [-1, 1, -1, 0, 0, 0];
+  const tr = (o, t) => [o[0], o[1], o[2], o[3], o[4] + t[0], o[5] + t[1]];
+  const cen = (ops) => ops.concat(ops.map((o) => tr(o, [H, H])));
+  const P3 = [E, R3, R3b], P6 = P3.concat([I2, [0, 1, -1, 1, 0, 0], [1, -1, 1, 0, 0, 0]]);
+  const M31 = [[0, -1, -1, 0, 0, 0], [-1, 1, 0, 1, 0, 0], [1, 0, 1, -1, 0, 0]], M13 = [[0, 1, 1, 0, 0, 0], [1, -1, 0, -1, 0, 0], [-1, 0, -1, 1, 0, 0]];
+  const G = {
+    p1: ["obl", [E]], p2: ["obl", [E, I2]],
+    pm: ["rect", [E, MX]], pg: ["rect", [E, tr(MX, [0, H])]], cm: ["crect", cen([E, MX])],
+    pmm: ["rect", [E, I2, MX, MY]], pmg: ["rect", [E, I2, tr(MX, [H, 0]), tr(MY, [H, 0])]],
+    pgg: ["rect", [E, I2, tr(MX, [H, H]), tr(MY, [H, H])]], cmm: ["crect", cen([E, I2, MX, MY])],
+    p4: ["sq", [E, I2, R4, R4i]], p4m: ["sq", [E, I2, R4, R4i, MX, MY, D1, D2]],
+    p4g: ["sq", [E, I2, R4, R4i, tr(MX, [H, H]), tr(MY, [H, H]), tr(D1, [H, H]), tr(D2, [H, H])]],
+    p3: ["hex", P3], p3m1: ["hex", P3.concat(M31)], p31m: ["hex", P3.concat(M13)],
+    p6: ["hex", P6], p6m: ["hex", P6.concat(M31, M13)],
+  };
+  const LAT = {
+    obl: { a: [1, 0], b: [0.3, 0.92], name: "평행사변형" }, rect: { a: [1, 0], b: [0, 0.72], name: "직사각" },
+    crect: { a: [1, 0], b: [0, 1.4], name: "중심 직사각" }, sq: { a: [1, 0], b: [0, 1], name: "정사각" },
+    hex: { a: [1, 0], b: [-0.5, S3 / 2], name: "육각 (120°)" },
+  };
+  function build(name) {
+    const [lt, ops] = G[name], { a, b } = LAT[lt];
+    const B = [[a[0], b[0]], [a[1], b[1]]], dt = B[0][0] * B[1][1] - B[0][1] * B[1][0];
+    const Bi = [[B[1][1] / dt, -B[0][1] / dt], [-B[1][0] / dt, B[0][0] / dt]];
+    const ops2 = ops.map((o) => {
+      const L = SYM.mul(SYM.mul(B, [[o[0], o[1]], [o[2], o[3]]]), Bi);
+      return { L, t: [B[0][0] * o[4] + B[0][1] * o[5], B[1][0] * o[4] + B[1][1] * o[5]], det: o[0] * o[3] - o[1] * o[2] };
+    });
+    let maxRot = 1;
+    ops2.forEach(({ L, det }) => { if (det > 0) { const an = Math.abs(Math.atan2(L[1][0], L[0][0])); if (an > 1e-6) maxRot = Math.max(maxRot, Math.round((2 * Math.PI) / an)); } });
+    return { name, lt, a, b, B, Bi, ops: ops2, centered: lt === "crect", maxRot };
+  }
+  // 대칭 요소 계산: 원소 × 격자 이동마다 회전 중심, 거울선, 미끄럼축
+  function elements(g, i0, i1, j0, j1) {
+    const { a, b, Bi } = g;
+    const cent = g.centered ? [[0, 0], [0.5, 0.5]] : [[0, 0]];
+    const isLat = (v) => {
+      const fx = Bi[0][0] * v[0] + Bi[0][1] * v[1], fy = Bi[1][0] * v[0] + Bi[1][1] * v[1];
+      return cent.some((c) => Math.abs(fx - c[0] - Math.round(fx - c[0])) < 1e-6 && Math.abs(fy - c[1] - Math.round(fy - c[1])) < 1e-6);
+    };
+    const rk = (v) => (Math.round(v * 1e4) / 1e4 + 0).toFixed(4);
+    const rots = new Map(), mir = new Map(), gl = new Map();
+    for (const { L, t: t0, det } of g.ops) {
+      for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+        const t = [t0[0] + i * a[0] + j * b[0], t0[1] + i * a[1] + j * b[1]];
+        if (det > 0) {
+          if (Math.abs(L[0][0] - 1) < 1e-9 && Math.abs(L[0][1]) < 1e-9) continue;
+          const an = Math.abs(Math.atan2(L[1][0], L[0][0])), ord = Math.round((2 * Math.PI) / an);
+          const A = [[1 - L[0][0], -L[0][1]], [-L[1][0], 1 - L[1][1]]], d = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+          const c = [(t[0] * A[1][1] - A[0][1] * t[1]) / d, (A[0][0] * t[1] - A[1][0] * t[0]) / d];
+          const k = rk(c[0]) + "," + rk(c[1]);
+          const o = rots.get(k);
+          if (!o || o.ord < ord) rots.set(k, { x: c[0], y: c[1], ord });
+        } else {
+          let al = Math.atan2(L[1][0], L[0][0]) / 2; al = ((al % Math.PI) + Math.PI) % Math.PI; if (Math.abs(al - Math.PI) < 1e-6) al = 0;
+          const u = [Math.cos(al), Math.sin(al)], n = [-u[1], u[0]];
+          const tp = t[0] * u[0] + t[1] * u[1], tn = t[0] * n[0] + t[1] * n[1], off = tn / 2;
+          const k = rk(al) + "|" + rk(off);
+          if (isLat([tp * u[0], tp * u[1]])) mir.set(k, { u, n, off }); else gl.set(k, { u, n, off });
+        }
+      }
+    }
+    for (const k of mir.keys()) gl.delete(k);
+    return { rots: [...rots.values()], mir: [...mir.values()], gl: [...gl.values()] };
+  }
+
+  let g = build("p4m"), strokes = [], cur = null, path = null, bbox = null, cache = null;
+  let showEl = true, showCell = true, mirrorColor = true, view = null;
+  function demo() {
+    const F = [[[0.3, 0.06], [0.3, 0.27]], [[0.3, 0.27], [0.43, 0.235], [0.3, 0.19]], [[0.3, 0.12], [0.37, 0.12]], [[0.22, 0.06], [0.3, 0.06]]];
+    strokes = F.map((s) => s.slice());
+    rebuild();
+  }
+  function rebuild() {
+    path = new Path2D(); bbox = null;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    strokes.concat(cur ? [cur] : []).forEach((s) => {
+      if (!s.length) return;
+      path.moveTo(s[0][0], s[0][1]);
+      if (s.length === 1) path.lineTo(s[0][0] + 1e-3, s[0][1]);
+      s.forEach(([x, y], i) => { if (i) path.lineTo(x, y); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); });
+    });
+    if (isFinite(x0)) bbox = { c: [(x0 + x1) / 2, (y0 + y1) / 2], r: Math.hypot(x1 - x0, y1 - y0) / 2 + 0.05 };
+  }
+  function shape(ctx, ord, x, y, r, P) {
+    const col = { 2: P.warn, 3: P.ok, 4: P.bad, 6: P.blue }[ord] || P.text;
+    ctx.beginPath();
+    if (ord === 2) { ctx.moveTo(x, y - r * 1.25); ctx.lineTo(x + r * 0.75, y); ctx.lineTo(x, y + r * 1.25); ctx.lineTo(x - r * 0.75, y); }
+    else for (let k = 0; k < ord; k++) { const an = -Math.PI / 2 + (k * 2 * Math.PI) / ord + (ord === 4 ? Math.PI / 4 : 0); const rr = ord === 4 ? r * 1.15 : r * 1.1; k ? ctx.lineTo(x + rr * Math.cos(an), y + rr * Math.sin(an)) : ctx.moveTo(x + rr * Math.cos(an), y + rr * Math.sin(an)); }
+    ctx.closePath(); ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = P.bg; ctx.stroke();
+  }
+  const cv = MB.canvas("#cv-sym-wp", (ctx, w, h) => {
+    const P = MB.palette();
+    const unit = Math.max(80, Math.min(180, w / 3.4));
+    const ox = w / 2 - unit * 0.5 * (g.a[0] + g.b[0]), oy = h / 2 + unit * 0.5 * (g.a[1] + g.b[1]);
+    view = { unit, ox, oy };
+    const X = (x) => ox + unit * x, Y = (y) => oy - unit * y;
+    // 보이는 격자 범위
+    const corners = [[0, 0], [w, 0], [0, h], [w, h]].map(([px, py]) => { const x = (px - ox) / unit, y = (oy - py) / unit; return [g.Bi[0][0] * x + g.Bi[0][1] * y, g.Bi[1][0] * x + g.Bi[1][1] * y]; });
+    const i0 = Math.floor(Math.min(...corners.map((c) => c[0]))) - 2, i1 = Math.ceil(Math.max(...corners.map((c) => c[0]))) + 1;
+    const j0 = Math.floor(Math.min(...corners.map((c) => c[1]))) - 2, j1 = Math.ceil(Math.max(...corners.map((c) => c[1]))) + 1;
+    // 단위 세포
+    if (showCell) {
+      const { a, b } = g;
+      ctx.strokeStyle = P.grid; ctx.lineWidth = 1;
+      for (let i = i0; i <= i1; i++) { ctx.beginPath(); ctx.moveTo(X(i * a[0] + j0 * b[0]), Y(i * a[1] + j0 * b[1])); ctx.lineTo(X(i * a[0] + j1 * b[0]), Y(i * a[1] + j1 * b[1])); ctx.stroke(); }
+      for (let j = j0; j <= j1; j++) { ctx.beginPath(); ctx.moveTo(X(i0 * a[0] + j * b[0]), Y(i0 * a[1] + j * b[1])); ctx.lineTo(X(i1 * a[0] + j * b[0]), Y(i1 * a[1] + j * b[1])); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(a[0]), Y(a[1])); ctx.lineTo(X(a[0] + b[0]), Y(a[1] + b[1])); ctx.lineTo(X(b[0]), Y(b[1])); ctx.closePath();
+      ctx.fillStyle = MB.isDark() ? "rgba(240,236,230,0.05)" : "rgba(28,26,23,0.035)"; ctx.fill();
+      ctx.setLineDash([5, 4]); ctx.strokeStyle = P.faint; ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]);
+    }
+    // 모티프 복사
+    if (path && bbox) {
+      const lw = 2.4 / unit, margin = bbox.r * unit + 4;
+      ctx.lineCap = "round"; ctx.lineJoin = "round";
+      g.ops.forEach(({ L, t, det }) => {
+        const col = mirrorColor && det < 0 ? P.accent2 : P.accent;
+        const mc = [L[0][0] * bbox.c[0] + L[0][1] * bbox.c[1] + t[0], L[1][0] * bbox.c[0] + L[1][1] * bbox.c[1] + t[1]];
+        for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+          const T = [t[0] + i * g.a[0] + j * g.b[0], t[1] + i * g.a[1] + j * g.b[1]];
+          const px = X(mc[0] + i * g.a[0] + j * g.b[0]), py = Y(mc[1] + i * g.a[1] + j * g.b[1]);
+          if (px < -margin || px > w + margin || py < -margin || py > h + margin) continue;
+          ctx.save();
+          ctx.transform(unit * L[0][0], -unit * L[1][0], unit * L[0][1], -unit * L[1][1], X(T[0]), Y(T[1]));
+          ctx.lineWidth = lw; ctx.strokeStyle = col; ctx.stroke(path);
+          ctx.restore();
+        }
+      });
+    }
+    // 대칭 요소
+    if (showEl) {
+      const ck = g.name + ":" + [i0, i1, j0, j1].join(",");
+      if (!cache || cache.k !== ck) cache = { k: ck, el: elements(g, i0, i1, j0, j1) };
+      const { rots, mir, gl } = cache.el, Lg = (w + h) / unit;
+      const drawLine = (m, dash, col, wd) => {
+        const p = [m.n[0] * m.off, m.n[1] * m.off];
+        ctx.beginPath(); ctx.moveTo(X(p[0] - m.u[0] * Lg), Y(p[1] - m.u[1] * Lg)); ctx.lineTo(X(p[0] + m.u[0] * Lg), Y(p[1] + m.u[1] * Lg));
+        ctx.setLineDash(dash); ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.stroke(); ctx.setLineDash([]);
+      };
+      ctx.globalAlpha = 0.8;
+      gl.forEach((m) => drawLine(m, [7, 5], P.ok, 1.6));
+      mir.forEach((m) => drawLine(m, [], P.text, 1.6));
+      ctx.globalAlpha = 1;
+      const r = Math.max(5, Math.min(8, unit * 0.06));
+      rots.forEach((c) => { const px = X(c.x), py = Y(c.y); if (px > -10 && px < w + 10 && py > -10 && py < h + 10) shape(ctx, c.ord, px, py, r, P); });
+    }
+    if (!strokes.length && !cur) {
+      ctx.fillStyle = P.dim; ctx.font = "14px " + SYM.font(); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("여기에 아무 획이나 그려 보세요", w / 2, h - 22);
+    }
+  }, { aspect: (w) => (w < 520 ? 1 : 0.78), maxHeight: 520, minHeight: 300 });
+
+  const el = cv.canvas;
+  const toMath = (e) => { const rc = el.getBoundingClientRect(); return [(e.clientX - rc.left - view.ox) / view.unit, (view.oy - (e.clientY - rc.top)) / view.unit]; };
+  const redraw = MB.throttle(() => cv.redraw());
+  el.addEventListener("pointerdown", (e) => { if (!view) return; cur = [toMath(e)]; el.setPointerCapture(e.pointerId); rebuild(); redraw(); e.preventDefault(); });
+  el.addEventListener("pointermove", (e) => {
+    if (!cur) return;
+    const p = toMath(e), q = cur[cur.length - 1];
+    if (Math.hypot(p[0] - q[0], p[1] - q[1]) * view.unit < 2.5 || cur.length > 600) return;
+    cur.push(p); rebuild(); redraw();
+  });
+  const end = () => { if (!cur) return; strokes.push(cur); if (strokes.length > 40) strokes.shift(); cur = null; rebuild(); redraw(); };
+  el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+
+  function readout() {
+    MB.stat("sym-wp-lat", LAT[g.lt].name);
+    MB.stat("sym-wp-rot", g.maxRot + "회");
+    const e = elements(g, -2, 2, -2, 2);
+    MB.stat("sym-wp-mg", (e.mir.length ? "있음" : "없음") + " / " + (e.gl.length ? "있음" : "없음"));
+    MB.stat("sym-wp-n", String(g.ops.length / (g.centered ? 2 : 1)));
+  }
+  const sel = document.getElementById("sym-wp-group");
+  sel.addEventListener("change", () => { g = build(sel.value); cache = null; readout(); cv.redraw(); });
+  MB.check("sym-wp-elems", (v) => { showEl = v; cv.redraw(); });
+  MB.check("sym-wp-cell", (v) => { showCell = v; cv.redraw(); });
+  MB.check("sym-wp-mirror", (v) => { mirrorColor = v; cv.redraw(); });
+  document.getElementById("sym-wp-undo").addEventListener("click", () => { strokes.pop(); rebuild(); cv.redraw(); });
+  document.getElementById("sym-wp-clear").addEventListener("click", () => { strokes = []; rebuild(); cv.redraw(); });
+  document.getElementById("sym-wp-demo").addEventListener("click", () => { demo(); cv.redraw(); });
+  demo(); readout(); cv.redraw();
+})();
+
+/* ===================================================== SIM 5: 결정학적 제약 */
+(function () {
+  let mode = "tile", n = 5, timer = null;
+  const cv = MB.canvas("#cv-sym-rest", (ctx, w, h) => {
+    const P = MB.palette(), th = (2 * Math.PI) / n;
+    ctx.font = "13px " + SYM.font();
+    if (mode === "tile") {
+      const alpha = Math.PI - th, m = Math.floor((2 * Math.PI) / alpha + 1e-9), gap = 2 * Math.PI - m * alpha;
+      const s = Math.min(w, h) * (n <= 4 ? 0.3 : n <= 6 ? 0.25 : 0.17), cx = w / 2, cy = h / 2;
+      const poly = (phi) => { const pts = [[cx, cy]]; let x = cx, y = cy, d = phi; for (let k = 0; k < n - 1; k++) { x += s * Math.cos(d); y -= s * Math.sin(d); pts.push([x, y]); d += th; } return pts; };
+      const drawPoly = (pts, fill, stroke, dash) => { ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); if (fill) { ctx.fillStyle = fill; ctx.fill(); } ctx.setLineDash(dash || []); ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]); };
+      const fills = MB.isDark() ? ["rgba(125,155,255,0.22)", "rgba(63,207,127,0.2)", "rgba(245,185,58,0.2)"] : ["rgba(43,84,212,0.14)", "rgba(31,157,85,0.14)", "rgba(217,138,0,0.14)"];
+      for (let k = 0; k < m; k++) drawPoly(poly(k * alpha), fills[k % 3], P.text);
+      if (gap > 1e-6) {
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, s * 0.8, -(m * alpha), -(2 * Math.PI), true); ctx.closePath();
+        ctx.fillStyle = MB.isDark() ? "rgba(255,107,107,0.3)" : "rgba(214,69,69,0.22)"; ctx.fill();
+        drawPoly(poly(m * alpha), null, P.bad, [6, 5]);
+        const mid = m * alpha + gap / 2;
+        ctx.fillStyle = P.bad; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "700 14px " + SYM.font();
+        ctx.fillText("틈 " + MB.fmt((gap * 180) / Math.PI, 3) + "°", cx + s * 0.5 * Math.cos(mid), cy - s * 0.5 * Math.sin(mid));
+      }
+      ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fillStyle = P.text; ctx.fill();
+      ctx.fillStyle = P.dim; ctx.font = "13px " + SYM.font(); ctx.textAlign = "left"; ctx.textBaseline = "top";
+      ctx.fillText(`정${n}각형 내각 ${MB.fmt((alpha * 180) / Math.PI, 4)}° × ${m}개 = ${MB.fmt((m * alpha * 180) / Math.PI, 4)}°`, 10, 10);
+      ctx.fillText(gap > 1e-6 ? "점선 = 하나 더 붙이면 겹침" : "360°를 정확히 채움", 10, 30);
+    } else {
+      const d = Math.min(w / 3.6, h * 0.62), cx = w / 2, by = h * 0.82;
+      const Pp = [cx - d / 2, by], Q = [cx + d / 2, by];
+      const Qp = [Pp[0] + d * Math.cos(th), by - d * Math.sin(th)];
+      const Pq = [Q[0] - d * Math.cos(th), by - d * Math.sin(th)];
+      const len = Math.abs(1 - 2 * Math.cos(th)), ok = len < 1e-6 || len > 1 - 1e-6;
+      // 보조 원호
+      ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5;
+      ctx.strokeStyle = P.accent; ctx.beginPath(); ctx.arc(Pp[0], by, d, -th, 0); ctx.stroke();
+      ctx.strokeStyle = P.accent2; ctx.beginPath(); ctx.arc(Q[0], by, d, Math.PI, Math.PI + th); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.strokeStyle = P.axis; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(...Pp); ctx.lineTo(...Qp); ctx.moveTo(...Q); ctx.lineTo(...Pq); ctx.stroke();
+      ctx.strokeStyle = P.text; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(...Pp); ctx.lineTo(...Q); ctx.stroke();
+      ctx.strokeStyle = ok ? P.ok : P.bad; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(...Qp); ctx.lineTo(...Pq); ctx.stroke();
+      const dot = (p, c, lab, dx, dy) => { ctx.beginPath(); ctx.arc(p[0], p[1], 7, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill(); ctx.fillStyle = c; ctx.font = "700 14px " + SYM.font(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(lab, p[0] + dx, p[1] + dy); };
+      dot(Pp, P.text, "P", -4, 20); dot(Q, P.text, "Q", 4, 20);
+      dot(Qp, P.accent, "Q′", Qp[0] < Pq[0] ? -18 : 18, -12); dot(Pq, P.accent2, "P′", Qp[0] < Pq[0] ? 18 : -18, -12);
+      ctx.fillStyle = P.dim; ctx.font = "13px " + SYM.font(); ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.fillText("d (가장 짧은 격자 간격)", cx, by + 12);
+      ctx.fillStyle = ok ? P.ok : P.bad; ctx.font = "700 14px " + SYM.font(); ctx.textBaseline = "bottom";
+      const txt = len < 1e-6 ? "Q′ = P′ (길이 0) → 가능" : `|Q′P′| = ${len.toFixed(3)} d ${ok ? "≥ d → 가능" : "< d → 모순"}`;
+      ctx.fillText(txt, cx, Math.min(Qp[1], Pq[1]) - 14 < 18 ? Math.max(Qp[1], Pq[1]) + 34 : Math.min(Qp[1], Pq[1]) - 14);
+    }
+  }, { aspect: 0.72, maxHeight: 420, minHeight: 260 });
+  function readout() {
+    const th = (2 * Math.PI) / n, tr = 2 * Math.cos(th), okN = [1, 2, 3, 4, 6].includes(n);
+    MB.stat("sym-rest-ang", MB.fmt(360 / n, 4) + "°");
+    MB.stat("sym-rest-tr", tr.toFixed(3) + (Math.abs(tr - Math.round(tr)) < 1e-9 ? " <small>정수</small>" : ""));
+    MB.stat("sym-rest-len", Math.abs(1 - 2 * Math.cos(th)).toFixed(3) + " <small>d</small>");
+    MB.stat("sym-rest-ok", okN ? '<span style="color:var(--ok)">가능</span>' : '<span style="color:var(--bad)">불가능</span>');
+  }
+  const N = MB.range("sym-rest-n", (v) => "n = " + v, (v) => { n = v; readout(); cv.redraw(); });
+  MB.seg("sym-rest-mode", (v) => { mode = v; cv.redraw(); });
+  MB.playButton("sym-rest-anim", () => {
+    let k = 3; N.set(k);
+    timer = setInterval(() => { k = k >= 12 ? 3 : k + 1; N.set(k); }, 900);
+  }, () => { clearInterval(timer); timer = null; }, ["▶ n = 3 … 12 훑기", "■ 멈추기"]);
+  readout();
+})();
+
+/* ===================================================== SIM 6: 밀러 지수 */
+(function () {
+  const A_SI = 5.431;
+  let hkl = [1, 1, 1], lat = "dia", family = false, spin = true, yaw = -0.62, pitch = 0.38, drag = null;
+  const V = [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]];
+  const EDGES = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
+  function atoms() {
+    const out = V.map((v) => v.slice());
+    if (lat === "none") return [];
+    if (lat === "bcc") out.push([0.5, 0.5, 0.5]);
+    if (lat === "fcc" || lat === "dia") out.push([0.5, 0.5, 0], [0.5, 0.5, 1], [0.5, 0, 0.5], [0.5, 1, 0.5], [0, 0.5, 0.5], [1, 0.5, 0.5]);
+    if (lat === "dia") out.push([0.25, 0.25, 0.25], [0.75, 0.75, 0.25], [0.75, 0.25, 0.75], [0.25, 0.75, 0.75]);
+    return out;
+  }
+  const dotv = (p) => hkl[0] * p[0] + hkl[1] * p[1] + hkl[2] * p[2];
+  function planes() {
+    if (!hkl.some((v) => v)) return [];
+    const vals = V.map(dotv), lo = Math.min(...vals), hi = Math.max(...vals);
+    if (family) { const out = []; for (let n = Math.ceil(lo); n <= Math.floor(hi); n++) out.push(n); return out; }
+    return [1 + hkl.filter((v) => v < 0).reduce((s, v) => s + v, 0)];
+  }
+  function section(n) {
+    const pts = [];
+    EDGES.forEach(([i, j]) => {
+      const a = V[i], b = V[j], fa = dotv(a) - n, fb = dotv(b) - n;
+      if (Math.abs(fa) < 1e-9) pts.push(a.slice());
+      else if (fa * fb < 0) { const t = fa / (fa - fb); pts.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]); }
+    });
+    const uniq = [];
+    pts.forEach((p) => { if (!uniq.some((q) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) < 1e-6)) uniq.push(p); });
+    if (uniq.length < 3) return null;
+    const c = [0, 1, 2].map((k) => uniq.reduce((s, p) => s + p[k], 0) / uniq.length);
+    const nn = Math.hypot(...hkl), nv = hkl.map((v) => v / nn);
+    let u = Math.abs(nv[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0];
+    const dd = u[0] * nv[0] + u[1] * nv[1] + u[2] * nv[2]; u = u.map((x, k) => x - dd * nv[k]); const un = Math.hypot(...u); u = u.map((x) => x / un);
+    const w = [nv[1] * u[2] - nv[2] * u[1], nv[2] * u[0] - nv[0] * u[2], nv[0] * u[1] - nv[1] * u[0]];
+    uniq.sort((p, q) => {
+      const ap = Math.atan2((p[0] - c[0]) * w[0] + (p[1] - c[1]) * w[1] + (p[2] - c[2]) * w[2], (p[0] - c[0]) * u[0] + (p[1] - c[1]) * u[1] + (p[2] - c[2]) * u[2]);
+      const aq = Math.atan2((q[0] - c[0]) * w[0] + (q[1] - c[1]) * w[1] + (q[2] - c[2]) * w[2], (q[0] - c[0]) * u[0] + (q[1] - c[1]) * u[1] + (q[2] - c[2]) * u[2]);
+      return ap - aq;
+    });
+    return uniq;
+  }
+  const cv = MB.canvas("#cv-sym-mil", (ctx, w, h) => {
+    const P = MB.palette(), S = Math.min(w, h) * 0.45, cx = w / 2, cy = h / 2 + 8;
+    const cy_ = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+    const proj = (p) => {
+      const x = p[0] - 0.5, y = p[1] - 0.5, z = p[2] - 0.5;
+      const x1 = x * cy_ - y * sy, y1 = x * sy + y * cy_;
+      return [cx + S * x1, cy - S * (z * cp + y1 * sp), y1 * cp - z * sp];
+    };
+    // 모서리
+    ctx.lineWidth = 1.3; ctx.strokeStyle = P.dim;
+    EDGES.forEach(([i, j]) => { const a = proj(V[i]), b = proj(V[j]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); });
+    // 축
+    const O = proj([0, 0, 0]);
+    [[[1.35, 0, 0], "x [100]"], [[0, 1.35, 0], "y [010]"], [[0, 0, 1.3], "z [001]"]].forEach(([p, lab]) => {
+      const q = proj(p); ctx.strokeStyle = P.axis; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(O[0], O[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = P.faint; ctx.font = "11px " + SYM.mono(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(lab, q[0], q[1]);
+    });
+    // 평면
+    const pls = planes();
+    pls.forEach((n) => {
+      const poly = section(n); if (!poly) return;
+      ctx.beginPath(); poly.map(proj).forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath();
+      ctx.fillStyle = MB.isDark() ? "rgba(125,155,255,0.25)" : "rgba(43,84,212,0.17)"; ctx.fill();
+      ctx.strokeStyle = P.accent; ctx.lineWidth = 2; ctx.stroke();
+    });
+    // 원자와 결합
+    const at = atoms();
+    const onPlane = (p) => pls.some((n) => Math.abs(dotv(p) - n) < 1e-6);
+    if (lat === "dia") {
+      ctx.strokeStyle = P.faint; ctx.lineWidth = 2.5;
+      for (let i = 0; i < at.length; i++) for (let j = i + 1; j < at.length; j++) {
+        const d = Math.hypot(at[i][0] - at[j][0], at[i][1] - at[j][1], at[i][2] - at[j][2]);
+        if (Math.abs(d - Math.sqrt(3) / 4) < 1e-6) { const a = proj(at[i]), b = proj(at[j]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+      }
+    }
+    let count = 0;
+    at.map((p) => ({ p, q: proj(p), on: onPlane(p) })).sort((a, b) => b.q[2] - a.q[2]).forEach(({ p, q, on }) => {
+      if (on) count++;
+      const r = (on ? 9 : 6.5) * (1 - q[2] * 0.25);
+      ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, Math.PI * 2);
+      ctx.fillStyle = on ? P.accent2 : MB.color("surface-2"); ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = on ? P.bg : P.dim; ctx.stroke();
+    });
+    MB.stat("sym-mil-atoms", lat === "none" ? "—" : count + "개");
+  }, { aspect: 0.86, maxHeight: 440, minHeight: 280 });
+
+  const bar = (v) => (v < 0 ? Math.abs(v) + "̄" : String(v));
+  function readout() {
+    const n2 = hkl[0] ** 2 + hkl[1] ** 2 + hkl[2] ** 2;
+    MB.stat("sym-mil-name", "(" + hkl.map(bar).join("") + ")");
+    if (!n2) { MB.stat("sym-mil-d", "—"); MB.stat("sym-mil-a100", "평면 없음"); cv.redraw(); return; }
+    MB.stat("sym-mil-d", (A_SI / Math.sqrt(n2)).toFixed(3) + " <small>Å</small>");
+    MB.stat("sym-mil-a100", ((Math.acos(Math.abs(hkl[0]) / Math.sqrt(n2)) * 180) / Math.PI).toFixed(2) + "°");
+    cv.redraw();
+  }
+  const rh = MB.range("sym-mil-h", String, (v) => { hkl[0] = v; readout(); });
+  const rk = MB.range("sym-mil-k", String, (v) => { hkl[1] = v; readout(); });
+  const rl = MB.range("sym-mil-l", String, (v) => { hkl[2] = v; readout(); });
+  document.querySelectorAll("#sim-sym-miller [data-hkl]").forEach((b) => b.addEventListener("click", () => {
+    const v = b.dataset.hkl.split(",").map(Number);
+    rh.set(v[0], false); rk.set(v[1], false); rl.set(v[2], false); hkl = v; readout();
+  }));
+  document.getElementById("sym-mil-lat").addEventListener("change", (e) => { lat = e.target.value; cv.redraw(); });
+  MB.check("sym-mil-family", (v) => { family = v; cv.redraw(); });
+  MB.check("sym-mil-spin", (v) => { spin = v; if (v) loop.start(); });
+  const c = cv.canvas;
+  c.addEventListener("pointerdown", (e) => { drag = [e.clientX, e.clientY, yaw, pitch]; c.setPointerCapture(e.pointerId); c.style.cursor = "grabbing"; e.preventDefault(); });
+  c.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    yaw = drag[2] + (e.clientX - drag[0]) * 0.01;
+    pitch = MB.clamp(drag[3] + (e.clientY - drag[1]) * 0.01, -1.3, 1.3);
+    cv.redraw();
+  });
+  const up = () => { drag = null; c.style.cursor = "grab"; };
+  c.addEventListener("pointerup", up); c.addEventListener("pointercancel", up);
+  const loop = MB.loop(c, (dt) => { if (!spin) { loop.stop(); return; } if (!drag) { yaw += dt * 0.35; cv.redraw(); } });
+  readout();
+})();
+
+/* ===================================================== SIM 7: KOH 식각 단면 */
+(function () {
+  const TH = Math.acos(1 / Math.sqrt(3)), RHO = 62.5, VIEW = 330;
+  let wafer = "100", W = 153, T = 60, sel = 100, fiber = true;
+  // 광섬유가 위에서 내려와 처음 닿는 중심 깊이(아래가 +). 단면 윤곽선 선분들과의 거리로 찾는다.
+  function fiberDepth(outline) {
+    const dist = (zc) => {
+      let m = Infinity;
+      for (let i = 0; i + 1 < outline.length; i++) {
+        const [ax, az] = outline[i], [bx, bz] = outline[i + 1], dx = bx - ax, dz = bz - az;
+        const t = MB.clamp(((0 - ax) * dx + (zc - az) * dz) / (dx * dx + dz * dz || 1), 0, 1);
+        m = Math.min(m, Math.hypot(ax + dx * t, az + dz * t - zc));
+      }
+      return m;
+    };
+    let z = -RHO - 1, stepz = 0.5;
+    while (z < 400 && dist(z + stepz) >= RHO) z += stepz;
+    let lo = z, hi = z + stepz;
+    for (let k = 0; k < 30; k++) { const mid = (lo + hi) / 2; if (dist(mid) >= RHO) lo = mid; else hi = mid; }
+    return lo;
+  }
+  function geom() {
+    const r111 = 1 / sel, BIG = 1000;
+    if (wafer === "100") {
+      const uc = (r111 * T) / Math.sin(TH), a = W / 2 + uc, Dv = a * Math.tan(TH), Df = 1.0 * T;
+      const isV = Df >= Dv, D = isV ? Dv : Df, b = isV ? 0 : a - Df / Math.tan(TH);
+      const zc = fiberDepth([[-BIG, 0], [-a, 0], [-b, D], [b, D], [a, 0], [BIG, 0]]);
+      return { uc, a, D, b, isV, zc };
+    }
+    const uc = r111 * T, a = W / 2 + uc, D = 1.5 * T;
+    const zc = fiberDepth([[-BIG, 0], [-a, 0], [-a, D], [a, D], [a, 0], [BIG, 0]]);
+    return { uc, a, D, b: a, isV: false, zc, vert: true };
+  }
+  const cv = MB.canvas("#cv-sym-koh", (ctx, w, h) => {
+    const P = MB.palette(), s = w / VIEW, cx = w / 2, y0 = Math.round(RHO * s + 24);
+    const X = (x) => cx + s * x, Y = (z) => y0 + s * z;
+    const gm = geom();
+    // 실리콘
+    ctx.fillStyle = MB.color("surface-2"); ctx.fillRect(0, y0, w, h - y0);
+    ctx.beginPath();
+    if (gm.vert) { ctx.moveTo(X(-gm.a), Y(0)); ctx.lineTo(X(-gm.a), Y(gm.D)); ctx.lineTo(X(gm.a), Y(gm.D)); ctx.lineTo(X(gm.a), Y(0)); }
+    else { ctx.moveTo(X(-gm.a), Y(0)); ctx.lineTo(X(-gm.b), Y(gm.D)); ctx.lineTo(X(gm.b), Y(gm.D)); ctx.lineTo(X(gm.a), Y(0)); }
+    ctx.closePath(); ctx.fillStyle = P.bg; ctx.fill();
+    ctx.strokeStyle = P.accent2; ctx.lineWidth = 2.5; ctx.stroke();
+    // 마스크
+    ctx.fillStyle = P.faint;
+    ctx.fillRect(0, y0 - 7, X(-W / 2), 7); ctx.fillRect(X(W / 2), y0 - 7, w - X(W / 2), 7);
+    // 표면선
+    ctx.strokeStyle = P.axis; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(w, y0); ctx.stroke(); ctx.setLineDash([]);
+    // 각도 표시
+    ctx.font = "12px " + SYM.font(); ctx.fillStyle = P.accent; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    if (!gm.vert && gm.D > 4) {
+      ctx.strokeStyle = P.accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(-gm.a), Y(0), 30, 0, TH); ctx.stroke();
+      ctx.fillText("54.74°", X(-gm.a) + 32, Y(0) + 6);
+    } else if (gm.vert && gm.D > 4) ctx.fillText("수직 {111} 벽", X(gm.a) + 6, Y(0) + 6);
+    // 광섬유
+    if (fiber) {
+      ctx.beginPath(); ctx.arc(X(0), Y(gm.zc), RHO * s, 0, Math.PI * 2);
+      ctx.fillStyle = MB.isDark() ? "rgba(125,155,255,0.18)" : "rgba(43,84,212,0.12)"; ctx.fill();
+      ctx.strokeStyle = P.accent; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.beginPath(); ctx.arc(X(0), Y(gm.zc), 4.5 * s, 0, Math.PI * 2); ctx.fillStyle = P.accent; ctx.fill();
+      ctx.beginPath(); ctx.arc(X(0), Y(gm.zc), 3, 0, Math.PI * 2); ctx.fill();
+    }
+    // 라벨
+    ctx.fillStyle = P.dim; ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.font = "12px " + SYM.font();
+    ctx.fillText(`Si (${wafer}) · t = ${T} min`, 8, 18);
+    ctx.textAlign = "right"; ctx.fillText(`보이는 폭 ${VIEW} µm`, w - 8, 18);
+    if (Y(gm.D) > h) { ctx.fillStyle = P.bad; ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillText("↓ 화면 아래로 계속", cx, h - 4); }
+  }, { aspect: 0.8, maxHeight: 470, minHeight: 280 });
+  function readout() {
+    const gm = geom();
+    MB.stat("sym-koh-depth", gm.D.toFixed(1) + " <small>µm</small>" + (gm.isV ? " <small>(V 완성)</small>" : ""));
+    MB.stat("sym-koh-bottom", (gm.isV ? 0 : 2 * gm.b).toFixed(1) + " <small>µm</small>");
+    MB.stat("sym-koh-uc", gm.uc.toFixed(2) + " <small>µm/쪽</small>");
+    MB.stat("sym-koh-fc", fiber ? MB.signed(-gm.zc, 1) + " <small>µm (표면 기준)</small>" : "—");
+    cv.redraw();
+  }
+  MB.seg("sym-koh-wafer", (v) => { wafer = v; readout(); });
+  MB.range("sym-koh-w", (v) => v + " µm", (v) => { W = v; readout(); });
+  const tget = MB.range("sym-koh-t", (v) => v + " min", (v) => { T = v; readout(); });
+  MB.range("sym-koh-sel", (v) => v + " : 1", (v) => { sel = v; readout(); });
+  MB.check("sym-koh-fiber", (v) => { fiber = v; readout(); });
+  let lp = null;
+  const pb = MB.playButton("sym-koh-play", () => {
+    if (T >= 180) tget.set(0);
+    let acc = T;
+    lp = MB.loop(cv.canvas, (dt) => {
+      acc = Math.min(180, acc + dt * 30); tget.set(Math.round(acc));
+      if (acc >= 180) { lp.stop(); pb.set(false); }
+    });
+  }, () => { if (lp) lp.stop(); }, ["▶ 식각 진행", "■ 멈추기"]);
+  readout();
+})();
+</script>
+</body>
+</html>
