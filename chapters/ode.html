@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<title>변화율로 세상을 쓰다 · MathBook</title>
+<meta name="description" content="칩 온도, RC 충전, 약물 농도가 모두 같은 1차 미분방정식이다. 기울기장, 오일러와 RK4, 감쇠 진동과 공진, SIR 감염병 모델, 열확산 방정식을 직접 만져 본다.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<script src="../js/common.js"></script>
+<style>
+  .ode-eq { font-family: var(--mono); font-size: 13.5px; color: var(--text); }
+  .ode-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ode-presets .btn { padding: 5px 10px; font-size: 13px; }
+  #cv-ode-heat { cursor: crosshair; touch-action: none; }
+  .split > div > canvas { display: block; width: 100%; }
+</style>
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3d6151a0abc94ede89285d462527fa80"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</head>
+<body data-chapter="ode">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">Chapter 04</div>
+    <h1>변화율로 세상을 쓰다</h1>
+    <p class="lead">세상의 많은 법칙은 "지금 값이 얼마인가"가 아니라 "지금 얼마나 빨리 변하고 있는가"로 주어집니다. 열은 온도 차에 비례해서 흐르고, 축전기 전류는 전압 차에 비례하고, 감염은 감염자와 비감염자가 만나는 만큼 늘어납니다. 변화율로 적힌 법칙에서 미래를 읽어 내는 도구, 그것이 <span class="term">미분방정식</span><span class="en">(Differential Equation)</span>입니다. 이 장에서는 서로 전혀 달라 보이는 물건들이 사실 같은 식 몇 개로 움직인다는 것을 직접 확인합니다.</p>
+    <ul class="objectives">
+      <li>칩 온도·RC 충전·방사성 붕괴·약물 농도가 모두 \(\dot y = -(y-y_\infty)/\tau\) 하나임을 보이고, 시정수 τ로 63%·5τ 규칙을 쓴다.</li>
+      <li>미분방정식을 "모든 점에 화살표를 그린 지도"(기울기장)로 읽고, 풀이 공식 없이도 해의 모양을 예측한다.</li>
+      <li>오일러법과 RK4가 어떻게 해를 근사하는지, 단계 크기 h가 오차와 안정성을 어떻게 좌우하는지 안다.</li>
+      <li>스프링–질량–감쇠기와 RLC 회로가 같은 2차 방정식임을 알고, 감쇠비 ζ와 특성근의 위치로 응답을 읽는다.</li>
+      <li>공진과 Q, SIR 감염병 모델의 집단면역 임계 \(1-1/R_0\), 열확산 방정식과 그 안정 조건을 설명한다.</li>
+    </ul>
+    <div class="origin">
+      <div class="o-head"><small>이 수식이 없었다면</small><b>스마트폰 AP의 열 관리(쓰로틀링)</b></div>
+      <div class="o-body"><p>게임을 켜면 스마트폰 AP는 수 와트를 쏟아냅니다. 설계자가 알고 싶은 것은 "몇 초 뒤에 접합 온도가 한계에 닿는가, 그때 클록을 얼마나 낮춰야 하는가"입니다. 그런데 손에 쥔 정보는 온도 자체가 아니라 <b>온도가 변하는 속도</b>를 정하는 규칙뿐입니다. 들어오는 전력과 빠져나가는 열의 차이가 온도 상승률을 정한다는 것. 이 규칙을 미분방정식으로 쓰고 풀면 온도 곡선 전체가 나오고, 그 곡선이 '열 시정수'라는 숫자 하나로 요약됩니다. 휴대폰의 쓰로틀링 정책, 서버의 팬 제어, 패키지의 방열판 크기가 모두 이 계산 위에 서 있습니다.</p>
+        <div class="o-chain"><span>칩 발열 예측</span><i>→</i><span>온도는 모르고 변화율만 앎</span><i>→</i><span class="tool">미분방정식 · 시정수 τ</span><i>→</i><span>온도 곡선 전체</span></div></div>
+    </div>
+  </header>
+
+  <!-- =============================================================== 1 -->
+  <section id="first-order">
+    <h2>하나의 식, 네 개의 세계</h2>
+    <div class="problem"><strong>칩은 몇 초 만에 뜨거워지는가</strong>
+      <p>AP가 일정 전력 \(P\)를 소비하기 시작했다. 칩의 열용량은 \(C_{th}\)(J/K), 칩에서 공기까지 열이 빠져나가는 길의 열저항은 \(R_{th}\)(K/W)다. 쓰로틀링 한계 80 °C에 닿는 시각을 알고 싶다. 그런데 물리 법칙이 알려 주는 것은 "지금 온도"가 아니라 "지금 온도가 오르는 속도"다.</p>
+    </div>
+    <p>에너지 보존을 그대로 쓰면 됩니다. 칩에 쌓이는 열(열용량 × 온도 상승률)은 들어오는 전력에서 빠져나가는 열류를 뺀 것입니다. 빠져나가는 열류는 주변과의 온도 차에 비례합니다(뉴턴의 냉각 법칙이라고 불리는 근사).</p>
+    <div class="formula">$$C_{th}\frac{dT}{dt} = P - \frac{T - T_{amb}}{R_{th}} \quad\Longrightarrow\quad \frac{dT}{dt} = -\frac{T - T_\infty}{\tau},\qquad \tau = R_{th}C_{th},\; T_\infty = T_{amb} + P R_{th}$$
+      <div class="where">\(T_\infty\): 충분히 오래 기다렸을 때의 정상 온도. \(\tau\): <b>열 시정수</b>(thermal time constant). 식의 오른쪽은 "목표까지 남은 거리 ÷ τ" — 멀리 있을수록 빨리 다가가고, 가까워질수록 느려진다.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 270" role="img" aria-label="칩 열 모델과 등가 RC 회로">
+        <!-- 왼쪽: 칩 단면 -->
+        <rect x="40" y="200" width="300" height="22" class="f-surface"/>
+        <text x="190" y="215" class="t-dim" text-anchor="middle">PCB · 섀시 (주변 온도 T_amb)</text>
+        <rect x="80" y="160" width="220" height="40" class="f-elev"/>
+        <text x="190" y="185" class="t-dim" text-anchor="middle">패키지 · 방열 경로 (R_th)</text>
+        <rect x="140" y="120" width="100" height="40" class="f-acc-soft"/>
+        <text x="190" y="145" class="t" text-anchor="middle">다이 (C_th)</text>
+        <path d="M190 116 L190 70" class="s-acc"/><path d="M184 78 L190 66 L196 78" class="s-acc"/>
+        <text x="200" y="70" class="t-acc">P (W) 발열</text>
+        <path d="M120 175 Q90 150 70 120" class="s-line" stroke-dasharray="4 4"/>
+        <path d="M260 175 Q290 150 310 120" class="s-line" stroke-dasharray="4 4"/>
+        <text x="40" y="110" class="t-mono">열 → 주변</text>
+        <text x="282" y="110" class="t-mono">열 → 주변</text>
+        <text x="190" y="252" class="t-dim" text-anchor="middle">물리 구조</text>
+        <!-- 오른쪽: 등가 회로 -->
+        <line x1="440" y1="70" x2="740" y2="70" class="s-line"/>
+        <line x1="440" y1="200" x2="740" y2="200" class="s-line"/>
+        <circle cx="470" cy="135" r="22" class="f-acc-soft"/>
+        <path d="M470 152 L470 118" class="s-acc"/><path d="M464 126 L470 116 L476 126" class="s-acc"/>
+        <line x1="470" y1="70" x2="470" y2="113" class="s-line"/><line x1="470" y1="157" x2="470" y2="200" class="s-line"/>
+        <text x="500" y="139" class="t-acc">P</text>
+        <line x1="590" y1="70" x2="590" y2="126" class="s-line"/>
+        <line x1="570" y1="126" x2="610" y2="126" class="s-acc"/><line x1="570" y1="140" x2="610" y2="140" class="s-acc"/>
+        <line x1="590" y1="140" x2="590" y2="200" class="s-line"/>
+        <text x="618" y="138" class="t">C_th</text>
+        <line x1="700" y1="70" x2="700" y2="100" class="s-line"/>
+        <path d="M700 100 l10 5 l-20 10 l20 10 l-20 10 l20 10 l-10 5" class="s-line"/>
+        <line x1="700" y1="150" x2="700" y2="200" class="s-line"/>
+        <text x="716" y="130" class="t">R_th</text>
+        <circle cx="590" cy="70" r="4" class="f-acc"/>
+        <text x="590" y="58" class="t" text-anchor="middle">T_j (노드 '전압')</text>
+        <text x="590" y="222" class="t-dim" text-anchor="middle">기준 = T_amb (접지)</text>
+        <text x="590" y="252" class="t-dim" text-anchor="middle">등가 회로: 열 = 전류, 온도 = 전압</text>
+      </svg>
+      <figcaption><b>그림 4-1.</b> 칩 열 모델의 등가 회로. 발열 \(P\)는 전류원, 열용량은 축전기, 방열 경로는 저항이 된다. 이 회로의 식은 RC 회로와 기호만 다를 뿐 똑같다. 실제 패키지는 다이–기판–섀시로 여러 단의 RC가 이어진 '열 회로망'(포스터·카우어 모델)으로 다룬다.</figcaption>
+    </figure>
+    <p>이 식의 해는 한 번만 구해 두면 됩니다. \(u = T - T_\infty\)로 두면 \(\dot u = -u/\tau\), 즉 "자기 크기에 비례해서 줄어드는 양"이고, 그런 함수는 지수함수뿐입니다.</p>
+    <div class="formula">$$y(t) = y_\infty + \left(y_0 - y_\infty\right)e^{-t/\tau}$$
+      <div class="where">\(t=\tau\)에서 남은 거리는 \(e^{-1}\approx 36.8\%\), 즉 목표의 <b>63.2%</b>까지 왔다. \(t = 5\tau\)에서는 \(e^{-5}\approx 0.67\%\)만 남아 엔지니어는 이를 "정착했다"고 본다. 반감기는 \(\tau\ln 2 \approx 0.693\,\tau\).</div>
+    </div>
+    <p>수치 예를 들어 봅시다(설명용 값). \(T_{amb}=25\) °C, \(P = 5\) W, \(R_{th}=12\) K/W, \(C_{th}=5\) J/K이면 \(T_\infty = 85\) °C, \(\tau = 60\) s입니다. 80 °C에 닿는 시각은 \(e^{-t/\tau} = 5/60\)에서 \(t = 60\ln 12 \approx 149\) 초. 정상 온도가 한계를 넘는다는 사실(85 > 80)은 \(T_\infty\)만 봐도 알 수 있고, <b>언제</b> 넘는지는 τ가 알려 줍니다. 방열판을 키우면 \(R_{th}\)가 줄어 \(T_\infty\)가 내려가고, 금속 덩어리(열 확산판)를 붙이면 \(C_{th}\)가 커져 같은 \(T_\infty\)로 <b>더 천천히</b> 갑니다 — 짧은 버스트 부하에는 후자가 효과적입니다.</p>
+
+    <h3>같은 곡선, 다른 이름표</h3>
+    <p>놀라운 것은 이 식이 칩에만 해당하지 않는다는 점입니다. "목표와의 차이에 비례해서 변한다"는 구조를 가진 현상은 모두 같은 곡선을 그립니다.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>현상</th><th>y</th><th>y∞ (목표)</th><th>τ</th></tr></thead>
+      <tbody>
+        <tr><td>RC 회로 충전 (카메라 플래시 축전기)</td><td>축전기 전압 \(V_C\)</td><td>전원 전압 \(V_s\)</td><td>\(RC\)</td></tr>
+        <tr><td>칩·커피 냉각/가열 (뉴턴 냉각)</td><td>온도 \(T\)</td><td>\(T_{amb}+PR_{th}\)</td><td>\(R_{th}C_{th}\)</td></tr>
+        <tr><td>방사성 붕괴</td><td>남은 핵 수 \(N\)</td><td>0</td><td>평균 수명 \(=t_{1/2}/\ln2\)</td></tr>
+        <tr><td>일정 속도 정맥 주입 (1구획 약동학)</td><td>혈중 농도 \(C\)</td><td>주입 속도 / 청소율</td><td>분포 용적 / 청소율</td></tr>
+        <tr><td>소수 캐리어 재결합 (반도체)</td><td>과잉 캐리어 \(\Delta n\)</td><td>0 (또는 생성률 × τ)</td><td>캐리어 수명</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sim" id="sim-ode-lens">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>해석 렌즈: 같은 곡선에 이름표만 바꾸기</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-ode-lens"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>해석 렌즈</span><div class="seg" id="ode-lens"><button data-value="rc" class="on">RC 충전</button><button data-value="chip">칩 온도</button><button data-value="decay">방사성 붕괴</button><button data-value="drug">약물 주입</button></div></div>
+          <label class="ctrl"><span>시정수 τ <output id="ode-tau-out"></output></span><input type="range" id="ode-tau" min="0.3" max="4" step="0.05" value="1.5"></label>
+          <label class="check"><input type="checkbox" id="ode-tangent" checked> 시작점의 접선 보이기</label>
+          <div class="ctrl"><span>이 렌즈의 식</span><div class="ode-eq" id="ode-lens-eq">—</div><small class="en" id="ode-lens-tag">—</small></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">τ (물리 단위)</span><span class="v" id="ode-l-tau">—</span></div>
+        <div class="stat"><span class="k">반감기 τ·ln2</span><span class="v" id="ode-l-half">—</span></div>
+        <div class="stat"><span class="k">5τ (99.3%)</span><span class="v" id="ode-l-5tau">—</span></div>
+        <div class="stat"><span class="k">t = τ에서의 값</span><span class="v" id="ode-l-63">—</span></div>
+      </div>
+      <div class="sim-note">왼쪽 점(시작값 \(y_0\))과 오른쪽 점(목표 \(y_\infty\))을 위아래로 끌 수 있습니다. 해볼 것: ① 렌즈를 바꿔 보세요 — 축의 단위와 이름만 바뀌고 곡선 모양은 그대로입니다. ② 시작점의 접선(점선)이 언제나 정확히 t = τ에서 목표선과 만나는지 확인. ③ \(y_0\)를 목표보다 위로 끌면 '충전'이 '방전·냉각'이 되지만 63% 규칙은 그대로. · 모델: 선형 1차 계(열저항·청소율·R·C가 상수). 실제 칩은 다단 RC, 약물은 다구획 모델이 더 정확하다. 단위 환산용 기준값(RC 1 s, 칩 40 s, I-131 반감기 약 8일, 약물 4 h)은 설명용 예시다.</div>
+    </div>
+    <div class="callout tip"><strong>τ만 알면 된다</strong> 1차 계의 응답은 \(y_0, y_\infty, \tau\) 세 숫자로 완전히 정해진다. 그래서 데이터시트는 열 저항과 열 시정수를, 의약품 설명서는 반감기를, 회로도는 RC 값을 적어 둔다. 오실로스코프로 RC를 잴 때 "최종값의 63%에 닿는 시각"을 읽는 것도 같은 이유다.</div>
+  </section>
+
+  <!-- =============================================================== 2 -->
+  <section id="direction-field">
+    <h2>기울기장: 모든 점에 화살표를 그린 지도</h2>
+    <div class="problem"><strong>공식으로 안 풀리는 식</strong>
+      <p>개체 수가 자원 한계 \(K\)에 가까워지면 성장이 둔해지는 로지스틱 식 \(\dot y = r y(1-y/K)\)이나, 부하가 주기적으로 변하는 칩의 온도 \(\dot T = -(T - T_{amb})/\tau + P(t)/C_{th}\) 같은 식은 공식을 외워서 풀기 어렵거나 아예 닫힌 해가 없다. 그래도 해가 어떤 모양일지는 알고 싶다.</p>
+    </div>
+    <p>미분방정식 \(\dot y = f(t, y)\)를 다시 읽어 봅시다. 이 식은 "\((t, y)\) 지점에 있다면 기울기는 \(f(t,y)\)다"라고 말합니다. 즉 평면의 <b>모든 점에 화살표 하나씩</b>을 지정합니다. 이 화살표 지도가 <span class="term">기울기장</span><span class="en">(Direction Field, Slope Field)</span>이고, 해곡선은 화살표를 따라 흐르는 물길입니다. 해를 구한다는 것은 "출발점을 정하면 물길이 정해진다"는 사실을 이용하는 일입니다.</p>
+
+    <div class="sim" id="sim-ode-field">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>기울기장 위에 해곡선 흘려 보내기</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-ode-field"></canvas><span class="tag-tl" id="ode-f-tag">—</span></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>방정식</span><select id="ode-f-preset">
+            <option value="decay">감쇠(가열): y′ = −(y − 2)/1.5</option>
+            <option value="logistic">로지스틱: y′ = 0.8·y(1 − y/4)</option>
+            <option value="ylin">y′ = y − t</option>
+            <option value="forced">주기 부하: y′ = −y + 2 sin t</option>
+            <option value="riccati">y′ = t − y²</option>
+          </select></label>
+          <label class="check"><input type="checkbox" id="ode-f-null"> 기울기 0인 곡선(널클라인) 보기</label>
+          <label class="check"><input type="checkbox" id="ode-f-color" checked> 화살표를 기울기 크기로 색칠</label>
+          <div class="btn-row"><button class="btn" id="ode-f-clear">해곡선 지우기</button><button class="btn" id="ode-f-fan">출발점 여러 개 뿌리기</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">드래그 점 (t, y)</span><span class="v" id="ode-f-pt">—</span></div>
+        <div class="stat"><span class="k">그 점의 기울기 f(t,y)</span><span class="v" id="ode-f-sl">—</span></div>
+        <div class="stat"><span class="k">그린 해곡선 수</span><span class="v" id="ode-f-n">—</span></div>
+      </div>
+      <div class="sim-note">빈 곳을 클릭(터치)하면 그 점에서 출발하는 해곡선이 앞뒤로 흘러갑니다. 큰 점은 끌 수 있는 '현재 상태'입니다. 해볼 것: ① 로지스틱에서 y = 0과 y = 4 근처에 점을 놓아 보기 — 하나는 밀어내고(불안정) 하나는 끌어당긴다(안정). ② y′ = y − t에서 직선 y = t + 1 바로 위·아래에 놓으면 해가 정반대로 갈라진다. ③ 주기 부하에서 출발점이 어디든 결국 같은 진동으로 모이는지(과도 응답 → 정상 응답). · 모델: 각 해곡선은 RK4로 작은 간격으로 적분했다. 해가 범위 밖으로 발산하면 그 지점에서 멈춘다.</div>
+    </div>
+    <p>시뮬레이터에서 본 것들을 정리하면, 공식 없이도 해에 대해 많은 것을 말할 수 있습니다.</p>
+    <ul>
+      <li><b>평형점</b><span class="en">(equilibrium)</span>: \(f(y^*) = 0\)인 수평선. 화살표가 양쪽에서 모이면 <b>안정</b>, 흩어지면 <b>불안정</b>. 로지스틱의 \(y=K\)는 안정, \(y=0\)은 불안정. 1차 선형계에서 \(y_\infty\)가 언제나 안정 평형인 것은 τ &gt; 0이기 때문이다.</li>
+      <li><b>유일성</b>: \(f\)가 매끄러우면 해곡선은 서로 교차하지 않는다(피카르–린델뢰프 정리). 그래서 두 곡선 사이에 갇힌 해는 영원히 그 사이에 있다 — 공식 없이 해의 범위를 가두는 강력한 논리다.</li>
+      <li><b>과도 응답과 정상 응답</b>: 감쇠가 있는 계에 주기 입력이 들어오면, 처음 상태의 기억은 \(e^{-t/\tau}\)로 사라지고 모든 해가 하나의 주기 해로 모인다. 칩 온도가 부하 주기를 따라 출렁이는 것이 이것이다. 진폭과 위상 지연은 <a href="complex.html">2장</a>의 페이저로 바로 계산된다.</li>
+    </ul>
+    <div class="callout deep"><strong>로지스틱 식의 해</strong> \(\dot y = ry(1-y/K)\)는 변수분리로 풀린다: \(y(t) = K/\big(1 + (K/y_0 - 1)e^{-rt}\big)\). 처음에는 지수 성장(\(y \ll K\)이면 \(\dot y\approx ry\)), 중간 \(y = K/2\)에서 기울기 최대, 끝에서는 \(K\)로 1차 계처럼 다가간다. 기술 보급 곡선(S-커브), 반도체 결함 밀도 학습 곡선의 경험식이 이 모양을 빌려 쓴다. 6절의 감염병 모델에서 다시 나온다.</div>
+  </section>
+
+  <!-- =============================================================== 3 -->
+  <section id="numerical">
+    <h2>컴퓨터는 어떻게 푸는가: 오일러와 RK4</h2>
+    <div class="problem"><strong>회로 시뮬레이터 안에서 일어나는 일</strong>
+      <p>SPICE, 열 해석, 차량 동역학 시뮬레이터는 손으로 풀 수 없는 수천 개짜리 연립 미분방정식을 매 순간 푼다. 컴퓨터가 할 수 있는 것은 "이 점에서 기울기 \(f(t,y)\)를 계산해 줘"뿐이다. 기울기만으로 어떻게 곡선을 따라가는가? 한 걸음을 얼마나 크게 내디뎌도 되는가?</p>
+    </div>
+    <p>가장 정직한 방법은 기울기장의 화살표를 따라 한 걸음씩 걷는 것입니다. 지금 점의 기울기로 \(h\)만큼 직선으로 나아가고, 도착한 점에서 다시 기울기를 묻습니다. 이것이 <span class="term">오일러법</span><span class="en">(Euler Method)</span>으로, 오일러가 1768년의 적분학 교재에서 제시했습니다.</p>
+    <div class="formula">$$y_{n+1} = y_n + h\, f(t_n, y_n)$$
+      <div class="where">한 걸음의 오차는 \(O(h^2)\)(곡선의 휘어짐을 무시한 만큼), 걸음 수가 \(T/h\)이므로 끝점 오차는 \(O(h)\) — 걸음을 절반으로 줄이면 오차도 절반. <b>1차 방법</b>이다.</div>
+    </div>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 260" role="img" aria-label="오일러법과 RK4의 기하적 의미">
+        <line x1="40" y1="230" x2="380" y2="230" class="s-axis"/><line x1="40" y1="230" x2="40" y2="20" class="s-axis"/>
+        <path d="M60 50 C 140 120, 220 170, 370 200" class="s-acc"/>
+        <text x="300" y="178" class="t-acc">참 해</text>
+        <circle cx="60" cy="50" r="5" class="f-acc"/>
+        <path d="M60 50 L160 140 L260 186 L360 205" class="s-line" stroke-dasharray="0"/>
+        <circle cx="160" cy="140" r="4" class="f-elev"/><circle cx="260" cy="186" r="4" class="f-elev"/><circle cx="360" cy="205" r="4" class="f-elev"/>
+        <text x="150" y="160" class="t-dim">오일러: 접선으로 h만큼</text>
+        <line x1="160" y1="128" x2="160" y2="140" class="s-line"/>
+        <text x="60" y="250" class="t-mono">t₀</text><text x="155" y="250" class="t-mono">t₀+h</text>
+        <text x="210" y="40" class="t-dim">휘어짐을 무시해서 바깥으로 샌다</text>
+        <!-- 오른쪽: RK4 기울기 4개 -->
+        <line x1="440" y1="230" x2="780" y2="230" class="s-axis"/><line x1="440" y1="230" x2="440" y2="20" class="s-axis"/>
+        <path d="M470 60 C 560 120, 640 160, 760 190" class="s-acc"/>
+        <circle cx="470" cy="60" r="5" class="f-acc"/>
+        <line x1="470" y1="60" x2="530" y2="120" class="s-line"/><text x="535" y="116" class="t-mono">k₁</text>
+        <line x1="580" y1="112" x2="640" y2="152" class="s-line" stroke-dasharray="4 3"/><text x="644" y="150" class="t-mono">k₂</text>
+        <line x1="580" y1="122" x2="640" y2="156" class="s-line" stroke-dasharray="2 3"/><text x="610" y="176" class="t-mono">k₃</text>
+        <line x1="690" y1="172" x2="740" y2="186" class="s-line"/><text x="744" y="178" class="t-mono">k₄</text>
+        <line x1="580" y1="40" x2="580" y2="230" class="s-line" stroke-dasharray="2 4"/>
+        <line x1="690" y1="40" x2="690" y2="230" class="s-line" stroke-dasharray="2 4"/>
+        <text x="470" y="250" class="t-mono">t₀</text><text x="565" y="250" class="t-mono">t₀+h/2</text><text x="675" y="250" class="t-mono">t₀+h</text>
+        <text x="600" y="36" class="t-dim" text-anchor="middle">RK4: 시작·중간(2번)·끝의 기울기를 가중 평균</text>
+      </svg>
+      <figcaption><b>그림 4-2.</b> 왼쪽: 오일러법은 출발점의 접선만 믿고 걷기 때문에 곡선이 휘는 쪽 바깥으로 오차가 쌓인다. 오른쪽: 룽게–쿠타 4차(RK4)는 한 걸음 안에서 기울기를 네 번 물어(\(k_1\)~\(k_4\)) 심프슨 공식처럼 1:2:2:1로 평균한다.</figcaption>
+    </figure>
+    <p>더 나은 방법은 한 걸음 안에서 기울기를 여러 번 물어보는 것입니다. 룽게(1895)와 쿠타(1901)가 발전시킨 방법 중 가장 널리 쓰이는 <span class="term">RK4</span><span class="en">(classical Runge–Kutta)</span>는 이렇습니다.</p>
+    <div class="formula">$$\begin{aligned}k_1 &= f(t_n, y_n), & k_2 &= f\!\left(t_n+\tfrac h2,\; y_n + \tfrac h2 k_1\right),\\ k_3 &= f\!\left(t_n+\tfrac h2,\; y_n + \tfrac h2 k_2\right), & k_4 &= f(t_n + h,\; y_n + h k_3),\end{aligned}\qquad y_{n+1} = y_n + \tfrac h6\left(k_1 + 2k_2 + 2k_3 + k_4\right)$$
+      <div class="where">끝점 오차 \(O(h^4)\): 걸음을 절반으로 줄이면 오차가 1/16. 걸음당 계산은 4배지만, 같은 정확도를 훨씬 큰 걸음으로 얻는다. 이 책의 모든 시뮬레이터(<code>MB.rk4</code>)도 이것을 쓴다.</div>
+    </div>
+
+    <div class="sim" id="sim-ode-euler">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>오일러 vs RK4: 단계 크기 h와 오차·불안정</h3></div>
+      <div class="split">
+        <div><canvas id="cv-ode-eu"></canvas><span class="cap">해 비교</span></div>
+        <div><canvas id="cv-ode-err"></canvas><span class="cap">끝점 오차 vs h (로그–로그)</span></div>
+      </div>
+      <div class="sim-controls">
+        <div class="ctrl"><span>문제</span><div class="seg" id="ode-eu-prob"><button data-value="decay" class="on">감쇠 y′ = −y</button><button data-value="osc">진동 x″ = −x</button></div></div>
+        <label class="ctrl"><span>단계 크기 h <output id="ode-eu-h-out"></output></span><input type="range" id="ode-eu-h" min="0.05" max="2.6" step="0.05" value="0.5"></label>
+        <label class="check"><input type="checkbox" id="ode-eu-rk" checked> RK4도 함께 보기</label>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">걸음 수 / f 호출(오일러·RK4)</span><span class="v" id="ode-eu-n">—</span></div>
+        <div class="stat"><span class="k">오일러 끝점 오차</span><span class="v" id="ode-eu-e1">—</span></div>
+        <div class="stat"><span class="k">RK4 끝점 오차</span><span class="v" id="ode-eu-e4">—</span></div>
+        <div class="stat"><span class="k">오일러 한 걸음 증폭률</span><span class="v" id="ode-eu-g">—</span></div>
+      </div>
+      <div class="sim-msg" id="ode-eu-msg">—</div>
+      <div class="sim-note">해볼 것: ① 감쇠 문제에서 h를 1 → 2 → 2.5로 올려 보세요. h &gt; 1이면 오일러 해가 부호를 바꾸며 진동하고, h &gt; 2이면 0으로 가야 할 해가 폭발합니다. ② 진동 문제에서는 h가 아무리 작아도 오일러 해가 바깥으로 나선형으로 커집니다(에너지가 생김). ③ 오른쪽 그래프에서 두 직선의 기울기 — 오일러는 1, RK4는 4 — 를 확인. · 모델: 감쇠는 \(y(0)=1\), 진동은 \(x(0)=1, \dot x(0)=0\). 오차는 감쇠 \(t\approx 2\), 진동 \(t\approx 20\)(정수 걸음으로 가장 가까운 시각)에서 정확해와의 차이.</div>
+    </div>
+    <p>두 번째 관찰이 더 중요합니다. 정확도와 별개로 <span class="term">안정성</span><span class="en">(Stability)</span>의 벽이 있습니다. \(\dot y = -\lambda y\)에 오일러를 쓰면 \(y_{n+1} = (1 - h\lambda)\,y_n\)이므로, 증폭률 \(|1-h\lambda|\)가 1을 넘는 순간(\(h\lambda > 2\)) 해가 폭발합니다. 시정수가 짧은 성분(큰 λ) 하나가 전체의 걸음 크기를 묶어 버리는 이 현상을 <b>강성</b><span class="en">(stiffness)</span>이라 합니다. 1 ps짜리 기생 RC와 1 ms짜리 열 시정수가 한 회로에 섞여 있으면, 명시적 방법은 1 ps 걸음으로 1 ms를 걸어야 합니다. 그래서 SPICE 같은 회로 시뮬레이터는 후진 오일러·사다리꼴·기어(BDF) 같은 <b>암시적</b> 방법을 기본으로 씁니다. 이 이야기는 <a href="numerics.html">10장</a>에서 이어집니다.</p>
+  </section>
+
+  <!-- =============================================================== 4 -->
+  <section id="second-order">
+    <h2>2차 방정식: 서스펜션과 RLC는 같은 식이다</h2>
+    <div class="problem"><strong>바늘이 흔들리지 않고 빨리 멈추게</strong>
+      <p>아날로그 계기의 바늘, 자동차 서스펜션, 하드디스크 헤드, 카메라 손떨림 보정 액추에이터. 모두 "목표 위치로 빨리 가되, 지나쳐서 출렁이지 말라"는 요구를 받는다. 스프링이 너무 세면 출렁이고, 댐퍼가 너무 세면 굼뜨다. 그 사이 어디가 최적인가?</p>
+    </div>
+    <p>질량 \(m\)이 스프링(강성 \(k\))과 댐퍼(감쇠 계수 \(c\))에 매달려 있으면 뉴턴의 제2법칙은 2차 미분방정식이 됩니다. 놀랍게도 저항·인덕터·축전기를 직렬로 이은 회로에서 전하 \(q\)가 따르는 식도 글자만 다르고 똑같습니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 250" role="img" aria-label="스프링-질량-감쇠기와 RLC 회로 대응">
+        <!-- 기계 -->
+        <rect x="30" y="40" width="16" height="170" class="f-surface"/>
+        <path d="M46 90 l14 0 l8 -12 l12 24 l12 -24 l12 24 l12 -24 l12 24 l8 -12 l14 0" class="s-line"/>
+        <text x="100" y="66" class="t" text-anchor="middle">k (스프링)</text>
+        <path d="M46 160 l40 0 M86 146 l0 28 M80 146 l40 0 l0 28 l-40 0 M100 160 l50 0" class="s-line"/>
+        <text x="100" y="196" class="t" text-anchor="middle">c (댐퍼)</text>
+        <rect x="150" y="70" width="90" height="110" rx="6" class="f-acc-soft"/>
+        <text x="195" y="130" class="t-acc" text-anchor="middle">m</text>
+        <path d="M245 125 L300 125" class="s-acc"/><path d="M292 119 L302 125 L292 131" class="s-acc"/>
+        <text x="270" y="112" class="t-mono" text-anchor="middle">x</text>
+        <text x="160" y="232" class="t-dim" text-anchor="middle">m ẍ + c ẋ + k x = F(t)</text>
+        <!-- 가운데 대응 -->
+        <text x="400" y="80" class="t-mono" text-anchor="middle">m ↔ L</text>
+        <text x="400" y="110" class="t-mono" text-anchor="middle">c ↔ R</text>
+        <text x="400" y="140" class="t-mono" text-anchor="middle">k ↔ 1/C</text>
+        <text x="400" y="170" class="t-mono" text-anchor="middle">x ↔ q,  ẋ ↔ i</text>
+        <!-- 회로 -->
+        <rect x="500" y="50" width="260" height="140" rx="4" class="s-line" fill="none"/>
+        <rect x="540" y="40" width="70" height="20" class="f-elev"/><text x="575" y="35" class="t" text-anchor="middle">R</text>
+        <path d="M650 50 q10 -18 20 0 q10 -18 20 0 q10 -18 20 0" class="s-line"/><text x="680" y="25" class="t" text-anchor="middle">L</text>
+        <line x1="748" y1="110" x2="772" y2="110" class="s-acc"/><line x1="748" y1="124" x2="772" y2="124" class="s-acc"/>
+        <rect x="755" y="111" width="10" height="12" fill="var(--bg-elev)"/>
+        <text x="782" y="122" class="t">C</text>
+        <circle cx="500" cy="120" r="16" class="f-elev"/><text x="500" y="125" class="t-mono" text-anchor="middle">~</text>
+        <text x="630" y="232" class="t-dim" text-anchor="middle">L q̈ + R q̇ + q / C = V(t)</text>
+      </svg>
+      <figcaption><b>그림 4-3.</b> 기계–전기 상사(相似). 질량은 관성(인덕턴스), 댐퍼는 에너지를 열로 버리는 저항, 스프링은 에너지를 저장했다 돌려주는 축전기(강성은 1/C)에 대응한다. 그래서 서스펜션 설계와 필터 설계가 같은 언어를 쓴다.</figcaption>
+    </figure>
+    <div class="formula">$$\ddot x + 2\zeta\omega_0\,\dot x + \omega_0^2\,x = 0,\qquad \omega_0 = \sqrt{\frac km} = \frac{1}{\sqrt{LC}},\qquad \zeta = \frac{c}{2\sqrt{mk}} = \frac R2\sqrt{\frac CL}$$
+      <div class="where">\(\omega_0\): 감쇠가 없을 때의 고유 각진동수. \(\zeta\): <b>감쇠비</b>(damping ratio). 계의 성격은 이 두 숫자로 전부 정해진다. 필터 설계에서는 \(Q = 1/(2\zeta)\)를 더 자주 쓴다.</div>
+    </div>
+    <p>이 식을 푸는 요령은 \(x = e^{st}\)를 넣어 보는 것입니다. 지수함수는 미분해도 모양이 그대로이므로 미분방정식이 <b>대수 방정식</b>으로 바뀝니다.</p>
+    <div class="formula">$$s^2 + 2\zeta\omega_0 s + \omega_0^2 = 0 \quad\Longrightarrow\quad s_{1,2} = -\zeta\omega_0 \pm \omega_0\sqrt{\zeta^2 - 1}$$
+      <div class="where">이 <b>특성방정식</b>의 근이 어디 있느냐가 전부다. \(\zeta&gt;1\): 서로 다른 음의 실근 둘 → 진동 없이 느리게(과감쇠). \(\zeta=1\): 중근 → 진동 없이 가장 빠르게(임계 감쇠). \(\zeta&lt;1\): 켤레 복소근 \(-\sigma \pm i\omega_d\) → \(e^{-\sigma t}\)로 줄어드는 진동(부족 감쇠).</div>
+    </div>
+    <p>복소근이 왜 진동일까요? <a href="complex.html">2장</a>의 오일러 공식으로 \(e^{(-\sigma + i\omega_d)t} = e^{-\sigma t}\,(\cos\omega_d t + i\sin\omega_d t)\). 실수부는 <b>얼마나 빨리 줄어드는가</b>, 허수부는 <b>얼마나 빨리 도는가</b>입니다. 복소평면의 점 하나가 응답의 성격을 다 말해 줍니다.</p>
+
+    <div class="sim" id="sim-ode-damping">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>감쇠비 ζ와 특성근: 계단 응답 ↔ 복소평면</h3></div>
+      <div class="split">
+        <div><canvas id="cv-ode-step"></canvas><span class="cap" id="ode-d-cap">계단 응답 x(t)</span></div>
+        <div><canvas id="cv-ode-roots"></canvas><span class="cap">특성근 s (복소평면)</span></div>
+      </div>
+      <div class="sim-controls">
+        <label class="ctrl"><span>감쇠비 ζ <output id="ode-zeta-out"></output></span><input type="range" id="ode-zeta" min="0" max="2.5" step="0.01" value="0.3"></label>
+        <label class="ctrl"><span>고유 각진동수 ω₀ <output id="ode-w0-out"></output></span><input type="range" id="ode-w0" min="0.5" max="4.5" step="0.05" value="2"></label>
+        <div class="ctrl"><span>해석</span><div class="seg" id="ode-d-view"><button data-value="car" class="on">서스펜션</button><button data-value="rlc">RLC</button><button data-value="meter">계측기 바늘</button></div></div>
+        <div class="btn-row"><button class="btn primary" id="ode-d-play">▶ 재생</button><button class="btn" id="ode-d-crit">임계 감쇠로</button></div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">특성근 s₁, s₂</span><span class="v" id="ode-d-roots">—</span></div>
+        <div class="stat"><span class="k">종류</span><span class="v" id="ode-d-kind">—</span></div>
+        <div class="stat"><span class="k">오버슈트</span><span class="v" id="ode-d-os">—</span></div>
+        <div class="stat"><span class="k">2% 정착 시간</span><span class="v" id="ode-d-ts">—</span></div>
+      </div>
+      <div class="sim-note">오른쪽 복소평면의 점(위쪽 근)을 직접 끌 수 있습니다. 해볼 것: ① 근을 허수축 쪽으로 끌면(ζ → 0) 감쇠 없는 진동, 왼쪽으로 끌면 빨리 죽는다 — 실수부 = 감쇠 속도. ② 원(|s| = ω₀)을 따라 돌리면 ω₀는 그대로 ζ만 바뀐다. ③ '임계 감쇠로'를 누른 뒤 ζ를 1보다 키우면 근이 실수축에서 둘로 갈라지고, 느린 근이 원점 쪽으로 다가가 응답이 오히려 굼떠진다. · 모델: 선형 2차 계, 단위 계단 입력(목표 위치 0 → 1). 실제 서스펜션은 타이어 강성·비선형 댐퍼가 더해진 다자유도 계다. 승용차 서스펜션은 대략 ζ ≈ 0.2~0.4, 계측기는 0.6~0.7 근처로 설계하는 경우가 많다.</div>
+    </div>
+    <div class="callout"><strong>왜 계측기는 ζ ≈ 0.7인가</strong> 임계 감쇠(ζ = 1)는 '오버슈트 없이 가장 빠른' 응답이지만, 약간의 오버슈트(ζ = 0.7에서 약 4.6%)를 허용하면 목표 근처(±5%)에 더 일찍 들어온다. 버터워스 2차 필터가 \(Q = 1/\sqrt2\), 즉 \(\zeta = 0.707\)인 것도 같은 타협이다 — 주파수 응답이 공진 봉우리 없이 가장 평평하다.</div>
+  </section>
+
+  <!-- =============================================================== 5 -->
+  <section id="resonance">
+    <h2>강제 진동과 공진: 작은 힘이 큰 진폭을 만드는 이유</h2>
+    <div class="problem"><strong>엔진 회전수가 특정 값일 때만 떨리는 차</strong>
+      <p>특정 rpm에서만 대시보드가 웅웅 떨리고, 세탁기는 탈수 초반 특정 속도를 지날 때 크게 흔들린다. 라디오는 수많은 방송 중 하나만 골라 듣는다. 모두 외부에서 주기적으로 미는 힘이 계의 고유 진동수와 맞을 때 생기는 일이다. 얼마나 커지고, 무엇이 그 크기를 정하는가?</p>
+    </div>
+    <p>2차 계를 \(F_0\sin\omega t\)로 계속 밀면, 과도 응답이 \(e^{-\zeta\omega_0 t}\)로 사라진 뒤 같은 주파수로 진동하는 정상 응답만 남습니다. 그 진폭을 정적 처짐 \(F_0/k\)로 나눈 값(동적 증폭률)은 주파수비 \(r = \omega/\omega_0\)의 함수입니다.</p>
+    <div class="formula">$$\left|\frac{X}{F_0/k}\right| = \frac{1}{\sqrt{(1-r^2)^2 + (2\zeta r)^2}},\qquad \varphi = \operatorname{atan2}\!\left(2\zeta r,\; 1 - r^2\right),\qquad Q = \frac{1}{2\zeta}$$
+      <div class="where">\(r = 1\)에서 증폭률은 정확히 \(Q\)이고 위상 지연은 90°. 봉우리 자체는 \(r = \sqrt{1-2\zeta^2}\)에서 약간 낮은 쪽에 생긴다(ζ가 작으면 거의 1). 반전력(−3 dB) 대역폭은 \(\Delta\omega \approx \omega_0/Q\).</div>
+    </div>
+
+    <div class="sim" id="sim-ode-resonance">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>주파수 응답 곡선과 공진의 성장</h3></div>
+      <div class="sim-body">
+        <div class="sim-view"><canvas id="cv-ode-fr"></canvas><span class="tag-tl">동적 증폭률 |X|/(F₀/k) vs r = ω/ω₀</span></div>
+        <div class="sim-view"><canvas id="cv-ode-ft"></canvas><span class="tag-tl">정지 상태에서 시작한 응답 x(t), f₀ = 1 Hz</span></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>감쇠비 ζ <output id="ode-r-z-out"></output></span><input type="range" id="ode-r-z" min="0.01" max="1" step="0.01" value="0.05"></label>
+          <label class="ctrl"><span>구동 주파수비 r <output id="ode-r-r-out"></output></span><input type="range" id="ode-r-r" min="0.1" max="3" step="0.01" value="0.9"></label>
+          <div class="btn-row"><button class="btn" id="ode-r-on">r = 1 (공진)</button><button class="btn" id="ode-r-off">r = 2 (고주파)</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Q = 1/(2ζ)</span><span class="v" id="ode-r-q">—</span></div>
+        <div class="stat"><span class="k">정상 진폭(증폭률)</span><span class="v" id="ode-r-a">—</span></div>
+        <div class="stat"><span class="k">위상 지연 φ</span><span class="v" id="ode-r-ph">—</span></div>
+        <div class="stat"><span class="k">−3 dB 대역폭(f₀ = 1 Hz)</span><span class="v" id="ode-r-bw">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① r = 1에 두고 ζ를 0.01까지 낮추면 진폭이 Q배(50배)까지, 그러나 <b>천천히</b> 자란다 — 정상 상태까지 약 Q/π 주기 이상이 걸린다. ② r = 2 이상에서는 증폭률이 1보다 작고 위상이 거의 180° — 질량이 힘과 반대로 움직인다(진동 절연의 원리). ③ ζ를 0.7 이상으로 하면 봉우리가 사라진다. · 모델: 선형 2차 계, \(\ddot x + 2\zeta\omega_0\dot x + \omega_0^2 x = \omega_0^2\sin(r\omega_0 t)\), RK4로 적분. 점선은 정상 진폭.</div>
+    </div>
+    <p>진폭이 커지는 이유는 에너지의 장부로 보면 분명합니다. 힘이 한 주기 동안 계에 넣는 일은 \(\oint F\,dx = \oint F\,\dot x\,dt\)인데, 공진에서는 속도가 힘과 같은 위상(변위는 90° 지연)이라 매 주기 일이 최대로 들어갑니다. 진폭은 "매 주기 들어오는 에너지 = 댐퍼가 매 주기 버리는 에너지"가 될 때까지 자랍니다. 댐퍼가 버리는 에너지는 진폭의 제곱에 비례하므로, 감쇠가 작을수록 그 균형점은 높아집니다. 그래서 Q는 두 얼굴을 가집니다: <b>공진에서의 증폭률</b>이자, <b>자유 진동이 얼마나 오래 울리는가</b>(에너지가 \(1/e\)로 줄 때까지 약 \(Q/2\pi\) 주기)입니다.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>계</th><th>Q의 대략적 크기</th><th>공진을 어떻게 쓰나/피하나</th></tr></thead>
+      <tbody>
+        <tr><td>자동차 서스펜션</td><td>1~3</td><td>바퀴 진동 주파수 대역에서 차체로 전달을 줄이도록 ζ 조정</td></tr>
+        <tr><td>RLC 동조 회로(라디오)</td><td>수십~수백</td><td>Q가 클수록 옆 채널을 잘 거른다(선택도)</td></tr>
+        <tr><td>수정 진동자</td><td>10⁴~10⁶</td><td>극도로 좁은 공진 → 시계·클록의 기준 주파수</td></tr>
+        <tr><td>MEMS 자이로·가속도계</td><td>수~수만(진공 패키징)</td><td>감지 모드 공진으로 감도 증폭, 대역폭과 맞바꿈</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout warn"><strong>타코마 다리는 '단순 공진'이 아니다</strong> 1940년 타코마 내로스 다리 붕괴는 흔히 바람과의 공진으로 소개되지만, 바람은 일정한 주기로 밀지 않았다. 현재의 설명은 구조물의 움직임이 공기력을 바꾸고 그 공기력이 다시 움직임을 키우는 <b>공탄성 플러터</b>(자려 진동)다. 식으로 쓰면 유효 감쇠 \(\zeta\)가 음수가 된 경우로, 특성근이 복소평면의 오른쪽 반평면으로 넘어간 것이다. 앞 절의 시뮬레이터에서 근을 허수축 오른쪽으로 보내면 어떻게 될지 상상해 보라.</div>
+  </section>
+
+  <!-- =============================================================== 6 -->
+  <section id="sir">
+    <h2>감염병 SIR 모델: 연립 미분방정식</h2>
+    <div class="problem"><strong>백신은 몇 %가 맞아야 하는가</strong>
+      <p>모두가 맞을 수는 없다. 그렇다면 몇 %가 면역을 가져야 유행이 스스로 꺼지는가? 접종률이 그보다 조금 모자라면 무슨 일이 생기는가? 그리고 정점은 언제 오는가 — 병상을 미리 준비하려면 그 날짜가 필요하다.</p>
+    </div>
+    <p>인구를 세 칸으로 나눕니다: 감염될 수 있는 \(S\), 감염된 \(I\), 회복(또는 면역)된 \(R\). 감염은 \(S\)와 \(I\)가 만나는 만큼(질량 작용) 일어나고, 회복은 평균 \(D\)일 걸린다고 하면 1927년 커맥–맥켄드릭이 정식화한 <span class="term">SIR 모델</span>이 됩니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 150" role="img" aria-label="SIR 구획 모델">
+        <rect x="60" y="45" width="140" height="60" rx="10" class="f-acc-soft"/><text x="130" y="82" class="t-acc" text-anchor="middle">S 감수성</text>
+        <rect x="330" y="45" width="140" height="60" rx="10" class="f-acc2-soft"/><text x="400" y="82" class="t" text-anchor="middle">I 감염</text>
+        <rect x="600" y="45" width="140" height="60" rx="10" class="f-surface"/><text x="670" y="82" class="t" text-anchor="middle">R 회복·면역</text>
+        <path d="M205 75 L322 75" class="s-line"/><path d="M314 69 L326 75 L314 81" class="s-line"/>
+        <path d="M475 75 L592 75" class="s-line"/><path d="M584 69 L596 75 L584 81" class="s-line"/>
+        <text x="265" y="62" class="t-mono" text-anchor="middle">β·S·I</text>
+        <text x="535" y="62" class="t-mono" text-anchor="middle">γ·I  (γ = 1/D)</text>
+        <path d="M130 110 Q 400 150 670 110" class="s-line" stroke-dasharray="4 4"/>
+        <text x="400" y="142" class="t-dim" text-anchor="middle">접종: 처음부터 R로 (비율 p)</text>
+      </svg>
+      <figcaption><b>그림 4-4.</b> SIR 구획 모델. 각 화살표가 변화율 하나다. 칸 사이의 흐름만 정하면 연립 미분방정식이 저절로 써진다 — 화학 반응 속도론, 약동학 구획 모델, 반도체의 캐리어 생성·재결합 모델이 모두 같은 방식으로 만들어진다.</figcaption>
+    </figure>
+    <div class="formula">$$\dot S = -\beta S I,\qquad \dot I = \beta S I - \gamma I,\qquad \dot R = \gamma I,\qquad R_0 = \frac{\beta}{\gamma}$$
+      <div class="where">\(S+I+R = 1\)(비율). \(R_0\): <b>기초 감염 재생산수</b> — 모두가 감수성일 때 감염자 한 명이 회복 전까지 옮기는 평균 인원. \(\dot I = \gamma I\,(R_0 S - 1)\)이므로 \(R_0 S &gt; 1\)일 때만 감염이 늘어난다.</div>
+    </div>
+    <p>마지막 줄에서 두 가지 결론이 바로 나옵니다. 첫째, 감염자 곡선의 정점은 \(S\)가 \(1/R_0\)로 떨어지는 순간입니다(그때 \(\dot I = 0\)). 둘째, 처음부터 \(S &lt; 1/R_0\)이면 감염은 처음부터 줄어듭니다. 접종률 \(p\)이면 \(S_0 \approx 1-p\)이므로</p>
+    <div class="formula">$$p_c = 1 - \frac{1}{R_0}$$
+      <div class="where"><b>집단면역 임계</b>. \(R_0 = 2.5\)면 60%, \(R_0 = 4\)면 75%. 홍역처럼 \(R_0\)가 10을 훌쩍 넘는 것으로 알려진 병은 90%를 넘어야 한다. 임계에 못 미친 접종도 정점을 낮추고 늦춘다.</div>
+    </div>
+
+    <div class="sim" id="sim-ode-sir">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>SIR 모델: R₀, 회복 기간, 접종률</h3></div>
+      <div class="split">
+        <div><canvas id="cv-ode-sir"></canvas><span class="cap">S · I · R (인구 비율) vs 일</span></div>
+        <div><canvas id="cv-ode-si"></canvas><span class="cap">위상 평면 (S, I)</span></div>
+      </div>
+      <div class="sim-controls">
+        <label class="ctrl"><span>기초 재생산수 R₀ <output id="ode-s-r0-out"></output></span><input type="range" id="ode-s-r0" min="0.5" max="8" step="0.1" value="2.5"></label>
+        <label class="ctrl"><span>평균 회복 기간 D <output id="ode-s-d-out"></output></span><input type="range" id="ode-s-d" min="2" max="21" step="1" value="7"></label>
+        <label class="ctrl"><span>접종률 p <output id="ode-s-p-out"></output></span><input type="range" id="ode-s-p" min="0" max="95" step="1" value="0"></label>
+        <div class="ctrl"><span>세로축</span><div class="seg" id="ode-s-scale"><button data-value="lin" class="on">선형</button><button data-value="log">로그</button></div></div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">실효 재생산수 R₀(1−p)</span><span class="v" id="ode-s-reff">—</span></div>
+        <div class="stat"><span class="k">집단면역 임계 1−1/R₀</span><span class="v" id="ode-s-hit">—</span></div>
+        <div class="stat"><span class="k">감염자 정점 / 날짜</span><span class="v" id="ode-s-peak">—</span></div>
+        <div class="stat"><span class="k">최종 누적 감염</span><span class="v" id="ode-s-final">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① 접종률을 집단면역 임계 바로 아래·위로 움직여 보세요 — 임계를 넘으면 곡선이 일어서지 못한다. ② 오른쪽 위상 평면에서 I의 정점이 언제나 점선 S = 1/R₀ 위에 있음을 확인. ③ 로그 축으로 바꾸면 초기 감염자 곡선이 직선 — 지수 성장 \(e^{(\beta-\gamma)t}\)이다. 같은 R₀에서 D만 바꾸면 최종 감염 비율은 같고 시간 축만 늘어난다. · 모델: 잘 섞인 단일 집단, 출생·사망 없음, 영구 면역, 접종은 100% 효과, 초기 감염자 0.01%. 행동 변화·연령 구조·잠복기(SEIR)는 무시한 교육용 모델이다.</div>
+    </div>
+    <p>SIR과 로지스틱 성장의 관계도 보입니다. 회복이 없으면(\(\gamma = 0\)) \(S = 1 - I\)이므로 \(\dot I = \beta I (1-I)\) — 바로 2절의 로지스틱 식입니다. 회복이 있으면 감염자 수는 로지스틱처럼 포화하지 않고, 감수성 인구라는 '연료'가 \(1/R_0\) 아래로 떨어지는 순간 꺾여서 줄어듭니다. 또 하나 눈여겨볼 점: 유행이 끝나도 \(S\)는 0이 되지 않습니다. 최종 감염 비율 \(z\)는 \(z = 1 - e^{-R_0 z}\)를 만족하며, \(R_0=2.5\)면 약 89%입니다. 집단면역 임계(60%)를 한참 넘어선 '관성 감염'이 생기는 셈입니다.</p>
+  </section>
+
+  <!-- =============================================================== 7 -->
+  <section id="heat-equation">
+    <h2>편미분방정식 맛보기: 열확산 방정식</h2>
+    <div class="problem"><strong>칩 위의 핫스팟은 어떻게 퍼지는가</strong>
+      <p>1절의 모델은 칩 전체를 온도 하나로 보았다. 그러나 실제 다이에는 CPU 코어 하나가 몰래 뜨거워지는 <b>핫스팟</b>이 있고, 온도 센서는 그 옆 몇 mm에 있다. 온도가 위치 \(x\)와 시간 \(t\) 모두의 함수가 되면, 변화율도 두 방향으로 생긴다.</p>
+    </div>
+    <p>막대를 잘게 나눈 칸 하나를 생각합시다. 칸으로 들어오는 열은 왼쪽 이웃과의 온도 차, 나가는 열은 오른쪽 이웃과의 온도 차에 비례합니다(푸리에의 열전도 법칙). 둘을 합치면 칸의 온도 상승률은 \((T_{i-1} - T_i) + (T_{i+1} - T_i)\)에 비례합니다. 정리하면 놀랍도록 단순한 문장이 됩니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 220" role="img" aria-label="이산 라플라시안: 이웃 평균과의 차이">
+        <line x1="60" y1="180" x2="740" y2="180" class="s-axis"/>
+        <rect x="170" y="110" width="90" height="70" class="f-surface"/>
+        <rect x="355" y="50" width="90" height="130" class="f-acc-soft"/>
+        <rect x="540" y="90" width="90" height="90" class="f-surface"/>
+        <text x="215" y="202" class="t-mono" text-anchor="middle">T(i−1)</text>
+        <text x="400" y="202" class="t-mono" text-anchor="middle">T(i)</text>
+        <text x="585" y="202" class="t-mono" text-anchor="middle">T(i+1)</text>
+        <line x1="170" y1="100" x2="630" y2="100" class="s-line" stroke-dasharray="6 4"/>
+        <text x="640" y="104" class="t-dim">이웃 평균</text>
+        <path d="M400 56 L400 94" class="s-acc"/><path d="M394 86 L400 96 L406 86" class="s-acc"/>
+        <text x="412" y="78" class="t-acc">∂T/∂t ∝ (평균 − 자기)</text>
+        <text x="60" y="30" class="t-dim">자기가 이웃 평균보다 높으면 식고, 낮으면 데워진다</text>
+      </svg>
+      <figcaption><b>그림 4-5.</b> 2차 미분의 직관. \(\frac{T_{i-1} - 2T_i + T_{i+1}}{\Delta x^2} = \frac{2}{\Delta x^2}\left(\frac{T_{i-1}+T_{i+1}}{2} - T_i\right)\). 2차 미분은 "이웃 평균에서 얼마나 튀어나와 있는가"를 잰다. 봉우리는 깎이고 골짜기는 메워진다 — 확산은 세상을 평평하게 만드는 연산이다.</figcaption>
+    </figure>
+    <div class="formula">$$\frac{\partial T}{\partial t} = \alpha\,\frac{\partial^2 T}{\partial x^2}\qquad\xrightarrow{\text{유한 차분}}\qquad T_i^{n+1} = T_i^n + r\left(T_{i-1}^n - 2T_i^n + T_{i+1}^n\right),\quad r = \frac{\alpha\,\Delta t}{\Delta x^2}$$
+      <div class="where">\(\alpha = k/(\rho c_p)\): 열확산도(m²/s). 실리콘은 상온에서 약 0.8~0.9 cm²/s. 확산 거리는 \(\sqrt{\alpha t}\)로 자라므로, 실리콘에서 1 mm 퍼지는 데는 대략 \(t \sim L^2/\alpha \approx 10\) ms 정도가 걸린다. 1822년 푸리에가 <i>열의 해석적 이론</i>에서 이 식을 풀려고 푸리에 급수를 꺼냈다(<a href="fourier.html">5장</a>).</div>
+    </div>
+    <p>오른쪽 식은 1절의 오일러법을 칸마다 적용한 것뿐입니다. 그래서 같은 안정성 문제가 따라옵니다. 가장 들쭉날쭉한 모양(칸마다 +, − 번갈아)은 한 걸음에 \(1 - 4r\)배가 되므로, \(|1-4r| \le 1\), 즉</p>
+    <div class="formula">$$r = \frac{\alpha\,\Delta t}{\Delta x^2} \le \frac12$$
+      <div class="where">격자를 두 배 촘촘히(\(\Delta x/2\)) 하면 시간 걸음은 네 배 짧아야 한다. 명시적 확산 계산이 비싼 이유이고, TCAD·열 해석 도구가 크랭크–니콜슨 같은 암시적 방법을 쓰는 이유다. 2차원이면 한계가 1/4로 더 엄격해진다.</div>
+    </div>
+
+    <div class="sim" id="sim-ode-heat">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>1D 열확산: 핫스팟과 도펀트가 퍼지는 모습</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-ode-heat"></canvas><span class="tag-tl" id="ode-h-tag">—</span></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>초기 상태</span><div class="ode-presets"><button class="btn" data-h="spot">핫스팟</button><button class="btn" data-h="two">핫스팟 두 개</button><button class="btn" data-h="half">반쪽 가열</button><button class="btn" data-h="dopant">도펀트 확산</button></div></div>
+          <div class="ctrl"><span>양 끝 경계</span><div class="seg" id="ode-h-bc"><button data-value="sink" class="on">방열판(25 °C 고정)</button><button data-value="ins">단열</button></div></div>
+          <label class="ctrl"><span>r = αΔt/Δx² <output id="ode-h-r-out"></output></span><input type="range" id="ode-h-r" min="0.05" max="0.5" step="0.05" value="0.4"></label>
+          <label class="ctrl"><span>프레임당 걸음 수 <output id="ode-h-sp-out"></output></span><input type="range" id="ode-h-sp" min="1" max="60" step="1" value="12"></label>
+          <label class="check"><input type="checkbox" id="ode-h-unstable"> 안정 조건 깨 보기 (r = 0.6)</label>
+          <label class="check"><input type="checkbox" id="ode-h-arrows"> 이웃 평균 − 자기 (변화 방향) 보기</label>
+          <div class="btn-row"><button class="btn primary" id="ode-h-play">▶ 재생</button><button class="btn" id="ode-h-step">한 걸음</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">경과 시간</span><span class="v" id="ode-h-t">—</span></div>
+        <div class="stat"><span class="k">최댓값</span><span class="v" id="ode-h-max">—</span></div>
+        <div class="stat"><span class="k">총량 (∑, 초기 대비)</span><span class="v" id="ode-h-sum">—</span></div>
+        <div class="stat"><span class="k">걸음 수</span><span class="v" id="ode-h-n">—</span></div>
+      </div>
+      <div class="sim-msg" id="ode-h-msg">캔버스를 클릭하거나 끌면 그 위치에 열을 더합니다.</div>
+      <div class="sim-note">해볼 것: ① 핫스팟에서 재생 — 봉우리가 낮아지며 넓어지고, 폭은 \(\sqrt{t}\)로 자란다. 단열 경계에서는 총량이 보존되고, 방열판 경계에서는 끝으로 빠져나간다. ② '도펀트 확산'은 표면 농도를 고정한 채 실리콘 속으로 불순물이 들어가는 공정이다. 점선(해석해 \(\mathrm{erfc}\))과 계산이 겹치는지 보라. ③ '안정 조건 깨 보기'를 켜면 칸마다 번갈아 튀는 톱니가 자라 계산이 폭발한다. · 모델: 80칸 명시적 유한 차분(FTCS). 열 모드는 길이 10 mm 실리콘 막대(α ≈ 88 mm²/s), 도펀트 모드는 깊이 0.5 µm, 확산계수 D ≈ 10⁻¹⁴ cm²/s(1000 °C 안팎의 붕소 정도 크기)로 시간을 환산했다. 표면에서 열이 공기로 빠지는 효과는 무시했다.</div>
+    </div>
+    <p>도펀트 확산 모드가 이 장의 마지막 의외성입니다. 반도체 공정에서 고온로에 웨이퍼를 넣어 붕소나 인을 실리콘 속으로 밀어 넣는 일은, 칩 위에서 열이 퍼지는 것과 <b>완전히 같은 방정식</b>을 따릅니다(픽의 제2법칙, \(\partial C/\partial t = D\,\partial^2 C/\partial x^2\)). 표면 농도를 고정하면 해는 \(C = C_s\,\mathrm{erfc}\big(x/2\sqrt{Dt}\big)\)이고, 확산 깊이는 \(\sqrt{Dt}\)로 자랍니다. D가 10⁻¹⁴ cm²/s 정도라면 한 시간에 \(\sqrt{Dt}\approx 60\) nm — 접합 깊이를 수십 nm 단위로 제어할 수 있는 근거입니다. 실제 공정에서는 D가 온도에 지수적으로(아레니우스) 의존하고 농도·결함에 따라 달라지므로, TCAD가 이 식을 비선형으로 확장해 수치로 풉니다. 같은 식은 확률 쪽에서도 나타납니다: 무작위 걸음의 분포가 퍼지는 모습이 바로 이것이며, 그 폭이 \(\sqrt t\)로 자라는 이유는 <a href="probability.html">7장</a>의 중심극한정리가 설명합니다.</p>
+  </section>
+
+  <!-- =============================================================== 8 -->
+  <section id="uses">
+    <h2>이 도구가 쓰이는 곳</h2>
+    <p>미분방정식은 시리즈 거의 모든 책의 바닥에 깔려 있습니다. 아래 책들에서 "더 깊이" 링크를 따라왔다면, 이 장의 어느 식이 그 현상과 대응하는지 표로 확인해 보세요.</p>
+    <div class="uses">
+      <a href="https://analogbook.euiyun.com/"><small>ANALOGBOOK</small>RC·RLC 과도 응답<br><span>필터의 Q, 증폭기 정착 시간, 위상 여유 — 모두 특성근의 위치 문제.</span></a>
+      <a href="https://carbook.euiyun.com/"><small>CARBOOK</small>서스펜션과 승차감<br><span>감쇠비 ζ, 바퀴·차체의 2자유도 진동, 공진 회피.</span></a>
+      <a href="https://packagingbook.euiyun.com/"><small>PACKAGINGBOOK</small>열저항·열 시정수<br><span>다이–기판–방열판의 RC 열 회로망, 과도 열 임피던스.</span></a>
+      <a href="https://processbook.euiyun.com/"><small>PROCESSBOOK</small>도펀트 확산·열처리<br><span>픽의 법칙 \(\partial C/\partial t = D\,\partial^2 C/\partial x^2\), 확산 깊이 \(\sqrt{Dt}\).</span></a>
+      <a href="https://tcadbook.euiyun.com/"><small>TCADBOOK</small>PDE의 수치 해<br><span>확산–드리프트, 유한 차분·유한 요소, 안정성과 암시적 방법.</span></a>
+      <a href="https://devicebook.euiyun.com/"><small>DEVICEBOOK</small>캐리어 연속 방정식<br><span>소수 캐리어 수명 τ, 생성–재결합 = 1차 감쇠, 확산 길이 \(\sqrt{D\tau}\).</span></a>
+      <a href="https://bodybook.euiyun.com/"><small>BODYBOOK</small>약동학·감염병<br><span>약물 반감기, 구획 모델, 체온 조절 피드백.</span></a>
+      <a href="https://phonebook.euiyun.com/"><small>PHONEBOOK</small>스마트폰 열 관리<br><span>AP 쓰로틀링, 배터리 충전 곡선, 손떨림 보정 액추에이터.</span></a>
+    </div>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>핵심 정리</h2>
+    <ol>
+      <li>미분방정식은 "지금 값"이 아니라 "변화의 규칙"을 적는다. 출발점 하나가 주어지면 미래 전체가 정해진다.</li>
+      <li>"목표와의 차이에 비례해 변한다"는 모든 현상(RC 충전, 칩 온도, 방사성 붕괴, 약물 주입)은 \(\dot y = -(y-y_\infty)/\tau\)이고, 해는 \(y_\infty + (y_0-y_\infty)e^{-t/\tau}\). τ에서 63%, 5τ에서 99.3%.</li>
+      <li>기울기장은 방정식을 그림으로 바꾼다. 평형점의 안정성, 해의 비교차, 정상 응답으로의 수렴을 공식 없이 읽을 수 있다.</li>
+      <li>오일러는 1차(\(O(h)\)), RK4는 4차(\(O(h^4)\)) 정확도다. 정확도와 별개로 \(h\lambda\) 같은 안정성 한계가 있고, 강성 문제는 암시적 방법을 쓴다.</li>
+      <li>스프링–질량–감쇠기와 RLC는 같은 식 \(\ddot x + 2\zeta\omega_0\dot x + \omega_0^2 x = 0\). 특성근이 실수 둘(과감쇠)·중근(임계)·켤레 복소수(진동)인지가 응답을 정한다. 실수부 = 감쇠, 허수부 = 진동.</li>
+      <li>공진에서 증폭률은 \(Q = 1/2\zeta\), 대역폭은 \(\omega_0/Q\). SIR 모델에서 정점은 \(S = 1/R_0\), 집단면역 임계는 \(1-1/R_0\). 열확산 \(\partial_t T = \alpha\,\partial_x^2 T\)의 2차 미분은 "이웃 평균과의 차이"이며, 명시적 계산은 \(\alpha\Delta t/\Delta x^2 \le 1/2\)을 지켜야 한다.</li>
+    </ol>
+  </section>
+
+  <section class="quiz-sec" id="quiz">
+    <h2>확인 퀴즈</h2>
+    <div class="quiz">
+      <div class="quiz-q"><p>열 시정수 τ = 60 s인 칩이 25 °C에서 정상 온도 85 °C를 향해 가열된다. 60초 뒤 온도는 대략?</p><div class="opts">
+        <button class="opt">55 °C (절반)</button><button class="opt" data-correct>63 °C</button><button class="opt">78 °C</button><button class="opt">85 °C</button>
+      </div><div class="quiz-exp">t = τ에서 목표까지 거리의 63.2%를 간다. 25 + 0.632 × 60 ≈ 62.9 °C. 절반(55 °C)에 닿는 시각은 τ ln2 ≈ 42 s다.</div></div>
+
+      <div class="quiz-q"><p>\(\dot y = -10\,y\)를 오일러법, h = 0.25로 풀면 어떻게 되는가?</p><div class="opts">
+        <button class="opt">정확도는 낮지만 0으로 수렴한다</button><button class="opt">부호를 바꾸지 않고 천천히 커진다</button><button class="opt" data-correct>매 걸음 −1.5배가 되어 부호를 바꾸며 폭발한다</button><button class="opt">h와 무관하게 정확해와 같다</button>
+      </div><div class="quiz-exp">증폭률 1 − hλ = 1 − 2.5 = −1.5. |−1.5| &gt; 1이므로 진동하며 발산한다. 안정하려면 hλ ≤ 2, 즉 h ≤ 0.2여야 한다. 정확도가 아니라 안정성의 문제다.</div></div>
+
+      <div class="quiz-q"><p>RLC 회로의 특성근이 \(s = -2 \pm 5i\) (단위 1/s)일 때 옳은 것은?</p><div class="opts">
+        <button class="opt">과감쇠: 진동 없이 천천히 정착한다</button><button class="opt" data-correct>부족 감쇠: 약 5 rad/s로 진동하며 시정수 0.5 s로 포락선이 줄어든다</button><button class="opt">감쇠 없이 영원히 진동한다</button><button class="opt">불안정해서 발산한다</button>
+      </div><div class="quiz-exp">켤레 복소근이므로 진동. 허수부 5 rad/s가 감쇠 진동수 \(\omega_d\), 실수부 −2가 포락선 \(e^{-2t}\)(시정수 1/2 s). ω₀ = √(4+25) ≈ 5.39, ζ = 2/5.39 ≈ 0.37.</div></div>
+
+      <div class="quiz-q"><p>공진 주파수 1 MHz, Q = 50인 동조 회로의 −3 dB 대역폭은 대략?</p><div class="opts">
+        <button class="opt">50 kHz</button><button class="opt" data-correct>20 kHz</button><button class="opt">2 kHz</button><button class="opt">50 MHz</button>
+      </div><div class="quiz-exp">대역폭 ≈ f₀/Q = 1 MHz / 50 = 20 kHz. Q가 높을수록 좁은 대역만 통과시켜 선택도가 좋아지지만, 응답이 정착하는 데 더 오래 걸린다.</div></div>
+
+      <div class="quiz-q"><p>\(R_0 = 4\)인 감염병에서 집단면역에 필요한 최소 면역 비율과, SIR 모델에서 감염자 수가 정점에 이르는 조건은?</p><div class="opts">
+        <button class="opt">25%, S = 0.75일 때</button><button class="opt">50%, I = 0.5일 때</button><button class="opt" data-correct>75%, S = 0.25일 때</button><button class="opt">100%, S = 0일 때</button>
+      </div><div class="quiz-exp">\(p_c = 1 - 1/R_0 = 0.75\). \(\dot I = \gamma I(R_0 S - 1) = 0\)이 되는 \(S = 1/R_0 = 0.25\)에서 감염자가 최대다.</div></div>
+
+      <div class="quiz-q"><p>명시적 유한 차분으로 열확산을 풀다가 정확도를 위해 격자 간격 Δx를 절반으로 줄였다. 안정성을 유지하려면 시간 걸음 Δt는?</p><div class="opts">
+        <button class="opt">그대로 둬도 된다</button><button class="opt">절반으로</button><button class="opt" data-correct>1/4로</button><button class="opt">두 배로 늘릴 수 있다</button>
+      </div><div class="quiz-exp">안정 조건 \(\alpha\Delta t/\Delta x^2 \le 1/2\)에서 Δx²이 1/4이 되므로 Δt도 1/4. 칸 수는 두 배, 걸음 수는 네 배라 계산량은 8배가 된다. 그래서 암시적 방법이 쓰인다.</div></div>
+    </div>
+  </section>
+</main>
+<script>
+/* ============================================================ 공통 작은 도구 */
+function odeRK4scalar(f, t, y, h) {
+  const k1 = f(t, y), k2 = f(t + h / 2, y + h / 2 * k1), k3 = f(t + h / 2, y + h / 2 * k2), k4 = f(t + h, y + h * k3);
+  return y + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4);
+}
+function odeFont(px, mono) { return px + "px " + getComputedStyle(document.body).getPropertyValue(mono ? "--mono" : "--font"); }
+
+/* ============================================================ 1. 해석 렌즈 */
+(function () {
+  const LENS = {
+    rc:    { name: "RC 충전", tScale: 1, tUnit: "s", yLabel: "축전기 전압 V_C [V]", map: (v) => 5 * v, unit: " V", d: [0, 1],
+             eq: "RC·dV/dt = V_s − V   (τ = RC)", tag: "C = 100 µF 기준", extra: (tau) => "R = " + MB.fmt(tau / 100e-6 / 1000, 3) + " kΩ" },
+    chip:  { name: "칩 온도", tScale: 40, tUnit: "s", yLabel: "접합 온도 T_j [°C]", map: (v) => 25 + 60 * v, unit: " °C", d: [0, 1],
+             eq: "C_th·dT/dt = P − (T − T_amb)/R_th", tag: "T_amb 25 °C → T∞ 85 °C" },
+    decay: { name: "방사성 붕괴", tScale: 8, tUnit: "일", yLabel: "남은 핵 N/N₀ [%]", map: (v) => 100 * v, unit: " %", d: [1, 0],
+             eq: "dN/dt = −N/τ   (τ = t½/ln2)", tag: "τ ≈ 11.6일이면 I-131" },
+    drug:  { name: "약물 주입", tScale: 4, tUnit: "h", yLabel: "혈중 농도 C [mg/L]", map: (v) => 8 * v, unit: " mg/L", d: [0, 1],
+             eq: "V·dC/dt = 주입속도 − CL·C   (τ = V/CL)", tag: "일정 속도 정맥 주입" },
+  };
+  let lens = "rc", tauN = 1.5, showTan = true;
+  const pts = [
+    { x: 0, y: 0, lock: "x", color: null, constrain(p) { p.y = MB.clamp(p.y, -0.05, 1.1); } },
+    { x: 9.4, y: 1, lock: "x", color: null, constrain(p) { p.y = MB.clamp(p.y, -0.05, 1.1); } },
+  ];
+  const fmtT = (v) => { const L = LENS[lens]; return MB.fmt(v * L.tScale, 3) + " " + L.tUnit; };
+  const pl = MB.plane("#cv-ode-lens", {
+    x: [-1.3, 10.5], y: [-0.28, 1.3], aspect: 0.6, grid: false, axes: false, points: pts,
+    draw(P, api) {
+      const L = LENS[lens], pal = P.P, ctx = P.ctx;
+      const [p0, pi] = api.points; p0.color = pal.accent; pi.color = pal.accent2;
+      const y0 = p0.y, yi = pi.y, f = (t) => yi + (y0 - yi) * Math.exp(-t / tauN);
+      // 5τ 이후 정착 영역
+      if (5 * tauN < 10) { ctx.fillStyle = pal.grid; ctx.globalAlpha = 0.5; ctx.fillRect(P.X(5 * tauN), P.Y(1.14), P.X(10.5) - P.X(5 * tauN), P.Y(-0.12) - P.Y(1.14)); ctx.globalAlpha = 1; P.text("5τ 이후 99.3%", 5 * tauN, -0.06, { color: pal.dim, size: 11, dx: 6 }); }
+      // 세로 τ 격자
+      for (let k = 1; k * tauN <= 10; k++) { P.line(k * tauN, -0.12, k * tauN, 1.12, { color: pal.grid, width: 1 }); P.text(k + "τ", k * tauN, 1.12, { color: pal.faint, size: 11, align: "center", baseline: "bottom" }); }
+      // 가로 눈금(물리 단위)
+      ctx.font = odeFont(10, true);
+      for (let v = 0; v <= 1.0001; v += 0.25) { P.line(0, v, 10, v, { color: pal.grid, width: 1 }); P.text(MB.fmt(L.map(v), 3), 0, v, { color: pal.faint, size: 10, align: "right", dx: -8 }); }
+      // 축
+      P.line(0, -0.12, 10, -0.12, { color: pal.axis, width: 1.2 }); P.line(0, -0.12, 0, 1.12, { color: pal.axis, width: 1.2 });
+      const step = [1, 2, 5, 10, 20, 50, 100].find((s) => (10 * L.tScale) / s <= 6) || 100;
+      for (let tp = step; tp / L.tScale <= 10; tp += step) P.text(String(tp), tp / L.tScale, -0.12, { color: pal.faint, size: 10, align: "center", baseline: "top", dy: 4 });
+      P.text("t [" + L.tUnit + "]", 10, -0.12, { color: pal.dim, size: 11, align: "right", baseline: "bottom", dy: -4 });
+      P.text(L.yLabel, -1.2, 1.27, { color: pal.dim, size: 12, baseline: "top" });
+      // 목표선, 63% 선
+      P.line(0, yi, 10, yi, { color: pal.accent2, width: 1.2, dash: [5, 4] });
+      const y63 = yi + (y0 - yi) * Math.exp(-1);
+      if (Math.abs(yi - y0) > 0.03) {
+        P.line(0, y63, tauN, y63, { color: pal.warn, width: 1.2, dash: [3, 3] }); P.line(tauN, -0.12, tauN, y63, { color: pal.warn, width: 1.2, dash: [3, 3] });
+        P.dot(tauN, y63, { color: pal.warn, r: 4 }); P.text("63.2%", tauN, y63, { color: pal.warn, size: 12, bold: true, dx: 8, dy: (yi > y0 ? 10 : -10) });
+      }
+      if (showTan) P.line(0, y0, tauN, yi, { color: pal.dim, width: 1.5, dash: [6, 4] });
+      P.curve(f, { from: 0, to: 10, color: pal.accent, width: 3 });
+      P.text("y₀", 0, y0, { color: pal.accent, size: 12, bold: true, dx: 10, dy: (y0 > yi ? -12 : 12) });
+      P.text("y∞", 9.4, yi, { color: pal.accent2, size: 12, bold: true, dx: -26, dy: -12 });
+    },
+    onDrag() { readout(); },
+  });
+  function readout() {
+    const L = LENS[lens], tau = tauN * L.tScale, [p0, pi] = pl.points;
+    MB.stat("ode-l-tau", MB.fmt(tau, 3) + " <small>" + L.tUnit + "</small>" + (L.extra ? " <small>(" + L.extra(tau) + ")</small>" : ""));
+    MB.stat("ode-l-half", MB.fmt(tau * Math.LN2, 3) + " <small>" + L.tUnit + "</small>");
+    MB.stat("ode-l-5tau", MB.fmt(5 * tau, 3) + " <small>" + L.tUnit + "</small>");
+    const v = pi.y + (p0.y - pi.y) * Math.exp(-1);
+    MB.stat("ode-l-63", MB.fmt(L.map(v), 3) + "<small>" + L.unit + "</small>");
+    document.getElementById("ode-lens-eq").textContent = L.eq;
+    document.getElementById("ode-lens-tag").textContent = L.tag;
+  }
+  const tauG = MB.range("ode-tau", (v) => "τ = " + v.toFixed(2) + " 단위", (v) => { tauN = v; pl.redraw(); readout(); });
+  tauN = tauG();
+  MB.seg("ode-lens", (v) => { lens = v; const L = LENS[v]; pl.points[0].y = L.d[0]; pl.points[1].y = L.d[1]; pl.redraw(); readout(); });
+  MB.check("ode-tangent", (v) => { showTan = v; pl.redraw(); });
+  pl.redraw(); readout();
+})();
+
+/* ============================================================ 2. 기울기장 */
+(function () {
+  const PRE = {
+    decay:    { f: (t, y) => -(y - 2) / 1.5, x: [-0.5, 8], y: [-1, 5], seeds: [[0, 0], [0, 4.5], [0, 1]], nc: [() => 2], tag: "y′ = −(y − 2)/1.5" },
+    logistic: { f: (t, y) => 0.8 * y * (1 - y / 4), x: [-1, 9], y: [-1.5, 5.5], seeds: [[0, 0.2], [0, 5.2], [0, -0.1]], nc: [() => 0, () => 4], tag: "y′ = 0.8 y(1 − y/4)" },
+    ylin:     { f: (t, y) => y - t, x: [-3, 5], y: [-3, 5], seeds: [[-2, -0.9], [-2, -1.1], [0, 1]], nc: [(t) => t], tag: "y′ = y − t  (특별해 y = t + 1)" },
+    forced:   { f: (t, y) => -y + 2 * Math.sin(t), x: [0, 14], y: [-3.5, 3.5], seeds: [[0, 3], [0, -3], [0, 0]], nc: [(t) => 2 * Math.sin(t)], tag: "y′ = −y + 2 sin t" },
+    riccati:  { f: (t, y) => t - y * y, x: [-2, 6], y: [-3.5, 3.5], seeds: [[-1, 2], [-1, 0], [0, -1.2]], nc: [(t) => (t >= 0 ? Math.sqrt(t) : NaN), (t) => (t >= 0 ? -Math.sqrt(t) : NaN)], tag: "y′ = t − y²" },
+  };
+  let key = "decay", seeds = PRE.decay.seeds.slice(), showNull = false, colorize = true;
+  const pts = [{ x: 0.5, y: 0.5, label: "" }];
+  function traj(f, t0, y0, x, y) {
+    const out = [[t0, y0]], h = (x[1] - x[0]) / 500, span = y[1] - y[0];
+    for (const dir of [1, -1]) {
+      let t = t0, v = y0; const arr = [];
+      for (let i = 0; i < 1200; i++) {
+        v = odeRK4scalar(f, t, v, dir * h); t += dir * h;
+        if (!isFinite(v) || t < x[0] || t > x[1] || v < y[0] - span || v > y[1] + span) break;
+        arr.push([t, v]);
+      }
+      if (dir > 0) out.push(...arr); else out.unshift(...arr.reverse());
+    }
+    return out;
+  }
+  const pl = MB.plane("#cv-ode-field", {
+    x: PRE.decay.x, y: PRE.decay.y, aspect: 0.62, points: pts,
+    draw(P, api) {
+      const pr = PRE[key], pal = P.P, ctx = P.ctx;
+      // 기울기장
+      const sx = P.w / (P.x1 - P.x0), sy = P.h / (P.y1 - P.y0);
+      const nx = Math.max(12, Math.round(P.w / 34)), ny = Math.max(8, Math.round(P.h / 34));
+      for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) {
+        const t = P.x0 + (i + 0.5) * (P.x1 - P.x0) / nx, y = P.y0 + (j + 0.5) * (P.y1 - P.y0) / ny;
+        const s = pr.f(t, y); if (!isFinite(s)) continue;
+        let dx = sx, dy = -s * sy; const L = Math.hypot(dx, dy); dx = dx / L * 10; dy = dy / L * 10;
+        const cx = P.X(t), cy = P.Y(y);
+        const m = Math.min(1, Math.abs(s) / 3);
+        ctx.strokeStyle = colorize ? (s > 0 ? pal.accent2 : s < 0 ? pal.accent : pal.dim) : pal.dim;
+        ctx.globalAlpha = colorize ? 0.35 + 0.5 * m : 0.6; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(cx - dx, cy - dy); ctx.lineTo(cx + dx, cy + dy); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx + dx, cy + dy, 1.6, 0, 7); ctx.fillStyle = ctx.strokeStyle; ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      if (showNull) pr.nc.forEach((g) => P.curve(g, { color: pal.warn, width: 2, dash: [6, 4] }));
+      if (key === "ylin") P.curve((t) => t + 1, { color: pal.dim, width: 1, dash: [2, 4] });
+      // 클릭한 해곡선들
+      seeds.forEach(([t0, y0]) => {
+        const tr = traj(pr.f, t0, y0, [P.x0, P.x1], [P.y0, P.y1]);
+        P.poly(tr, { color: pal.text, width: 1.6, close: false, alpha: 0.75 });
+        P.dot(t0, y0, { color: pal.text, r: 3 });
+      });
+      // 드래그 점의 해곡선
+      const p = api.points[0];
+      const tr = traj(pr.f, p.x, p.y, [P.x0, P.x1], [P.y0, P.y1]);
+      P.poly(tr, { color: pal.accent, width: 3, close: false });
+      const s = pr.f(p.x, p.y), d = 0.6 * (P.x1 - P.x0) / 10;
+      P.arrow(p.x, p.y, p.x + d, p.y + s * d, { color: pal.warn, width: 2.5, head: 9 });
+    },
+    onDrag() { readout(); },
+    onPointer(x, y, phase) { if (phase !== "down") return; seeds.push([x, y]); if (seeds.length > 14) seeds.shift(); pl.redraw(); readout(); },
+  });
+  function readout() {
+    const p = pl.points[0], s = PRE[key].f(p.x, p.y);
+    MB.stat("ode-f-pt", "(" + p.x.toFixed(2) + ", " + p.y.toFixed(2) + ")");
+    MB.stat("ode-f-sl", MB.signed(s, 3));
+    MB.stat("ode-f-n", String(seeds.length + 1));
+    document.getElementById("ode-f-tag").textContent = PRE[key].tag;
+  }
+  const sel = document.getElementById("ode-f-preset");
+  sel.addEventListener("change", () => {
+    key = sel.value; const pr = PRE[key]; seeds = pr.seeds.slice();
+    pl.points[0].x = pr.x[0] + 0.15 * (pr.x[1] - pr.x[0]); pl.points[0].y = pr.y[0] + 0.3 * (pr.y[1] - pr.y[0]);
+    pl.view({ x: pr.x, y: pr.y }); readout();
+  });
+  MB.check("ode-f-null", (v) => { showNull = v; pl.redraw(); });
+  MB.check("ode-f-color", (v) => { colorize = v; pl.redraw(); });
+  document.getElementById("ode-f-clear").addEventListener("click", () => { seeds = []; pl.redraw(); readout(); });
+  document.getElementById("ode-f-fan").addEventListener("click", () => {
+    const pr = PRE[key]; seeds = [];
+    for (let k = 0; k < 9; k++) seeds.push([pr.x[0] + 0.02 * (pr.x[1] - pr.x[0]), pr.y[0] + (k + 0.5) / 9 * (pr.y[1] - pr.y[0])]);
+    pl.redraw(); readout();
+  });
+  readout();
+})();
+
+/* ============================================================ 3. 오일러 vs RK4 */
+(function () {
+  let prob = "decay", h = 0.5, showRK = true;
+  const PROB = {
+    decay: { f: (t, y) => [-y[0]], y0: [1], T: 8, Te: 2, exact: (t) => Math.exp(-t), yr: [-1.6, 1.6], label: "y" },
+    osc:   { f: (t, y) => [y[1], -y[0]], y0: [1, 0], T: 20, Te: 20, exact: (t) => Math.cos(t), yr: [-3, 3], label: "x" },
+  };
+  function solve(method, hh, Tn) {
+    const pr = PROB[prob], N = Math.max(1, Math.round((Tn || pr.T) / hh));
+    return (method === "e" ? MB.euler : MB.rk4)(pr.f, pr.y0, 0, hh, N);
+  }
+  const endErr = (sol) => { const [t, y] = sol[sol.length - 1]; return Math.abs(y[0] - PROB[prob].exact(t)); };
+  const cvA = MB.canvas("#cv-ode-eu", (ctx, w, h0) => {
+    const pr = PROB[prob], P = MB.palette();
+    const se = solve("e", h), sr = solve("r", h), Tend = se[se.length - 1][0];
+    const ex = []; for (let i = 0; i <= 400; i++) { const t = Tend * i / 400; ex.push([t, pr.exact(t)]); }
+    const clip = (v) => MB.clamp(v, -1e3, 1e3);
+    const ser = [{ data: ex, color: P.dim, width: 2.5 }, { data: se.map(([t, y]) => [t, clip(y[0])]), color: P.bad, width: 1.8 }];
+    if (showRK) ser.push({ data: sr.map(([t, y]) => [t, y[0]]), color: P.accent, width: 1.8, dash: [5, 3] });
+    const box = { x: 46, y: 46, w: w - 60, h: h0 - 46 - 40 };
+    const c = MB.chart(ctx, box, { x: [0, Tend], y: pr.yr, xLabel: "t", series: ser, hlines: [{ y: 0, color: P.axis, dash: [] }] });
+    ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip();
+    if (se.length <= 200) se.forEach(([t, y]) => { ctx.fillStyle = P.bad; ctx.beginPath(); ctx.arc(c.X(t), c.Y(clip(y[0])), 3.2, 0, 7); ctx.fill(); });
+    if (showRK && sr.length <= 200) sr.forEach(([t, y]) => { ctx.strokeStyle = P.accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(c.X(t), c.Y(y[0]), 3.6, 0, 7); ctx.stroke(); });
+    ctx.restore();
+    ctx.font = odeFont(12); ctx.textBaseline = "middle";
+    const leg = [["정확해", P.dim], ["오일러", P.bad]].concat(showRK ? [["RK4", P.accent]] : []);
+    let lx = box.x + 4; leg.forEach(([s, col]) => { ctx.fillStyle = col; ctx.fillRect(lx, 31, 14, 3); ctx.fillStyle = P.text; ctx.textAlign = "left"; ctx.fillText(s, lx + 18, 33); lx += ctx.measureText(s).width + 34; });
+  }, { aspect: 0.66, minHeight: 240, maxHeight: 340 });
+  const cvB = MB.canvas("#cv-ode-err", (ctx, w, h0) => {
+    const P = MB.palette(), pr = PROB[prob];
+    const de = [], dr = [];
+    for (let N = 1; N <= 2000; N = Math.ceil(N * 1.12)) {
+      const hh = pr.Te / N; if (hh > 2.6) continue;
+      de.push([hh, Math.max(1e-15, endErr(MB.euler(pr.f, pr.y0, 0, hh, N)))]);
+      dr.push([hh, Math.max(1e-15, endErr(MB.rk4(pr.f, pr.y0, 0, hh, N)))]);
+    }
+    const box = { x: 52, y: 52, w: w - 66, h: h0 - 52 - 40 };
+    const c = MB.chart(ctx, box, { x: [0.01, 3], y: [1e-14, 1e3], logX: true, logY: true, xLabel: "h (로그)", yTicks: [1e-12, 1e-8, 1e-4, 1],
+      series: [{ data: de, color: P.bad, width: 2 }, { data: dr, color: P.accent, width: 2 }], vlines: [{ x: h, color: P.warn }] });
+    ctx.font = odeFont(11); ctx.fillStyle = P.warn; ctx.textBaseline = "top"; ctx.textAlign = h > 0.6 ? "right" : "left";
+    ctx.fillText("h = " + h.toFixed(2), c.X(h) + (h > 0.6 ? -5 : 5), box.y + 4);
+    const e1 = endErr(solve("e", h, pr.Te)), e4 = endErr(solve("r", h, pr.Te));
+    [[e1, P.bad], [Math.max(1e-15, e4), P.accent]].forEach(([e, col]) => { if (e > 1e-14 && e < 1e4) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(c.X(h), c.Y(e), 5, 0, 7); ctx.fill(); } });
+    ctx.font = odeFont(12); ctx.textBaseline = "middle"; ctx.fillStyle = P.bad; ctx.textAlign = "left"; ctx.fillText("오일러 ∝ h¹", box.x + 4, 38);
+    ctx.fillStyle = P.accent; ctx.fillText("RK4 ∝ h⁴", box.x + 96, 38);
+  }, { aspect: 0.66, minHeight: 240, maxHeight: 340 });
+  function readout() {
+    const pr = PROB[prob], N = Math.max(1, Math.round(pr.Te / h));
+    const e1 = endErr(solve("e", h, pr.Te)), e4 = endErr(solve("r", h, pr.Te));
+    MB.stat("ode-eu-n", N + " <small>/ " + N + " · " + 4 * N + "</small>");
+    MB.stat("ode-eu-e1", MB.fmt(e1, 3)); MB.stat("ode-eu-e4", MB.fmt(e4, 3));
+    const g = prob === "decay" ? 1 - h : Math.sqrt(1 + h * h);
+    MB.stat("ode-eu-g", (prob === "decay" ? MB.signed(g, 2) : g.toFixed(3)) + (prob === "osc" ? " <small>(진폭)</small>" : ""));
+    const msg = document.getElementById("ode-eu-msg");
+    let txt, bad = false;
+    if (prob === "decay") {
+      if (h > 2) { txt = "hλ = " + h.toFixed(2) + " > 2: 오일러 증폭률 |1 − h| > 1 → 부호를 바꾸며 폭발. " + (h > 2.785 ? "RK4도 안정 한계(≈2.785)를 넘었다." : "RK4는 아직 안정(한계 hλ ≈ 2.785)."); bad = true; }
+      else if (h > 1) txt = "1 < hλ ≤ 2: 오일러 해는 0으로 가지만 매 걸음 부호가 바뀐다(가짜 진동).";
+      else txt = "hλ ≤ 1: 오일러도 단조 감소. 정확도만 h에 비례해 나빠진다.";
+    } else {
+      txt = "진동 문제: 오일러 증폭률 √(1+h²) > 1 → 어떤 h에서도 진폭이 매 걸음 커진다(에너지 생성). RK4는 h가 작으면 거의 보존.";
+      bad = h > 0.3;
+    }
+    msg.textContent = txt; msg.className = "sim-msg " + (bad ? "bad" : "ok");
+  }
+  const redraw = () => { cvA.redraw(); cvB.redraw(); readout(); };
+  const hG = MB.range("ode-eu-h", (v) => v.toFixed(2), (v) => { h = v; redraw(); });
+  h = hG();
+  MB.seg("ode-eu-prob", (v) => { prob = v; redraw(); });
+  MB.check("ode-eu-rk", (v) => { showRK = v; redraw(); });
+  redraw();
+})();
+
+/* ============================================================ 4. 감쇠비와 특성근 */
+(function () {
+  let zeta = 0.3, w0 = 2, view = "car", cursor = -1;
+  const T = 10;
+  function roots(z, w) {
+    if (z < 1) return { kind: z === 0 ? "none" : "under", re: -z * w, im: w * Math.sqrt(1 - z * z) };
+    const d = w * Math.sqrt(z * z - 1);
+    return { kind: Math.abs(z - 1) < 1e-3 ? "crit" : "over", s1: -z * w + d, s2: -z * w - d };
+  }
+  function step(t, z, w) {
+    if (Math.abs(z - 1) < 1e-3) return 1 - Math.exp(-w * t) * (1 + w * t);
+    if (z < 1) { const s = z * w, wd = w * Math.sqrt(1 - z * z); return 1 - Math.exp(-s * t) * (Math.cos(wd * t) + (s / wd) * Math.sin(wd * t)); }
+    const d = w * Math.sqrt(z * z - 1), s1 = -z * w + d, s2 = -z * w - d;
+    return 1 + (s2 * Math.exp(s1 * t) - s1 * Math.exp(s2 * t)) / (s1 - s2);
+  }
+  const VIEW = { car: ["차체 높이 변화 (목표 = 1)", "x"], rlc: ["축전기 전하 q/q∞ (계단 전압)", "q"], meter: ["바늘 위치 (목표 = 1)", "θ"] };
+  const cvS = MB.canvas("#cv-ode-step", (ctx, w, h) => {
+    const P = MB.palette();
+    const data = []; for (let i = 0; i <= 600; i++) { const t = T * i / 600; data.push([t, step(t, zeta, w0)]); }
+    const env = [];
+    if (zeta < 1 && zeta > 0) for (let i = 0; i <= 200; i++) { const t = T * i / 200; env.push([t, 1 + Math.exp(-zeta * w0 * t) / Math.sqrt(1 - zeta * zeta)]); }
+    const env2 = env.map(([t, v]) => [t, 2 - v]);
+    const box = { x: 44, y: 22, w: w - 56, h: h - 22 - 40 };
+    const c = MB.chart(ctx, box, { x: [0, T], y: [-0.1, 2.1], xLabel: "t [s]",
+      series: [{ data: env, color: P.faint, width: 1, dash: [3, 3] }, { data: env2, color: P.faint, width: 1, dash: [3, 3] }, { data, color: P.accent, width: 2.6 }],
+      hlines: [{ y: 1, color: P.accent2, label: "목표" }, { y: 1.02, color: P.grid, dash: [1, 3] }, { y: 0.98, color: P.grid, dash: [1, 3] }] });
+    if (cursor >= 0) {
+      const v = step(cursor, zeta, w0);
+      ctx.strokeStyle = P.warn; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(c.X(cursor), box.y); ctx.lineTo(c.X(cursor), box.y + box.h); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = P.warn; ctx.beginPath(); ctx.arc(c.X(cursor), c.Y(MB.clamp(v, -0.1, 2.1)), 5, 0, 7); ctx.fill();
+    }
+    // 바늘 게이지 / 질량 표시 (오른쪽 위)
+    const v = cursor >= 0 ? step(cursor, zeta, w0) : step(T, zeta, w0);
+    const R = w < 420 ? 30 : 44, gx = box.x + box.w - R - 14, gy = box.y + R + 18;
+    ctx.fillStyle = P.elev; ctx.strokeStyle = P.border; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(gx, gy, R + 6, Math.PI, 2 * Math.PI); ctx.closePath(); ctx.fill(); ctx.stroke();
+    for (let k = 0; k <= 4; k++) { const a = Math.PI + (k / 4) * Math.PI; ctx.strokeStyle = k === 2 ? P.accent2 : P.faint; ctx.lineWidth = k === 2 ? 2 : 1; ctx.beginPath(); ctx.moveTo(gx + Math.cos(a) * (R - 6), gy + Math.sin(a) * (R - 6)); ctx.lineTo(gx + Math.cos(a) * R, gy + Math.sin(a) * R); ctx.stroke(); }
+    const a = Math.PI + MB.clamp(v / 2, 0, 1) * Math.PI;
+    ctx.strokeStyle = P.bad; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + Math.cos(a) * (R - 4), gy + Math.sin(a) * (R - 4)); ctx.stroke();
+    ctx.fillStyle = P.text; ctx.beginPath(); ctx.arc(gx, gy, 3, 0, 7); ctx.fill();
+    ctx.font = odeFont(11); ctx.fillStyle = P.dim; ctx.textAlign = "center"; ctx.fillText(VIEW[view][1] + " = " + v.toFixed(2), gx, gy + 14);
+    document.getElementById("ode-d-cap").textContent = VIEW[view][0];
+  }, { aspect: 0.85, maxHeight: 420, minHeight: 240 });
+  const pts = [{ x: -0.6, y: 1.9, color: null }];
+  const pl = MB.plane("#cv-ode-roots", {
+    x: [-8.5, 2.5], y: null, aspect: 0.85, maxHeight: 420, minHeight: 240, points: pts, gridStep: 1,
+    draw(P, api) {
+      const pal = P.P, ctx = P.ctx; api.points[0].color = pal.accent;
+      ctx.fillStyle = pal.ok; ctx.globalAlpha = 0.07; ctx.fillRect(0, 0, P.X(0), P.h); ctx.globalAlpha = 1;
+      ctx.fillStyle = pal.bad; ctx.globalAlpha = 0.07; ctx.fillRect(P.X(0), 0, P.w - P.X(0), P.h); ctx.globalAlpha = 1;
+      P.text("안정(왼쪽 반평면)", P.x0 + 0.15, P.y0 + 0.4, { color: pal.ok, size: 11 });
+      P.text("불안정", P.X(0) < P.w - 50 ? 0.15 : 0, P.y0 + 0.4, { color: pal.bad, size: 11 });
+      P.text("Re", P.x1 - 0.1, 0, { color: pal.dim, size: 11, align: "right", dy: -9 });
+      P.text("Im", 0, P.y1 - 0.1, { color: pal.dim, size: 11, dx: 6, baseline: "top" });
+      P.circle(0, 0, w0, { color: pal.dim, width: 1, dash: [4, 4] });
+      const r = roots(zeta, w0);
+      const X = (x, y, col) => { const px = P.X(x), py = P.Y(y); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px - 7, py - 7); ctx.lineTo(px + 7, py + 7); ctx.moveTo(px + 7, py - 7); ctx.lineTo(px - 7, py + 7); ctx.stroke(); };
+      const p = api.points[0];
+      if (r.kind === "under" || r.kind === "none") {
+        P.line(0, 0, r.re, r.im, { color: pal.faint, width: 1 }); P.line(0, 0, r.re, -r.im, { color: pal.faint, width: 1 });
+        X(r.re, -r.im, pal.accent); p.x = r.re; p.y = r.im;
+        if (r.im > 0.8) P.text("ζ = cos θ", r.re / 2, r.im / 2, { color: pal.dim, size: 11, align: "right", dx: -8 });
+      } else {
+        const lim = (v) => Math.max(v, P.x0 + 0.2);
+        X(lim(r.s2), 0, pal.accent2); if (r.s2 < P.x0) P.text("← s₂ = " + r.s2.toFixed(1), P.x0 + 0.1, 0.55, { color: pal.accent2, size: 11 });
+        X(r.s1, 0, pal.accent); p.x = r.s1; p.y = 0;
+      }
+    },
+    onDrag(p) {
+      let x = Math.min(p.x, 0), y = Math.abs(p.y);
+      if (y < 0.12) {
+        if (zeta < 1) { zeta = 1; w0 = MB.clamp(-x, 0.5, 4.5); }
+        else { const k = zeta - Math.sqrt(zeta * zeta - 1); w0 = MB.clamp(-x / k, 0.5, 4.5); }
+      } else { w0 = MB.clamp(Math.hypot(x, y), 0.5, 4.5); zeta = MB.clamp(-x / Math.hypot(x, y), 0, 0.999); }
+      zG.set(+zeta.toFixed(2), false); wG.set(+w0.toFixed(2), false);
+      update(false);
+    },
+  });
+  function settle() {
+    let last = 0; const dt = 0.005;
+    for (let t = 0; t < 80; t += dt) if (Math.abs(step(t, zeta, w0) - 1) > 0.02) last = t;
+    return last >= 79.9 ? Infinity : last;
+  }
+  function update(redrawPlane = true) {
+    cvS.redraw(); if (redrawPlane) pl.redraw();
+    const r = roots(zeta, w0);
+    if (r.kind === "under" || r.kind === "none") MB.stat("ode-d-roots", r.re.toFixed(2) + " ± " + r.im.toFixed(2) + "i");
+    else MB.stat("ode-d-roots", r.s1.toFixed(2) + ", " + r.s2.toFixed(2));
+    const kinds = { none: ["무감쇠", "warn"], under: ["부족 감쇠", "warn"], crit: ["임계 감쇠", "ok"], over: ["과감쇠", "bad"] };
+    MB.stat("ode-d-kind", '<span class="badge ' + kinds[r.kind][1] + '">' + kinds[r.kind][0] + "</span>");
+    const os = zeta < 1 ? Math.exp(-Math.PI * zeta / Math.sqrt(1 - zeta * zeta)) * 100 : 0;
+    MB.stat("ode-d-os", os.toFixed(1) + " <small>%</small>");
+    const ts = settle(); MB.stat("ode-d-ts", isFinite(ts) ? ts.toFixed(2) + " <small>s</small>" : "∞");
+  }
+  const zG = MB.range("ode-zeta", (v) => v.toFixed(2), (v) => { zeta = v; update(); });
+  const wG = MB.range("ode-w0", (v) => v.toFixed(2) + " rad/s", (v) => { w0 = v; update(); });
+  zeta = zG(); w0 = wG();
+  MB.seg("ode-d-view", (v) => { view = v; cvS.redraw(); });
+  document.getElementById("ode-d-crit").addEventListener("click", () => { zeta = 1; zG.set(1, false); update(); });
+  let loop = null;
+  MB.playButton("ode-d-play", () => {
+    cursor = 0;
+    if (!loop) loop = MB.loop(document.getElementById("sim-ode-damping"), (dt) => { if (cursor < 0) return; cursor += dt * 1.5; if (cursor > T) cursor = 0; cvS.redraw(); });
+    else loop.start();
+  }, () => { cursor = -1; if (loop) loop.stop(); cvS.redraw(); });
+  update();
+})();
+
+/* ============================================================ 5. 공진 */
+(function () {
+  let z = 0.05, r = 0.9;
+  const amp = (rr, zz) => 1 / Math.sqrt((1 - rr * rr) ** 2 + (2 * zz * rr) ** 2);
+  const cvF = MB.canvas("#cv-ode-fr", (ctx, w, h) => {
+    const P = MB.palette();
+    const curve = (zz) => { const d = []; for (let i = 0; i <= 400; i++) { const rr = 0.02 + 2.98 * i / 400; d.push([rr, amp(rr, zz)]); } return d; };
+    const ref = [0.05, 0.2, 0.5, 1].map((zz) => ({ data: curve(zz), color: P.faint, width: 1 }));
+    const box = { x: 48, y: 34, w: w - 62, h: h - 34 - 40 };
+    const c = MB.chart(ctx, box, { x: [0, 3], y: [0.05, 80], logY: true, yTicks: [0.1, 1, 10], xLabel: "r = ω/ω₀",
+      series: ref.concat([{ data: curve(z), color: P.accent, width: 2.8 }]), vlines: [{ x: r, color: P.warn }], hlines: [{ y: 1, color: P.dim }] });
+    const a = amp(r, z);
+    ctx.fillStyle = P.warn; ctx.beginPath(); ctx.arc(c.X(r), c.Y(a), 5.5, 0, 7); ctx.fill();
+    ctx.font = odeFont(11); ctx.fillStyle = P.faint; ctx.textAlign = "left";
+    [[0.05, 1.0], [0.2, 1.0], [0.5, 1.0], [1, 1.0]].forEach(([zz]) => { const v = amp(1, zz); ctx.fillText("ζ=" + zz, c.X(1.03), c.Y(v) - 2); });
+  }, { aspect: 0.42, minHeight: 220, maxHeight: 300 });
+  const cvT = MB.canvas("#cv-ode-ft", (ctx, w, h) => {
+    const P = MB.palette(), w0 = 2 * Math.PI, wd = r * w0, T = 30, dt = 0.004, N = Math.round(T / dt);
+    const sol = MB.rk4((t, y) => [y[1], w0 * w0 * Math.sin(wd * t) - 2 * z * w0 * y[1] - w0 * w0 * y[0]], [0, 0], 0, dt, N);
+    const data = []; let mx = 0;
+    for (let i = 0; i < sol.length; i += 2) { data.push([sol[i][0], sol[i][1][0]]); mx = Math.max(mx, Math.abs(sol[i][1][0])); }
+    const a = amp(r, z), lim = Math.max(mx, a, 1) * 1.15;
+    const box = { x: 48, y: 34, w: w - 62, h: h - 34 - 40 };
+    MB.chart(ctx, box, { x: [0, T], y: [-lim, lim], xLabel: "t [s]", series: [{ data, color: P.accent, width: 1.3 }],
+      hlines: [{ y: a, color: P.warn, label: "정상 진폭" }, { y: -a, color: P.warn }] });
+  }, { aspect: 0.36, minHeight: 200, maxHeight: 260 });
+  function readout() {
+    const a = amp(r, z), ph = Math.atan2(2 * z * r, 1 - r * r) * 180 / Math.PI;
+    MB.stat("ode-r-q", MB.fmt(1 / (2 * z), 3));
+    MB.stat("ode-r-a", MB.fmt(a, 3) + " <small>배 (" + (20 * Math.log10(a)).toFixed(1) + " dB)</small>");
+    MB.stat("ode-r-ph", ph.toFixed(1) + "°");
+    MB.stat("ode-r-bw", MB.fmt(2 * z, 3) + " <small>Hz</small>");
+  }
+  const redraw = MB.throttle(() => { cvF.redraw(); cvT.redraw(); readout(); });
+  const zG = MB.range("ode-r-z", (v) => v.toFixed(2), (v) => { z = v; redraw(); });
+  const rG = MB.range("ode-r-r", (v) => v.toFixed(2), (v) => { r = v; redraw(); });
+  z = zG(); r = rG();
+  document.getElementById("ode-r-on").addEventListener("click", () => { rG.set(1); });
+  document.getElementById("ode-r-off").addEventListener("click", () => { rG.set(2); });
+  readout();
+})();
+
+/* ============================================================ 6. SIR */
+(function () {
+  let R0 = 2.5, D = 7, p = 0, scale = "lin";
+  const I0 = 1e-4, DAYS = 365;
+  let sol = [];
+  function run() {
+    const g = 1 / D, b = R0 * g, S0 = (1 - p) * (1 - I0);
+    sol = MB.rk4((t, y) => [-b * y[0] * y[1], b * y[0] * y[1] - g * y[1], g * y[1]], [S0, I0 * (1 - p), p], 0, 0.25, DAYS * 4);
+  }
+  run();
+  const cvA = MB.canvas("#cv-ode-sir", (ctx, w, h) => {
+    const P = MB.palette();
+    const S = [], I = [], R = [];
+    sol.forEach(([t, y], k) => { if (k % 2) return; S.push([t, y[0]]); I.push([t, y[1]]); R.push([t, y[2]]); });
+    let pk = 0, pd = 0; sol.forEach(([t, y]) => { if (y[1] > pk) { pk = y[1]; pd = t; } });
+    const box = { x: 50, y: 46, w: w - 62, h: h - 46 - 40 };
+    const log = scale === "log";
+    const c = MB.chart(ctx, box, { x: [0, DAYS], y: log ? [1e-5, 1] : [0, 1], logY: log, xLabel: "일", yFmt: (v) => (log ? (v * 100 >= 1 ? (v * 100).toFixed(0) : (v * 100).toPrecision(1)) : (v * 100).toFixed(0)) + "%",
+      series: [{ data: S, color: P.accent, width: 2.2 }, { data: I, color: P.bad, width: 2.6 }, { data: R, color: P.ok, width: 2.2 }],
+      hlines: [{ y: 1 / R0 <= 1 ? 1 / R0 : 1, color: P.accent, label: "S = 1/R₀" }],
+      vlines: pk > I0 * 1.5 ? [{ x: pd, color: P.bad, label: "정점" }] : [] });
+    ctx.font = odeFont(12); ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    let lx = box.x + 4; [["S", P.accent], ["I", P.bad], ["R(+접종)", P.ok]].forEach(([s, col]) => { ctx.fillStyle = col; ctx.fillRect(lx, 31, 14, 3); ctx.fillStyle = P.text; ctx.fillText(s, lx + 18, 33); lx += ctx.measureText(s).width + 34; });
+  }, { aspect: 0.66, minHeight: 240, maxHeight: 340 });
+  const cvB = MB.canvas("#cv-ode-si", (ctx, w, h) => {
+    const P = MB.palette();
+    let pk = 0; sol.forEach(([, y]) => { pk = Math.max(pk, y[1]); });
+    const ymax = Math.max(0.02, pk * 1.2);
+    const box = { x: 50, y: 36, w: w - 62, h: h - 36 - 40 };
+    const c = MB.chart(ctx, box, { x: [0, 1], y: [0, ymax], xLabel: "S (감수성 비율)", yFmt: (v) => (v * 100).toFixed(ymax < 0.1 ? 1 : 0) + "%", xFmt: (v) => (v * 100).toFixed(0) + "%",
+      series: [{ data: sol.map(([, y]) => [y[0], y[1]]), color: P.bad, width: 2.4 }], vlines: 1 / R0 <= 1 ? [{ x: 1 / R0, color: P.accent, label: "1/R₀" }] : [] });
+    ctx.fillStyle = P.text; ctx.beginPath(); ctx.arc(c.X(sol[0][1][0]), c.Y(sol[0][1][1]), 4, 0, 7); ctx.fill();
+    ctx.font = odeFont(11); ctx.textAlign = "right"; ctx.fillText("시작 →", c.X(sol[0][1][0]) - 6, c.Y(sol[0][1][1]) - 10);
+  }, { aspect: 0.66, minHeight: 240, maxHeight: 340 });
+  function readout() {
+    let pk = 0, pd = 0; sol.forEach(([t, y]) => { if (y[1] > pk) { pk = y[1]; pd = t; } });
+    const last = sol[sol.length - 1][1];
+    const infected = last[1] + last[2] - p;
+    MB.stat("ode-s-reff", (R0 * (1 - p)).toFixed(2) + (R0 * (1 - p) < 1 ? ' <span class="badge ok">소멸</span>' : ' <span class="badge bad">유행</span>'));
+    MB.stat("ode-s-hit", R0 > 1 ? (100 * (1 - 1 / R0)).toFixed(0) + " <small>%</small>" : "0 <small>%</small>");
+    MB.stat("ode-s-peak", pk > I0 * 1.01 ? (pk * 100).toFixed(pk < 0.01 ? 2 : 1) + "<small>%</small> / " + Math.round(pd) + "<small>일</small>" : "없음 <small>(처음부터 감소)</small>");
+    MB.stat("ode-s-final", (infected * 100).toFixed(1) + " <small>%</small>");
+  }
+  const redraw = MB.throttle(() => { run(); cvA.redraw(); cvB.redraw(); readout(); });
+  const r0G = MB.range("ode-s-r0", (v) => v.toFixed(1), (v) => { R0 = v; redraw(); });
+  const dG = MB.range("ode-s-d", (v) => v + " 일", (v) => { D = v; redraw(); });
+  const pG = MB.range("ode-s-p", (v) => v + " %", (v) => { p = v / 100; redraw(); });
+  R0 = r0G(); D = dG(); p = pG() / 100;
+  MB.seg("ode-s-scale", (v) => { scale = v; cvA.redraw(); });
+  run(); cvA.redraw(); cvB.redraw(); readout();
+})();
+
+/* ============================================================ 7. 열확산 */
+(function () {
+  const N = 80;
+  let T = new Float64Array(N), mode = "heat", bc = "sink", rr = 0.4, unstable = false, speed = 12, steps = 0, sum0 = 1, arrows = false, blown = false, playing = false;
+  const BASE = 25;
+  let mapX = null;
+  const reff = () => (unstable ? 0.6 : rr);
+  function preset(k) {
+    steps = 0; blown = false; mode = k === "dopant" ? "dopant" : "heat";
+    for (let i = 0; i < N; i++) {
+      const x = i / (N - 1);
+      if (k === "spot") T[i] = BASE + 90 * Math.exp(-(((x - 0.5) / 0.03) ** 2));
+      else if (k === "two") T[i] = BASE + 80 * Math.exp(-(((x - 0.3) / 0.025) ** 2)) + 60 * Math.exp(-(((x - 0.72) / 0.025) ** 2));
+      else if (k === "half") T[i] = x < 0.5 ? BASE + 70 : BASE;
+      else T[i] = 0;
+    }
+    if (mode === "dopant") T[0] = 1;
+    sum0 = total() || 1;
+    msg(mode === "dopant" ? "표면(왼쪽 끝) 농도를 C_s로 고정했다. 점선은 해석해 erfc(x / 2√(Dt))." : "캔버스를 클릭하거나 끌면 그 위치에 열을 더합니다.", "");
+    cv.redraw(); readout();
+  }
+  function total() { let s = 0; for (let i = 0; i < N; i++) s += mode === "dopant" ? T[i] : T[i] - BASE; return s; }
+  function stepOnce() {
+    const r = reff(), nT = new Float64Array(N);
+    for (let i = 0; i < N; i++) {
+      let L, R;
+      if (mode === "dopant") { L = i === 0 ? 1 : T[i - 1]; R = i === N - 1 ? T[i - 1] : T[i + 1]; }
+      else if (bc === "sink") { L = i === 0 ? BASE : T[i - 1]; R = i === N - 1 ? BASE : T[i + 1]; }
+      else { L = i === 0 ? T[1] : T[i - 1]; R = i === N - 1 ? T[N - 2] : T[i + 1]; }
+      nT[i] = T[i] + r * (L - 2 * T[i] + R);
+    }
+    if (mode === "dopant") nT[0] = 1;
+    else if (bc === "sink") { /* 경계 칸 바깥이 25 °C */ }
+    T = nT; steps++;
+    let m = 0; for (let i = 0; i < N; i++) m = Math.max(m, Math.abs(T[i]));
+    if (!isFinite(m) || m > 1e6) { blown = true; }
+  }
+  function msg(s, cls) { const el = document.getElementById("ode-h-msg"); el.textContent = s; el.className = "sim-msg " + (cls || ""); }
+  const cv = MB.canvas("#cv-ode-heat", (ctx, w, h) => {
+    const P = MB.palette();
+    const strip = { x: 44, y: 34, w: w - 58, h: 28 };
+    const box = { x: 44, y: 80, w: w - 58, h: h - 80 - 40 };
+    const dop = mode === "dopant";
+    const lo = dop ? 0 : 20, hi = dop ? 1.1 : 125;
+    // 색 띠
+    const cells = new Float64Array(N); for (let i = 0; i < N; i++) cells[i] = MB.clamp((T[i] - lo) / (hi - lo), 0, 1);
+    MB.drawGray(ctx, cells, N, 1, strip.x, strip.y, strip.w, strip.h, { map: (v) => MB.colormap(v, "viridis"), smooth: true });
+    ctx.strokeStyle = P.border; ctx.strokeRect(strip.x, strip.y, strip.w, strip.h);
+    const xs = []; for (let i = 0; i < N; i++) xs.push([i / (N - 1), MB.clamp(T[i], -1e3, 1e3)]);
+    const ser = [{ data: xs, color: P.accent, width: 2.4 }];
+    if (dop && steps > 0) {
+      const Dt = reff() * steps; const ex = [];
+      for (let i = 0; i < N; i++) ex.push([i / (N - 1), 1 - MB.erf(i / (2 * Math.sqrt(Dt)))]);
+      ser.push({ data: ex, color: P.warn, width: 2, dash: [5, 4] });
+    }
+    const c = MB.chart(ctx, box, { x: [0, 1], y: [lo, hi], xLabel: dop ? "깊이 x (0 ~ 0.5 µm)" : "위치 x (0 ~ 10 mm)", xFmt: (v) => (dop ? (v * 0.5).toFixed(1) : (v * 10).toFixed(0)), yFmt: (v) => (dop ? v.toFixed(1) : String(v)), series: ser,
+      hlines: dop ? [] : [{ y: BASE, color: P.faint }] });
+    if (arrows) {
+      for (let i = 1; i < N - 1; i += 2) {
+        const lap = (T[i - 1] + T[i + 1]) / 2 - T[i];
+        if (Math.abs(lap) < (dop ? 1e-3 : 0.05)) continue;
+        const x = c.X(i / (N - 1)), y = c.Y(MB.clamp(T[i], lo, hi)), L = MB.clamp(lap * (dop ? 400 : 4), -26, 26);
+        ctx.strokeStyle = lap > 0 ? P.ok : P.bad; ctx.fillStyle = ctx.strokeStyle; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - L); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, y - L - Math.sign(L) * 5); ctx.lineTo(x - 3.5, y - L); ctx.lineTo(x + 3.5, y - L); ctx.closePath(); ctx.fill();
+      }
+    }
+    ctx.font = odeFont(11); ctx.fillStyle = P.dim; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText(dop ? "C / C_s" : "T [°C]", box.x + 4, box.y + 2);
+    document.getElementById("ode-h-tag").textContent = dop ? "실리콘 단면, 왼쪽 = 표면 · 도펀트 확산" : (bc === "sink" ? "실리콘 막대 10 mm · 양 끝 방열판" : "실리콘 막대 10 mm · 양 끝 단열");
+    mapX = (px) => (px - box.x) / box.w;
+  }, { aspect: 0.62, minHeight: 280, maxHeight: 420 });
+  function readout() {
+    const r = reff();
+    let t, unit;
+    if (mode === "dopant") { const dx = 0.5e-4 / (N - 1), dt = r * dx * dx / 1e-14; t = steps * dt / 60; unit = "분"; }
+    else { const dx = 10 / (N - 1), dt = r * dx * dx / 88; t = steps * dt * 1000; unit = "ms"; }
+    MB.stat("ode-h-t", MB.fmt(t, 3) + " <small>" + unit + "</small>");
+    let m = -Infinity; for (let i = 0; i < N; i++) m = Math.max(m, T[i]);
+    MB.stat("ode-h-max", blown ? "발산" : (mode === "dopant" ? m.toFixed(2) + " <small>C_s</small>" : m.toFixed(1) + " <small>°C</small>"));
+    MB.stat("ode-h-sum", blown ? "—" : (mode === "dopant" ? "주입량 " + MB.fmt(total(), 3) : (100 * total() / sum0).toFixed(1) + " <small>%</small>"));
+    MB.stat("ode-h-n", String(steps));
+    document.getElementById("ode-h-r-out").textContent = unstable ? "0.60 (위반!)" : rr.toFixed(2);
+  }
+  function advance(n) {
+    if (blown) return;
+    for (let k = 0; k < n && !blown; k++) stepOnce();
+    if (blown) { msg("r = 0.6 > 1/2: 칸마다 번갈아 튀는 성분이 매 걸음 |1 − 4r| = 1.4배로 커져 계산이 폭발했다. 초기 상태 버튼으로 다시 시작하세요.", "bad"); if (play.on) { play.set(false); playing = false; } }
+    cv.redraw(); readout();
+  }
+  const play = MB.playButton("ode-h-play", () => { playing = true; }, () => { playing = false; });
+  MB.loop(document.getElementById("sim-ode-heat"), () => { if (playing) advance(speed); });
+  document.getElementById("ode-h-step").addEventListener("click", () => advance(1));
+  document.querySelectorAll("#sim-ode-heat [data-h]").forEach((b) => b.addEventListener("click", () => preset(b.dataset.h)));
+  MB.seg("ode-h-bc", (v) => { bc = v; if (mode === "heat") { sum0 = total() || 1; } cv.redraw(); readout(); });
+  MB.range("ode-h-r", (v) => v.toFixed(2), (v) => { rr = v; readout(); });
+  MB.range("ode-h-sp", (v) => String(v), (v) => { speed = v; });
+  MB.check("ode-h-unstable", (v) => { unstable = v; readout(); });
+  MB.check("ode-h-arrows", (v) => { arrows = v; cv.redraw(); });
+  // 클릭·드래그로 열 더하기
+  const canvas = document.getElementById("cv-ode-heat");
+  let down = false;
+  const addHeat = (e) => {
+    if (!mapX) return;
+    const rect = canvas.getBoundingClientRect(), u = mapX(e.clientX - rect.left);
+    if (u < 0 || u > 1) return;
+    for (let i = 0; i < N; i++) {
+      const g = Math.exp(-(((i / (N - 1) - u) / 0.025) ** 2));
+      if (mode === "dopant") T[i] = Math.min(1.05, T[i] + 0.15 * g); else T[i] = Math.min(150, T[i] + 12 * g);
+    }
+    blown = false; sum0 = total() || 1; cv.redraw(); readout();
+  };
+  canvas.addEventListener("pointerdown", (e) => { down = true; canvas.setPointerCapture(e.pointerId); addHeat(e); });
+  canvas.addEventListener("pointermove", (e) => { if (down) addHeat(e); });
+  canvas.addEventListener("pointerup", () => { down = false; });
+  canvas.addEventListener("pointercancel", () => { down = false; });
+  preset("spot");
+})();
+</script>
+</body>
+</html>
