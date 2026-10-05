@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<title>잡음과 산포의 수학 · MathBook</title>
+<meta name="description" content="밤 사진의 자글자글한 잡음은 빛이 알갱이라서 생긴다. 포아송 분포와 샷 노이즈, 중심극한정리와 공정 산포, Cpk와 6시그마, 베이즈 불량 판정, 수율 모델을 직접 만져 본다.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<script src="../js/common.js"></script>
+<style>
+  .pr-legend { display: grid; gap: 6px; font-size: 13.5px; }
+  .pr-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .pr-legend .tp { background: var(--bad); }
+  .pr-legend .fn { background: var(--bad); opacity: .35; }
+  .pr-legend .fp { background: var(--accent); }
+  .pr-legend .tn { background: var(--text-faint); opacity: .35; }
+  .pr-legend b { font-family: var(--mono); font-weight: 600; }
+</style>
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3d6151a0abc94ede89285d462527fa80"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</head>
+<body data-chapter="probability">
+<main class="chapter">
+  <header class="chapter-hero">
+    <div class="eyebrow">Chapter 07</div>
+    <h1>잡음과 산포의 수학</h1>
+    <p class="lead">공학의 수식은 대부분 "이 값을 넣으면 저 값이 나온다"는 결정론입니다. 그런데 실제 물건은 같은 조건에서도 매번 조금씩 다른 값을 냅니다. 픽셀은 같은 빛을 받아도 매 프레임 다른 숫자를 읽고, 같은 레시피로 만든 트랜지스터도 선폭이 나노미터 단위로 들쭉날쭉합니다. 이 '들쭉날쭉'을 없앨 수 없다면, 적어도 <b>얼마나</b> 들쭉날쭉할지 예측하고 그 크기를 설계 변수로 다뤄야 합니다. 그 언어가 확률입니다.</p>
+    <ul class="objectives">
+      <li>독립적으로 드문드문 일어나는 사건의 개수가 포아송 분포를 따르는 이유를 설명하고, 분산 = 평균에서 SNR = √N을 끌어낸다.</li>
+      <li>샷 노이즈와 읽기 잡음을 구분하고, 노출·픽셀 크기·멀티프레임 합성이 SNR을 어떻게 바꾸는지 계산한다.</li>
+      <li>중심극한정리로 공정 산포가 정규분포에 가까운 이유와, 그 근사가 깨지는 조건을 안다.</li>
+      <li>Cp, Cpk, ppm을 계산하고 '6시그마 = 3.4 ppm'이 1.5σ 평균 이동을 가정한 관례임을 정확히 설명한다.</li>
+      <li>베이즈 정리로 검사 결과를 해석하고(기저율 무시의 함정), 포아송 결함 모델로 수율 \(Y = e^{-AD_0}\)를 유도한다.</li>
+    </ul>
+    <div class="origin">
+      <div class="o-head"><small>이 수식이 없었다면</small><b>밤에도 깨끗한 스마트폰 사진</b></div>
+      <div class="o-body"><p>어두운 곳에서 찍은 사진의 자글자글한 얼룩은 센서가 나빠서 생기는 것만이 아닙니다. 빛은 연속된 물결이 아니라 <b>광자라는 알갱이</b>로 도착하고, 알갱이가 몇 개 들어올지는 매번 무작위입니다. 아무리 완벽한 센서도 이 '알갱이 잡음'(샷 노이즈)은 피할 수 없습니다. 그래서 설계자는 잡음을 없애는 대신 <b>잡음의 통계를 예측</b>합니다. 평균 N개의 광자를 받으면 흔들림은 √N개 — 이 한 줄이 픽셀 크기, 노출 시간, 그리고 야간 모드가 여러 장을 찍어 합치는 이유를 모두 정합니다.</p>
+        <div class="o-chain"><span>어두운 장면</span><i>→</i><span>광자 수의 무작위 흔들림</span><i>→</i><span class="tool">포아송 분포 · √N 법칙</span><i>→</i><span>픽셀·노출·멀티프레임 설계</span></div></div>
+    </div>
+  </header>
+
+  <!-- =============================================================== 1 -->
+  <section id="poisson">
+    <h2>광자 빗방울: 포아송 분포</h2>
+    <div class="problem"><strong>같은 빛, 다른 숫자</strong>
+      <p>균일한 회색 벽을 향해 카메라를 고정하고 같은 노출로 100장을 찍었다. 어떤 픽셀은 프레임마다 47, 53, 49, 61, 44 …를 읽는다. 렌즈도, 조명도, 회로도 그대로다. 이 흔들림은 어디서 오며, 얼마나 클지 미리 알 수 있을까?</p></div>
+    <p>소나기가 내릴 때 보도블록 한 칸에 1초 동안 떨어지는 빗방울 수를 생각해 봅시다. 빗방울 하나하나는 서로를 모르고 독립적으로 떨어지며, 평균 비율만 일정합니다. 그러면 칸마다 떨어진 수는 평균 근처에서 들쭉날쭉할 수밖에 없습니다. 광자도 똑같습니다. 광원(전구의 열적 방출이든 LED의 재결합이든)에서 나오는 광자의 방출·흡수는 개별적인 양자 사건이고, 일정한 밝기는 "단위 시간당 <b>평균</b> 몇 개"라는 뜻일 뿐입니다.</p>
+
+    <figure class="diagram">
+      <svg viewBox="0 0 800 190" role="img" aria-label="시간축 위에 무작위로 도착하는 광자와 구간별 개수">
+        <g id="pr-fig-arrivals"></g>
+      </svg>
+      <figcaption><b>그림 7-1.</b> 시간축 위에 무작위로 도착하는 광자(점). 같은 길이의 구간(=같은 노출) 10개로 자르면, 평균 밀도가 같아도 구간마다 세는 개수가 다르다. 이 개수의 분포가 포아송 분포다.</figcaption>
+    </figure>
+
+    <p>이 개수를 계산해 봅시다. 노출 시간 \(T\)를 아주 잘게 \(n\)조각으로 나누면, 한 조각에 광자가 들어올 확률은 \(p = \lambda/n\)으로 작고(둘 이상 들어올 확률은 무시할 만큼 더 작고), 조각들은 서로 독립입니다. 그러면 전체 개수는 동전 \(n\)번 던지기의 이항분포입니다. \(n \to \infty\)로 보내면(1장의 극한 \((1-\lambda/n)^n \to e^{-\lambda}\)가 여기서 나옵니다):</p>
+    <div class="formula">$$P(K = k) = \lim_{n\to\infty}\binom{n}{k}\Big(\frac{\lambda}{n}\Big)^k\Big(1-\frac{\lambda}{n}\Big)^{n-k} = \frac{\lambda^k e^{-\lambda}}{k!}, \qquad \mathbb{E}[K] = \lambda,\quad \operatorname{Var}[K] = \lambda$$
+      <div class="where">\(\lambda\): 노출 동안 들어올 광자의 평균 개수. <b>분산이 평균과 같다</b>는 것이 포아송 분포의 지문이다. 이항분포의 분산 \(np(1-p)\)에서 \(p\to0\)이면 \(np=\lambda\)만 남기 때문이다.</div>
+    </div>
+    <p>이 분포의 이름은 1837년 이를 다룬 시메옹 드니 푸아송<span class="en">(Siméon Denis Poisson)</span>에서 왔고, 1898년 보르트키예비치<span class="en">(Ladislaus Bortkiewicz)</span>가 프로이센 기병대에서 말에 차여 죽은 병사 수 기록에 들어맞음을 보이면서 '드문 사건의 법칙'으로 유명해졌습니다. 전자 회로에서는 1918년 쇼트키<span class="en">(Walter Schottky)</span>가 진공관 전류가 전자 알갱이 때문에 흔들리는 현상을 분석하며 <span class="term">샷 노이즈</span><span class="en">(Shot Noise)</span>라는 이름을 붙였습니다 — 산탄(shot)이 양철판을 두드리는 소리에 빗댄 것입니다.</p>
+
+    <div class="sim" id="sim-pr-photons">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>픽셀 격자에 광자 떨어뜨리기</h3></div>
+      <div class="sim-body">
+        <div class="sim-view split">
+          <div><canvas id="cv-pr-grid"></canvas><span class="cap">픽셀 격자 (밝기 = 광자 수)</span></div>
+          <div><canvas id="cv-pr-hist"></canvas><span class="cap">픽셀별 개수 히스토그램</span></div>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>평균 광자 수 λ (픽셀당) <output id="pr-lam-out"></output></span><input type="range" id="pr-lam"></label>
+          <div class="ctrl"><span>격자 크기</span><div class="seg" id="pr-grid-n"><button data-value="16" class="on">16×16</button><button data-value="32">32×32</button><button data-value="64">64×64</button></div></div>
+          <div class="btn-row"><button class="btn primary" id="pr-drop">▶ 광자 떨어뜨리기</button><button class="btn" id="pr-fill">즉시 채우기</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">표본 평균</span><span class="v" id="pr-ph-mean">—</span></div>
+        <div class="stat"><span class="k">표본 분산</span><span class="v" id="pr-ph-var">—</span></div>
+        <div class="stat"><span class="k">분산/평균</span><span class="v" id="pr-ph-ratio">—</span></div>
+        <div class="stat"><span class="k">SNR = 평균/표준편차</span><span class="v" id="pr-ph-snr">—</span></div>
+        <div class="stat"><span class="k">이론 √λ</span><span class="v" id="pr-ph-sqrt">—</span></div>
+      </div>
+      <div class="sim-note">막대는 시뮬레이션한 픽셀들의 개수 분포, 점과 선은 포아송 PMF \(\lambda^k e^{-\lambda}/k!\), 점선은 같은 평균·분산의 정규분포. 해볼 것: ① λ = 1에서 '광자 0개'인 픽셀이 약 37%(=e⁻¹)인지 확인. ② λ를 바꿔도 분산/평균이 늘 1 근처에 머무는 것을 확인. ③ λ ≥ 20이면 포아송이 정규분포와 거의 겹친다(뒤의 중심극한정리). 모델: 광자는 격자 전체에 균일한 밀도로 서로 독립적으로 도착한다(전체 개수도 포아송). 양자효율 100%, 다른 잡음 없음.</div>
+    </div>
+
+    <p>표본 분산이 평균과 거의 같게 나오는 것을 확인했을 겁니다. 그러면 신호 대 잡음비는 곧바로 나옵니다.</p>
+    <div class="formula">$$\mathrm{SNR} = \frac{\text{평균}}{\text{표준편차}} = \frac{N}{\sqrt{N}} = \sqrt{N}, \qquad \mathrm{SNR_{dB}} = 20\log_{10}\sqrt{N} = 10\log_{10} N$$
+      <div class="where">\(N\): 받은 광자(정확히는 광전자) 수의 평균. 잡음의 절대 크기 \(\sqrt N\)은 신호와 함께 <b>커지지만</b>, 상대 크기 \(1/\sqrt N\)은 줄어든다. 광자 100개 → SNR 10(20 dB), 1만 개 → SNR 100(40 dB).</div>
+    </div>
+    <div class="callout"><strong>√N 법칙의 비정함</strong> SNR을 2배로 올리려면 광자가 4배 필요하다. 노출을 4배로 늘리거나, 픽셀 면적을 4배(한 변 2배)로 키우거나, 조리개를 2스톱 열어야 한다. 밝은 장면은 광자가 넉넉해 거의 문제가 없지만, 밤 장면의 어두운 픽셀이 받는 광자는 수십 개 수준까지 떨어질 수 있고 그러면 SNR이 한 자릿수가 된다. 바로 '자글자글함'이다.</div>
+  </section>
+
+  <!-- =============================================================== 2 -->
+  <section id="shot-noise">
+    <h2>샷 노이즈와 멀티프레임 합성</h2>
+    <div class="problem"><strong>야간 모드는 왜 여러 장을 찍는가</strong>
+      <p>손떨림 때문에 노출을 1/15초보다 길게 할 수 없다. 그런데 어두운 장면에서는 1/15초 동안 픽셀당 광자가 너무 적다. 스마트폰의 야간 모드는 셔터를 누르면 여러 장을 빠르게 찍어 정렬한 뒤 합친다. 몇 장을 합쳐야 얼마나 깨끗해질까? 그리고 '긴 노출 1장'과 '짧은 노출 여러 장'은 같은가?</p></div>
+    <p>센서가 실제로 읽는 숫자에는 샷 노이즈 말고도 잡음이 더 들어갑니다. 아래 그림처럼 광자가 전자로 바뀌고, 전자가 전압으로 읽히고, 그 전압이 숫자로 바뀌는 단계마다 무작위성이 더해집니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 200" role="img" aria-label="광자에서 디지털 값까지의 잡음 사슬">
+        <defs><marker id="pr-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="f-acc"/></marker></defs>
+        <rect x="20" y="50" width="140" height="64" rx="10" class="f-acc2-soft"/>
+        <text x="90" y="78" text-anchor="middle" class="t">광자</text>
+        <text x="90" y="98" text-anchor="middle" class="t-mono">Poisson(N)</text>
+        <rect x="225" y="50" width="150" height="64" rx="10" class="f-acc-soft"/>
+        <text x="300" y="78" text-anchor="middle" class="t">광전자</text>
+        <text x="300" y="98" text-anchor="middle" class="t-mono">Poisson(ηN)</text>
+        <rect x="440" y="50" width="150" height="64" rx="10" class="f-elev"/>
+        <text x="515" y="78" text-anchor="middle" class="t">전압 (읽기)</text>
+        <text x="515" y="98" text-anchor="middle" class="t-mono">+ 𝒩(0, σᵣ²)</text>
+        <rect x="655" y="50" width="125" height="64" rx="10" class="f-elev"/>
+        <text x="717" y="78" text-anchor="middle" class="t">ADC 값</text>
+        <text x="717" y="98" text-anchor="middle" class="t-mono">+ Δ²/12</text>
+        <line x1="162" y1="82" x2="221" y2="82" class="s-acc" marker-end="url(#pr-ah)"/>
+        <line x1="377" y1="82" x2="436" y2="82" class="s-acc" marker-end="url(#pr-ah)"/>
+        <line x1="592" y1="82" x2="651" y2="82" class="s-acc" marker-end="url(#pr-ah)"/>
+        <text x="192" y="40" text-anchor="middle" class="t-dim">양자효율 η</text>
+        <text x="407" y="40" text-anchor="middle" class="t-dim">소스 팔로워</text>
+        <text x="622" y="40" text-anchor="middle" class="t-dim">양자화</text>
+        <text x="90" y="145" text-anchor="middle" class="t-dim">샷 노이즈</text>
+        <text x="300" y="145" text-anchor="middle" class="t-dim">여전히 포아송</text>
+        <text x="300" y="163" text-anchor="middle" class="t-mono">(무작위 솎아내기)</text>
+        <text x="515" y="145" text-anchor="middle" class="t-dim">읽기 잡음</text>
+        <text x="515" y="163" text-anchor="middle" class="t-mono">신호와 무관</text>
+        <text x="717" y="145" text-anchor="middle" class="t-dim">양자화 잡음</text>
+        <text x="717" y="163" text-anchor="middle" class="t-mono">6장</text>
+      </svg>
+      <figcaption><b>그림 7-2.</b> 단순화한 픽셀 잡음 사슬. 포아송 개수에서 각 광자를 확률 η로 독립적으로 남기면(양자효율) 결과도 포아송(평균 ηN)이다. 읽기 잡음은 신호 크기와 무관한 가우시안으로, 양자화 잡음은 계단 폭 Δ의 균일 오차로 근사한다. 실제 센서에는 암전류·고정 패턴 잡음 등이 더 있다.</figcaption>
+    </figure>
+    <p>서로 독립인 잡음은 <b>분산끼리 더해집니다</b>(표준편차끼리가 아닙니다). 이 사실 하나로 대부분의 센서 잡음 계산이 끝납니다.</p>
+    <div class="formula">$$\sigma_{\text{total}} = \sqrt{N + \sigma_r^2}, \qquad \mathrm{SNR} = \frac{N}{\sqrt{N + \sigma_r^2}}$$
+      <div class="where">\(N\): 광전자 수, \(\sigma_r\): 읽기 잡음(전자 rms). \(N \gg \sigma_r^2\)이면 샷 노이즈가 지배(SNR ≈ √N), \(N \ll \sigma_r^2\)이면 읽기 잡음이 지배(SNR ≈ N/σᵣ). 읽기 잡음 2 e⁻인 센서는 광전자가 4개를 넘는 순간부터 샷 노이즈가 더 크다.</div>
+    </div>
+    <p>프레임 \(K\)장을 더하면 신호는 \(K\)배, 분산도 \(K\)배이므로 SNR은 \(\sqrt K\)배가 됩니다. 단, 이 계산은 <b>각 프레임이 같은 광자를 받을 때</b>입니다. 같은 총 시간을 \(K\)조각으로 나누면 광자 총량은 그대로인데 읽기 잡음만 \(K\)번 더해집니다.</p>
+    <div class="formula">$$\underbrace{\mathrm{SNR}_K = \sqrt{K}\,\frac{N}{\sqrt{N+\sigma_r^2}}}_{\text{프레임마다 } N \text{개, 총 } K \text{배 시간}} \qquad \underbrace{\mathrm{SNR}_{\text{split}} = \frac{N}{\sqrt{N + K\sigma_r^2}}}_{\text{총 } N\text{개를 } K \text{장에 나눔}}$$</div>
+
+    <div class="sim" id="sim-pr-shot">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>샷 노이즈 사진과 멀티프레임 평균</h3></div>
+      <div class="sim-body">
+        <div class="sim-view split">
+          <div><canvas id="cv-pr-shot-a"></canvas><span class="cap" id="pr-shot-cap-a">1 프레임</span></div>
+          <div><canvas id="cv-pr-shot-b"></canvas><span class="cap" id="pr-shot-cap-b">K 프레임 평균</span></div>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>가장 밝은 곳의 광전자 수 N <output id="pr-shot-n-out"></output></span><input type="range" id="pr-shot-n"></label>
+          <label class="ctrl"><span>합성 프레임 수 K <output id="pr-shot-k-out"></output></span><input type="range" id="pr-shot-k"></label>
+          <label class="ctrl"><span>읽기 잡음 σᵣ <output id="pr-shot-r-out"></output></span><input type="range" id="pr-shot-r" min="0" max="10" step="0.5" value="2"></label>
+          <label class="check"><input type="checkbox" id="pr-shot-split"> 총 노출 시간 고정(1장을 K조각으로 나눔)</label>
+          <div class="btn-row"><button class="btn" id="pr-shot-again">다시 촬영</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">왼쪽 SNR (회색 50%)</span><span class="v" id="pr-shot-s1">—</span></div>
+        <div class="stat"><span class="k">오른쪽 SNR</span><span class="v" id="pr-shot-s2">—</span></div>
+        <div class="stat"><span class="k">개선</span><span class="v" id="pr-shot-gain">—</span></div>
+        <div class="stat"><span class="k">지배 잡음 (중간 회색)</span><span class="v" id="pr-shot-dom">—</span></div>
+      </div>
+      <div class="sim-note">해볼 것: ① N = 10에서 K를 1 → 16으로 올리면 SNR이 4배(+12 dB)인지 확인. ② '총 노출 시간 고정'을 켜고 σᵣ = 5로 두면, 짧게 여러 장 찍은 쪽이 오히려 나빠진다(읽기 잡음이 K번 들어간다). σᵣ = 0이면 둘은 통계적으로 같다. ③ N = 1000이면 샷 노이즈 지배라서 읽기 잡음 슬라이더가 거의 영향을 못 준다. 모델: 장면은 MB.testImage, 픽셀값 ∝ 광전자 수. 프레임 사이 움직임·정렬 오차 없음. K장 합 = Poisson(K·λ) + √K·σᵣ·𝒩(0,1)로 정확히 같은 분포를 한 번에 샘플링한다. 화면 표시는 선형(감마·노이즈 제거 없음).</div>
+    </div>
+
+    <p>실제 야간 모드는 여기에 정렬(손떨림·피사체 움직임 보정), 움직이는 영역의 가중치 조절, 노이즈 제거, 톤 매핑을 더합니다. 하지만 "몇 장을 합치면 얼마나 좋아지는가"의 상한은 이 √K 계산이 정합니다. 그리고 "긴 노출 한 장 vs 짧은 노출 여러 장"의 손익은 읽기 잡음이 결정합니다 — 최신 CMOS 센서의 읽기 잡음이 1–2 e⁻ 수준까지 내려오면서 여러 장으로 나눠 찍는 손해가 작아졌고, 그 덕에 흔들림에 강한 멀티프레임 방식이 실용화되었습니다. 픽셀 자체의 잡음 구조는 <a href="https://sensorbook.euiyun.com/">SensorBook</a>에서 자세히 다룹니다.</p>
+    <div class="callout tip"><strong>픽셀 크기 논쟁의 핵심</strong> 픽셀 한 변을 절반으로 줄이면 픽셀당 광자는 1/4, SNR은 1/2이 된다. 하지만 작은 픽셀 4개를 합치면(비닝) 광자 수는 원래대로 돌아오고, 샷 노이즈만 있다면 SNR도 원래와 같다. 손해는 합칠 때 읽기 잡음이 4번(분산 기준) 들어가는 몫이다. 같은 원리가 위의 '총 시간 고정' 실험이다 — 공간에서 나누든 시간에서 나누든 같은 수학이다.</div>
+  </section>
+
+  <!-- =============================================================== 3 -->
+  <section id="clt">
+    <h2>중심극한정리: 산포는 왜 종 모양인가</h2>
+    <div class="problem"><strong>선폭 산포의 모양</strong>
+      <p>웨이퍼 위 게이트 선폭(CD)을 수천 곳에서 재면 히스토그램이 거의 언제나 종 모양이 된다. 노광 초점, 도즈, 레지스트 두께, 현상 온도, 식각 속도 … 원인 하나하나의 분포는 종 모양이 아닌데도 그렇다. 왜 결과는 정규분포일까? 그리고 그 가정을 믿고 불량률을 계산해도 될까?</p></div>
+    <p>선폭은 수많은 작은 요인의 효과가 <b>더해진</b> 결과입니다. 초점이 조금 어긋나면 +0.3 nm, 도즈가 조금 많으면 −0.2 nm, 레지스트가 조금 두꺼우면 +0.1 nm … 각 요인이 서로 독립이고 어느 하나가 지배적이지 않다면, 그 합의 분포는 개별 분포의 모양을 잊어버리고 정규분포로 수렴합니다. 이것이 <span class="term">중심극한정리</span><span class="en">(Central Limit Theorem)</span>입니다.</p>
+    <div class="formula">$$\frac{S_n - n\mu}{\sigma\sqrt{n}} \;\xrightarrow{\;n\to\infty\;}\; \mathcal{N}(0, 1), \qquad S_n = X_1 + \dots + X_n$$
+      <div class="where">\(X_i\): 평균 \(\mu\), 분산 \(\sigma^2\)(유한)인 독립 동일 분포 확률변수. 평균은 \(n\)배, 표준편차는 \(\sqrt n\)배로 커지므로 \(\sqrt n\)으로 나눠 표준화한다. 동일 분포가 아니어도 어느 한 항이 전체 분산을 지배하지 않으면 성립한다(린데베르크·랴푸노프 조건).</div>
+    </div>
+    <p>가장 오래된 형태는 1733년 드무아브르<span class="en">(Abraham de Moivre)</span>가 동전 던지기(이항분포)를 정규 곡선으로 근사한 것이고, 라플라스가 일반화했으며, 1901년 랴푸노프<span class="en">(Aleksandr Lyapunov)</span>가 엄밀한 일반 조건을 증명했습니다. 동전 버전을 눈으로 보여 주는 장치가 골턴<span class="en">(Francis Galton)</span>이 1889년 책 『Natural Inheritance』에 소개한 갈톤 보드입니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 300" role="img" aria-label="갈톤 보드와 이항분포 막대, 정규 곡선">
+        <g id="pr-fig-galton"></g>
+      </svg>
+      <figcaption><b>그림 7-3.</b> 갈톤 보드. 공은 못(점)을 만날 때마다 왼쪽(−1) 또는 오른쪽(+1)으로 반반의 확률로 튄다. 10단을 지나면 위치 = ±1 열 개의 합이고, 칸별 개수는 이항분포 \(\binom{10}{k}/2^{10}\)(막대)이며 정규 곡선(선)에 가깝다.</figcaption>
+    </figure>
+
+    <div class="sim" id="sim-pr-clt">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>요인 n개를 더하면</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-pr-clt"></canvas></div>
+        <div class="sim-controls">
+          <div class="ctrl"><span>요인 하나의 분포</span><div class="seg" id="pr-clt-dist"><button data-value="unif" class="on">균일</button><button data-value="exp">지수</button><button data-value="bimodal">이봉</button><button data-value="coin">동전 ±1</button></div></div>
+          <label class="ctrl"><span>더하는 요인 수 n <output id="pr-clt-n-out"></output></span><input type="range" id="pr-clt-n" min="1" max="60" value="1"></label>
+          <div class="btn-row"><button class="btn" id="pr-clt-again">다시 뽑기 (2만 회)</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">왜도 (표본 / 이론)</span><span class="v" id="pr-clt-skew">—</span></div>
+        <div class="stat"><span class="k">초과 첨도 (표본 / 이론)</span><span class="v" id="pr-clt-kurt">—</span></div>
+        <div class="stat"><span class="k">|Z| &gt; 3 비율 (정규 0.27%)</span><span class="v" id="pr-clt-tail">—</span></div>
+      </div>
+      <div class="sim-note">히스토그램은 합 \(S_n\)을 표준화한 \(Z\), 선은 \(\mathcal N(0,1)\). 왼쪽 위 작은 그림이 요인 하나의 분포다. 해볼 것: ① 균일분포는 n = 3만 돼도 거의 종 모양(수렴이 빠르다). ② 지수분포는 치우침(왜도 2/√n)이 천천히 사라진다 — n = 60에서도 오른쪽 꼬리가 길다. ③ 이봉분포를 n = 2로 두면 봉우리 셋, n이 커지면 하나. 모델: 요인은 독립 동일 분포. 이봉 = ±1 + 𝒩(0, 0.15²). 각 막대 높이는 2만 개 표본의 밀도.</div>
+    </div>
+
+    <p>중심극한정리에서 공학적으로 가장 쓸모 있는 부산물은 <b>분산의 덧셈</b>입니다. 독립 요인의 합에서 표준편차는 더해지지 않고 제곱합의 제곱근(RSS)으로 합쳐집니다.</p>
+    <div class="formula">$$\sigma_{\text{total}} = \sqrt{\sigma_1^2 + \sigma_2^2 + \dots + \sigma_n^2}$$
+      <div class="where">예: 선폭 산포 요인이 초점 0.6 nm, 도즈 0.5 nm, 레지스트 0.3 nm, 식각 0.4 nm(각 1σ)이면 합은 \(\sqrt{0.36+0.25+0.09+0.16} \approx 0.93\) nm. 최악값을 그냥 더한 1.8 nm보다 훨씬 작다. 공차 누적(tolerance stack-up)의 통계적 방법이 바로 이것이다. 그리고 <b>가장 큰 항을 줄여야</b> 효과가 크다는 것도 보인다 — 0.6을 0.3으로 줄이면 0.79 nm, 0.3을 0으로 줄이면 0.88 nm.</div>
+    </div>
+    <div class="callout warn"><strong>정규 가정이 깨지는 곳</strong> ① 한 요인이 지배하면(예: 특정 장비 하나의 드리프트) 합은 그 요인의 분포를 닮는다. ② 요인이 곱해지면(성장률, 저항의 비율 오차) 합이 아니라 로그의 합이 정규 → 결과는 로그정규분포다. ③ 요인이 서로 상관되어 있으면 분산이 RSS보다 커진다. ④ 중심극한정리는 '가운데'가 정규로 수렴한다는 정리이지, 꼬리 끝(10⁻⁶ 이하)까지 정확하다고 보장하지 않는다. 이 마지막 점이 다음 두 절의 주제다.</div>
+  </section>
+
+  <!-- =============================================================== 4 -->
+  <section id="process-capability">
+    <h2>시그마와 공정 능력: Cp, Cpk, ppm</h2>
+    <div class="problem"><strong>규격 안에 몇 개가 들어오나</strong>
+      <p>게이트 선폭 목표는 20.0 nm이고, 회로 설계가 허용하는 범위(규격)는 18.5–21.5 nm다. 공정의 평균은 20.3 nm, 표준편차는 0.35 nm다. 칩 100만 개당 규격을 벗어나는 것은 몇 개일까? 평균을 0.3 nm 맞추는 것과 산포를 줄이는 것 중 무엇이 급할까?</p></div>
+    <p>정규분포를 가정하면 이 질문은 꼬리 면적 계산입니다. 규격 한계까지의 거리를 표준편차 단위로 잰 값 \(z = (\text{USL}-\mu)/\sigma\)만 알면 불량 확률이 정해지기 때문입니다. 그래서 산업계는 '몇 시그마'라는 말로 품질을 이야기합니다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 264" role="img" aria-label="정규분포의 1, 2, 3 시그마 구간">
+        <g id="pr-fig-sigma"></g>
+      </svg>
+      <figcaption><b>그림 7-4.</b> 정규분포에서 평균 ±1σ, ±2σ, ±3σ 안에 드는 비율은 68.27%, 95.45%, 99.73%. 3σ 밖으로 나가는 비율은 양쪽 합쳐 약 2,700 ppm이다. 꼬리는 \(e^{-z^2/2}\)로 줄어들어 4σ는 63 ppm, 5σ는 0.57 ppm, 6σ는 약 0.002 ppm(2 ppb)이다(양쪽 합).</figcaption>
+    </figure>
+    <p>규격 폭과 산포를 비교하는 두 지수가 <span class="term">공정 능력 지수</span><span class="en">(Process Capability Index)</span>입니다.</p>
+    <div class="formula">$$C_p = \frac{\text{USL} - \text{LSL}}{6\sigma}, \qquad C_{pk} = \min\!\left(\frac{\text{USL}-\mu}{3\sigma},\; \frac{\mu-\text{LSL}}{3\sigma}\right), \qquad \text{불량률} = \Phi\!\Big(\frac{\text{LSL}-\mu}{\sigma}\Big) + 1-\Phi\!\Big(\frac{\text{USL}-\mu}{\sigma}\Big)$$
+      <div class="where">\(C_p\): 평균이 가운데에 있다면 얼마나 여유가 있나(잠재 능력). \(C_{pk}\): 실제 평균 위치를 반영한, 가까운 쪽 한계까지의 여유. \(C_{pk} = C_p\)이면 평균이 정중앙. \(3C_{pk}\)가 가까운 쪽 '시그마 거리'다. 흔히 \(C_{pk} \ge 1.33\)(4σ)을 최소 요구로, 중요 특성에는 1.67(5σ) 이상을 요구한다.</div>
+    </div>
+
+    <div class="sim" id="sim-pr-cpk">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>선폭 분포와 규격: Cpk와 ppm</h3></div>
+      <div class="sim-body">
+        <div class="sim-view split">
+          <div><canvas id="cv-pr-cpk-a"></canvas><span class="cap">선폭 분포 (nm)</span></div>
+          <div><canvas id="cv-pr-cpk-b"></canvas><span class="cap">불량 ppm vs Cpk (로그)</span></div>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>평균 μ <output id="pr-cpk-mu-out"></output></span><input type="range" id="pr-cpk-mu" min="18.5" max="21.5" step="0.05" value="20.3"></label>
+          <label class="ctrl"><span>표준편차 σ <output id="pr-cpk-s-out"></output></span><input type="range" id="pr-cpk-s" min="0.1" max="1" step="0.01" value="0.35"></label>
+          <label class="ctrl"><span>규격 20.0 ± T, T <output id="pr-cpk-t-out"></output></span><input type="range" id="pr-cpk-t" min="0.5" max="3" step="0.1" value="1.5"></label>
+          <label class="check"><input type="checkbox" id="pr-cpk-shift"> 장기 변동: 평균이 1.5σ 더 나쁜 쪽으로 이동</label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">Cp</span><span class="v" id="pr-cpk-cp">—</span></div>
+        <div class="stat"><span class="k">Cpk</span><span class="v" id="pr-cpk-cpk">—</span></div>
+        <div class="stat"><span class="k">불량</span><span class="v" id="pr-cpk-ppm">—</span></div>
+        <div class="stat"><span class="k">가까운 한계까지</span><span class="v" id="pr-cpk-z">—</span></div>
+      </div>
+      <div class="sim-note">왼쪽의 빨간 영역이 규격 밖 확률, 오른쪽은 한쪽 꼬리 기준 ppm과 Cpk의 관계(실선: 이동 없음, 점선: 1.5σ 이동)와 현재 공정(점). 해볼 것: ① 기본값(μ 20.3, σ 0.35)에서 μ를 20.0으로 맞출 때와 σ를 0.25로 줄일 때 ppm을 비교. ② Cpk = 2(6σ)를 만든 뒤 '장기 변동'을 켜면 약 3.4 ppm이 되는 것을 확인. ③ 로그 축에서 Cpk가 0.33 오를 때마다 ppm이 몇 자리씩 떨어지는지 보기. 모델: 선폭은 정규분포, 규격은 양쪽(LSL·USL). 장기 이동은 평균이 가까운 쪽 한계로 1.5σ 움직였다고 놓은 관례적 가정.</div>
+    </div>
+
+    <h3>6시그마 = 3.4 ppm의 정체</h3>
+    <p>'6시그마 품질 = 100만 개당 3.4개 불량'이라는 말은 유명하지만, 정규분포의 6σ 꼬리는 한쪽 약 0.001 ppm(10억 개당 1개)입니다. 3.4 ppm은 사실 <b>4.5σ 한쪽 꼬리</b>(3.40 ppm)입니다. 1980년대 모토로라가 6시그마 운동을 만들면서, 단기 측정으로 얻은 σ로 계산한 공정도 장기적으로는 평균이 흔들리므로 평균이 <b>1.5σ 이동</b>한다고 가정하는 관례를 넣었기 때문입니다: \(6\sigma - 1.5\sigma = 4.5\sigma\).</p>
+    <div class="callout warn"><strong>1.5σ는 자연법칙이 아니다</strong> 1.5라는 값은 경험적 관례이며 공정마다 실제 평균 이동은 다르다. 이 가정 자체에 대한 비판도 많다. 숫자를 읽을 때는 '단기 σ 기준인지, 이동을 포함한 장기 기준인지'를 반드시 확인하자. 또 '6σ 공정'이 실제로 3.4 ppm을 낸다는 것은 꼬리 끝까지 정규분포라는 가정 위에서만 맞는다.</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>시그마 수준 (단기)</th><th class="num">Cpk</th><th class="num">양쪽 꼬리, 중앙 (ppm)</th><th class="num">한쪽, 1.5σ 이동 (ppm)</th></tr></thead>
+      <tbody>
+        <tr><td>3σ</td><td class="num">1.00</td><td class="num">2,700</td><td class="num">66,800</td></tr>
+        <tr><td>4σ</td><td class="num">1.33</td><td class="num">63</td><td class="num">6,210</td></tr>
+        <tr><td>5σ</td><td class="num">1.67</td><td class="num">0.57</td><td class="num">233</td></tr>
+        <tr><td>6σ</td><td class="num">2.00</td><td class="num">0.002</td><td class="num">3.4</td></tr>
+      </tbody>
+    </table></div>
+    <p>공정을 실시간으로 감시하는 도구도 같은 수학에서 나왔습니다. 1920년대 벨 연구소의 슈와트<span class="en">(Walter Shewhart)</span>가 만든 관리도<span class="en">(Control Chart)</span>는 측정값이 평균 ±3σ 선을 넘으면 "우연이 아니라 원인이 있는 변동"으로 보고 공정을 멈춥니다. 정상 공정에서 3σ를 넘을 확률은 0.27%이므로 거짓 경보가 약 370점에 한 번입니다. 실제 공정 관리 체계는 <a href="https://processbook.euiyun.com/">ProcessBook</a>에서 다룹니다.</p>
+  </section>
+
+  <!-- =============================================================== 5 -->
+  <section id="tails">
+    <h2>꼬리가 중요할 때: 수십억 개 중 하나</h2>
+    <div class="problem"><strong>칩에는 트랜지스터가 몇 개인가</strong>
+      <p>SRAM 셀 하나가 읽기 오류를 낼 확률이 10⁻⁶이면 꽤 좋아 보인다. 그런데 칩에 셀이 10⁹개 있다면? 칩 하나에 평균 1,000개의 불량 셀이 생긴다. 수십억 개 중 '하나라도' 틀리면 안 되는 설계에서는 분포의 가운데가 아니라 아주 먼 꼬리가 수율을 정한다.</p></div>
+    <p>소자 \(N\)개가 독립이고 각각 불량 확률이 \(p\)이면 칩 전체가 멀쩡할 확률은</p>
+    <div class="formula">$$Y_{\text{chip}} = (1-p)^N \approx e^{-Np}$$
+      <div class="where">\(Np\)는 칩당 기대 불량 소자 수. 이것이 0.01이면 수율 99%. \(N = 10^9\)에서 \(p = 10^{-11}\)이 필요하고, 정규분포라면 마진이 약 6.7σ여야 한다. 그래서 메모리 셀 설계에서는 6σ 안팎의 마진을 흔히 이야기한다.</div>
+    </div>
+    <p>문제는 6σ 바깥을 <b>측정으로 확인하기가 거의 불가능</b>하다는 것입니다. 정규분포는 가운데 데이터로 맞춘 모델이고, 꼬리 끝에서는 다른 메커니즘(드문 결함, 다른 공정 영역, 한 요인이 우연히 크게 튀는 경우)이 섞이기 쉽습니다. 아래에서 '대부분은 정규인데 극히 일부(ε)가 두 배 넓은 분포에서 나온다'는 <span class="term">오염된 정규 모델</span><span class="en">(Contaminated Normal)</span>을 정규 가정과 비교해 보세요.</p>
+
+    <div class="sim" id="sim-pr-tail">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>소자 N개 칩의 수율과 설계 마진</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-pr-tail"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>칩당 소자 수 N <output id="pr-tail-n-out"></output></span><input type="range" id="pr-tail-n"></label>
+          <label class="ctrl"><span>설계 마진 z (σ 단위) <output id="pr-tail-z-out"></output></span><input type="range" id="pr-tail-z" min="3" max="14" step="0.05" value="6"></label>
+          <label class="ctrl"><span>넓은 꼬리 비율 ε <output id="pr-tail-e-out"></output></span><input type="range" id="pr-tail-e"></label>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">소자 불량 p (정규 / 오염)</span><span class="v" id="pr-tail-p">—</span></div>
+        <div class="stat"><span class="k">칩 수율 (정규)</span><span class="v" id="pr-tail-y1">—</span></div>
+        <div class="stat"><span class="k">칩 수율 (오염)</span><span class="v" id="pr-tail-y2">—</span></div>
+        <div class="stat"><span class="k">수율 99%에 필요한 z</span><span class="v" id="pr-tail-req">—</span></div>
+      </div>
+      <div class="sim-note">곡선은 마진 z에 따른 칩 수율. 실선은 꼬리까지 정규 가정, 점선은 비율 ε의 소자가 σ가 2배인 분포를 따르는 경우. 해볼 것: ① N = 10⁹, ε = 0에서 수율 99%에 필요한 z(약 6.7σ)를 확인. ② ε = 0.1%로 두면 같은 z에서 수율이 무너지고, 필요한 마진이 약 11σ로 치솟는다 — 가운데 99.9%의 데이터로는 거의 구별할 수 없는 차이다. ③ N을 10배 늘릴 때 필요한 z가 얼마나 늘어나는지(꼬리가 가우시안이면 조금씩만) 보기. 모델: 소자는 독립, 불량 = 특성이 한쪽 방향으로 z·σ 넘게 벗어남. 오염 모델의 p = (1−ε)Q(z) + εQ(z/2). 실제 SRAM 해석은 중요도 샘플링 등 특수 기법을 쓴다.</div>
+    </div>
+
+    <p>ε = 0.1%의 오염은 히스토그램으로는 거의 보이지 않지만, z = 6에서 소자 불량 확률을 약 10⁻⁹에서 1.4 × 10⁻⁶으로 1,000배 이상 키웁니다. 그래서 꼬리가 중요한 설계에서는 ① 정규 가정 대신 꼬리 자체를 모델링하는 <span class="term">극단값 이론</span><span class="en">(Extreme Value Theory)</span>, ② 드문 사건을 일부러 많이 뽑아 가중치로 보정하는 중요도 샘플링<span class="en">(Importance Sampling)</span>, ③ 그리고 무엇보다 <b>여분과 수리</b>(예비 행·열, 오류 정정 부호)를 씁니다. 예비 셀로 바꿔 끼우면 '하나라도 불량이면 칩 폐기'라는 가혹한 조건이 '불량이 k개 이하면 살릴 수 있다'로 바뀌고, 수율 계산이 \(e^{-Np}\)에서 포아송 분포의 누적합 \(P(K \le k)\)로 바뀝니다. 오류 정정 부호는 <a href="information.html">8장</a>에서 다룹니다.</p>
+    <div class="callout deep"><strong>주식 수익률도 같은 함정</strong> 일일 수익률을 정규분포로 맞추면 '5σ 하락'은 수천 년에 한 번이어야 하지만 실제 시장에서는 훨씬 자주 일어난다. 두꺼운 꼬리(fat tail) 때문이다. 위험 관리가 정규 가정에 기대면 가장 중요한 순간에 틀린다. 금융 쪽 이야기는 <a href="https://stockbook.euiyun.com/">StockBook</a>에서.</div>
+  </section>
+
+  <!-- =============================================================== 6 -->
+  <section id="bayes">
+    <h2>베이즈: 불량 판정의 역설</h2>
+    <div class="problem"><strong>"불량" 판정을 받은 칩은 정말 불량인가</strong>
+      <p>최종 검사 장비가 있다. 실제 불량 칩은 99% 확률로 잡아내고(민감도), 양품을 불량으로 잘못 판정하는 비율(위양성률)은 1%뿐이다. 전체 칩 중 불량은 0.1%다. 어떤 칩이 '불량' 판정을 받았다. 이 칩이 실제로 불량일 확률은? 직관은 "99%"라고 하지만 답은 <b>약 9%</b>다.</p></div>
+    <p>확률보다 <b>개수</b>로 세면 금방 보입니다. 칩 10,000개를 생각합시다.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 800 250" role="img" aria-label="칩 1만 개를 불량과 양품, 검사 결과로 나눈 나무 그림">
+        <rect x="320" y="14" width="160" height="44" rx="10" class="f-elev"/>
+        <text x="400" y="42" text-anchor="middle" class="t">칩 10,000개</text>
+        <line x1="370" y1="58" x2="200" y2="98" class="s-line"/>
+        <line x1="430" y1="58" x2="600" y2="98" class="s-line"/>
+        <text x="262" y="74" text-anchor="end" class="t-mono">0.1%</text>
+        <text x="538" y="74" class="t-mono">99.9%</text>
+        <rect x="120" y="98" width="160" height="44" rx="10" class="f-acc2-soft"/>
+        <text x="200" y="126" text-anchor="middle" class="t">실제 불량 10개</text>
+        <rect x="520" y="98" width="160" height="44" rx="10" class="f-acc-soft"/>
+        <text x="600" y="126" text-anchor="middle" class="t">실제 양품 9,990개</text>
+        <line x1="170" y1="142" x2="100" y2="182" class="s-line"/>
+        <line x1="230" y1="142" x2="300" y2="182" class="s-line"/>
+        <line x1="570" y1="142" x2="500" y2="182" class="s-line"/>
+        <line x1="630" y1="142" x2="700" y2="182" class="s-line"/>
+        <text x="122" y="164" text-anchor="end" class="t-mono">99%</text>
+        <text x="278" y="164" class="t-mono">1%</text>
+        <text x="522" y="164" text-anchor="end" class="t-mono">1%</text>
+        <text x="678" y="164" class="t-mono">99%</text>
+        <rect x="30" y="182" width="140" height="50" rx="10" class="f-acc2-soft"/>
+        <text x="100" y="203" text-anchor="middle" class="t-acc">불량 판정 ≈ 10</text>
+        <text x="100" y="222" text-anchor="middle" class="t-mono">(9.9)</text>
+        <rect x="230" y="182" width="140" height="50" rx="10" class="f-surface"/>
+        <text x="300" y="203" text-anchor="middle" class="t">통과 (놓침)</text>
+        <text x="300" y="222" text-anchor="middle" class="t-mono">0.1</text>
+        <rect x="430" y="182" width="140" height="50" rx="10" class="f-acc-soft"/>
+        <text x="500" y="203" text-anchor="middle" class="t-acc">불량 판정 ≈ 100</text>
+        <text x="500" y="222" text-anchor="middle" class="t-mono">(99.9)</text>
+        <rect x="630" y="182" width="140" height="50" rx="10" class="f-surface"/>
+        <text x="700" y="203" text-anchor="middle" class="t">통과</text>
+        <text x="700" y="222" text-anchor="middle" class="t-mono">9,890</text>
+      </svg>
+      <figcaption><b>그림 7-5.</b> 자연 빈도로 본 검사 결과. '불량' 판정은 약 110개인데 그중 진짜 불량은 약 10개 → 10/110 ≈ 9%. 1%라는 작은 위양성률이 9,990개라는 큰 모집단에 곱해져, 10개짜리 진짜 불량을 압도한다.</figcaption>
+    </figure>
+    <p>이 계산을 일반적인 식으로 쓴 것이 <span class="term">베이즈 정리</span><span class="en">(Bayes' Theorem)</span>입니다. 18세기 목사 토머스 베이즈<span class="en">(Thomas Bayes)</span>의 유고를 리처드 프라이스가 정리해 1763년에 발표했습니다.</p>
+    <div class="formula">$$P(D \mid +) = \frac{P(+\mid D)\,P(D)}{P(+\mid D)\,P(D) + P(+\mid \bar D)\,P(\bar D)} = \frac{0.99 \times 0.001}{0.99\times0.001 + 0.01\times0.999} \approx 0.090$$
+      <div class="where">\(P(D)\): 사전확률(불량률, 기저율). \(P(+\mid D)\): 민감도. \(P(+\mid\bar D)\): 위양성률(= 1 − 특이도). \(P(D\mid +)\): 사후확률 — 판정을 본 뒤의 불량 확률. 오즈로 쓰면 더 간단하다: 사후 오즈 = 우도비 × 사전 오즈, 우도비 = 0.99/0.01 = 99. 사전 오즈 1:999 × 99 ≈ 1:10.1 → 약 9%.</div>
+    </div>
+
+    <div class="sim" id="sim-pr-bayes">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>칩 10,000개로 보는 베이즈 정리</h3></div>
+      <div class="sim-body side">
+        <div class="sim-view"><canvas id="cv-pr-bayes"></canvas></div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>불량률 (사전확률) <output id="pr-bay-prior-out"></output></span><input type="range" id="pr-bay-prior"></label>
+          <label class="ctrl"><span>민감도 P(+|불량) <output id="pr-bay-sens-out"></output></span><input type="range" id="pr-bay-sens" min="50" max="100" step="0.5" value="99"></label>
+          <label class="ctrl"><span>위양성률 P(+|양품) <output id="pr-bay-fpr-out"></output></span><input type="range" id="pr-bay-fpr" min="0.1" max="10" step="0.1" value="1"></label>
+          <div class="ctrl"><span>검사 횟수 (독립, 둘 다 불량이면 불량)</span><div class="seg" id="pr-bay-tests"><button data-value="1" class="on">1회</button><button data-value="2">2회</button><button data-value="3">3회</button></div></div>
+          <div class="pr-legend" id="pr-bay-legend"></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">P(불량 | 불량 판정)</span><span class="v" id="pr-bay-post">—</span></div>
+        <div class="stat"><span class="k">P(불량 | 통과)</span><span class="v" id="pr-bay-miss">—</span></div>
+        <div class="stat"><span class="k">우도비</span><span class="v" id="pr-bay-lr">—</span></div>
+      </div>
+      <div class="sim-note">격자의 칸 하나가 칩 하나(기대 개수를 반올림). 진한 칸이 '불량 판정'을 받은 칩이고, 빨강은 실제 불량, 파랑은 실제 양품이다. 해볼 것: ① 기본값에서 진한 칸 중 빨강의 비율(≈9%)을 눈으로 확인. ② 검사를 2회로 → 사후확률 약 91%. 같은 장비를 한 번 더 쓰는 것이 민감도를 99.9%로 올리는 것보다 낫다. ③ 불량률을 10%로 올리면 같은 장비로도 사후확률이 92%가 된다 — 판정의 의미는 장비만이 아니라 모집단에 달렸다. 모델: 반복 검사는 칩 상태가 주어졌을 때 서로 독립(실제로는 같은 원인으로 같은 칩이 반복해서 오판될 수 있어 개선이 이보다 작다).</div>
+    </div>
+    <p>이 '기저율 무시'의 함정은 검사 공학 어디에나 있습니다. 드문 불량을 잡는 검사일수록 위양성률이 조금만 있어도 판정 대부분이 오경보가 됩니다. 그래서 실제 테스트 흐름은 값싼 1차 선별 → 걸린 것만 정밀 재검사의 2단 구조를 자주 쓰고, 재검사로 '불량'이 확정된 칩만 폐기합니다. 반대 방향도 중요합니다. 통과한 칩 중 불량이 섞일 확률 \(P(D\mid -)\)은 출하 품질(DPPM)을 정하며, 이를 줄이려면 민감도(테스트 커버리지)를 올려야 합니다. 테스트 설계는 <a href="https://testbook.euiyun.com/">TestBook</a>에서, 같은 추론이 분류기의 정밀도·재현율로 나타나는 모습은 <a href="https://aibook.euiyun.com/">AIBook</a>에서 볼 수 있습니다.</p>
+  </section>
+
+  <!-- =============================================================== 7 -->
+  <section id="yield">
+    <h2>수율 모델: 결함 빗방울과 다이 크기</h2>
+    <div class="problem"><strong>큰 칩은 왜 비싼가</strong>
+      <p>300 mm 웨이퍼 한 장의 가공비는 칩 크기와 무관하게 거의 일정하다. 다이 면적을 2배로 키우면 웨이퍼당 다이 수는 절반 이하가 된다. 그런데 실제 원가는 2배보다 훨씬 더 오른다. 무엇이 더 깎아 먹을까?</p></div>
+    <p>웨이퍼 위에 떨어지는 치명적 결함(파티클, 패턴 결함)을 1절의 광자처럼 <b>무작위 빗방울</b>로 봅시다. 단위 면적당 평균 결함 밀도가 \(D_0\)이면, 면적 \(A\)인 다이 하나에 떨어지는 결함 개수는 평균 \(\lambda = AD_0\)인 포아송 분포를 따릅니다. 다이가 살아남으려면 결함이 0개여야 하므로</p>
+    <div class="formula">$$Y = P(K=0) = \frac{(AD_0)^0 e^{-AD_0}}{0!} = e^{-AD_0}$$
+      <div class="where">\(A\): 다이 면적(cm²), \(D_0\): 치명 결함 밀도(개/cm²). 예: \(D_0 = 0.1\)이면 1 cm² 다이는 90.5%, 6 cm² 다이는 54.9%. 면적이 커지면 다이 수가 줄어드는 효과와 수율이 지수적으로 떨어지는 효과가 겹친다.</div>
+    </div>
+    <p>실제 결함은 완전히 무작위로 흩어지지 않고 뭉쳐 다니는 경향이 있습니다(장비 하나의 문제, 스크래치, 웨이퍼 가장자리). 결함이 뭉치면 같은 평균 밀도에서도 '결함이 여러 개 몰린 다이'가 생기는 대신 '결함 없는 다이'가 늘어 수율이 올라갑니다. 이를 반영한 대표적 모델이 결함 밀도 자체가 다이마다 감마분포로 흔들린다고 놓은 <span class="term">음이항 수율 모델</span><span class="en">(Negative Binomial Yield Model)</span>입니다.</p>
+    <div class="formula">$$Y = \Big(1 + \frac{AD_0}{\alpha}\Big)^{-\alpha}$$
+      <div class="where">\(\alpha\): 군집 계수. 작을수록 결함이 심하게 뭉친다. \(\alpha \to \infty\)이면 \(e^{-AD_0}\)(포아송)로 돌아간다. \(\alpha\)는 공정 데이터에 맞춰 정한다.</div>
+    </div>
+
+    <div class="sim" id="sim-pr-yield">
+      <div class="sim-head"><span class="sim-tag">SIMULATOR</span><h3>웨이퍼 맵: 결함 밀도와 다이 크기</h3></div>
+      <div class="sim-body">
+        <div class="sim-view split">
+          <div><canvas id="cv-pr-wafer"></canvas><span class="cap">300 mm 웨이퍼</span></div>
+          <div><canvas id="cv-pr-ycurve"></canvas><span class="cap">수율 vs 다이 면적</span></div>
+        </div>
+        <div class="sim-controls">
+          <label class="ctrl"><span>다이 면적 A <output id="pr-y-a-out"></output></span><input type="range" id="pr-y-a"></label>
+          <label class="ctrl"><span>결함 밀도 D₀ <output id="pr-y-d-out"></output></span><input type="range" id="pr-y-d"></label>
+          <div class="ctrl"><span>결함 분포</span><div class="seg" id="pr-y-mode"><button data-value="random" class="on">무작위 (포아송)</button><button data-value="cluster">뭉침</button></div></div>
+          <div class="btn-row"><button class="btn" id="pr-y-new">새 웨이퍼</button></div>
+        </div>
+      </div>
+      <div class="sim-readout">
+        <div class="stat"><span class="k">다이 수 (전체)</span><span class="v" id="pr-y-gross">—</span></div>
+        <div class="stat"><span class="k">양품 / 수율 (시뮬)</span><span class="v" id="pr-y-sim">—</span></div>
+        <div class="stat"><span class="k">포아송 e^(−AD₀)</span><span class="v" id="pr-y-poi">—</span></div>
+        <div class="stat"><span class="k">음이항 (α = 2)</span><span class="v" id="pr-y-nb">—</span></div>
+      </div>
+      <div class="sim-note">초록 칸은 결함이 없는 다이, 빨간 칸은 결함(점)이 하나 이상 떨어진 다이. 오른쪽 곡선: 실선 포아송, 점선 음이항(α = 2), 점은 이 웨이퍼의 결과. 해볼 것: ① D₀ = 0.1/cm²에서 다이를 100 → 600 mm²로 키우면 다이 수와 수율이 함께 줄어 양품 다이가 얼마나 줄어드는지 보기. ② '뭉침'으로 바꾸면 결함 총수는 비슷한데 수율이 포아송보다 높아진다. ③ 같은 설정에서 '새 웨이퍼'를 여러 번 — 작은 다이 수율은 안정적이고 큰 다이 수율은 웨이퍼마다 크게 흔들린다(표본 수가 적다). 모델: 가장자리 3 mm 제외, 다이는 정사각형 격자(스크라이브 라인 무시), 결함 하나면 다이 불량. 뭉침 모드는 결함 평균 8개짜리 무리가 반경 약 6 mm로 퍼진다고 가정.</div>
+    </div>
+    <p>그래서 큰 칩의 원가는 '면적 × 지수적 수율 손실'로 오릅니다. 최근 대형 프로세서가 큰 칩 하나 대신 작은 칩렛<span class="en">(Chiplet)</span> 여러 개를 패키지에서 잇는 방향으로 가는 이유 중 하나가 이 계산입니다. 작은 다이로 나누면 다이별 수율이 높고, 검사로 양품만 골라 조립할 수 있습니다(다만 연결 비용과 조립 수율이 새로 생깁니다). 수율 모델과 결함 분석은 <a href="https://yieldbook.euiyun.com/">YieldBook</a>에서, 칩렛 조립은 <a href="https://packagingbook.euiyun.com/">PackagingBook</a>에서 이어집니다.</p>
+  </section>
+
+  <!-- =============================================================== uses -->
+  <section id="uses">
+    <h2>이 도구가 쓰이는 곳</h2>
+    <p>포아송 분포, 분산의 덧셈, 정규 꼬리, 베이즈 정리는 시리즈의 거의 모든 책에서 다시 나옵니다.</p>
+    <div class="uses">
+      <a href="https://sensorbook.euiyun.com/"><small>SENSORBOOK</small>샷 노이즈와 읽기 잡음<br><span>광자 전달 곡선(PTC): 분산 = 평균 관계로 변환 이득을 잰다</span></a>
+      <a href="https://camerabook.euiyun.com/"><small>CAMERABOOK</small>노출과 ISO, 야간 모드<br><span>√N 법칙으로 보는 노출 삼각형과 멀티프레임 합성</span></a>
+      <a href="https://phonebook.euiyun.com/"><small>PHONEBOOK</small>작은 픽셀의 카메라<br><span>픽셀 비닝과 컴퓨테이셔널 포토그래피</span></a>
+      <a href="https://processbook.euiyun.com/"><small>PROCESSBOOK</small>공정 관리와 Cpk<br><span>관리도, 분산 분해, 공차 누적</span></a>
+      <a href="https://lithobook.euiyun.com/"><small>LITHOBOOK</small>선폭 산포와 확률적 결함<br><span>EUV에서도 광자 수 샷 노이즈가 패턴 거칠기를 만든다</span></a>
+      <a href="https://yieldbook.euiyun.com/"><small>YIELDBOOK</small>수율 모델<br><span>포아송·음이항 모델, 결함 밀도와 다이 크기</span></a>
+      <a href="https://testbook.euiyun.com/"><small>TESTBOOK</small>검사와 판정<br><span>위양성·위음성, 테스트 커버리지와 DPPM</span></a>
+      <a href="https://memorybook.euiyun.com/"><small>MEMORYBOOK</small>셀 산포와 6σ 마진<br><span>수십억 셀의 꼬리, 예비 셀과 ECC</span></a>
+      <a href="https://devicebook.euiyun.com/"><small>DEVICEBOOK</small>소자 편차<br><span>도펀트 개수의 무작위 요동과 문턱 전압 산포</span></a>
+      <a href="https://aibook.euiyun.com/"><small>AIBOOK</small>확률 모델과 분류<br><span>베이즈 추론, 정밀도와 재현율, 잡음 모델</span></a>
+      <a href="https://stockbook.euiyun.com/"><small>STOCKBOOK</small>수익률 분포와 위험<br><span>분산의 덧셈(분산 투자)과 두꺼운 꼬리</span></a>
+      <a href="https://analogbook.euiyun.com/"><small>ANALOGBOOK</small>회로 잡음<br><span>샷·열 잡음의 전력 합, 소자 부정합 통계</span></a>
+    </div>
+    <p>이 장의 확률 분포는 <a href="information.html">8장</a>에서 '놀라움의 양'인 엔트로피로 이어지고, 잡음의 주파수 성분(백색 잡음, 1/f 잡음)은 <a href="fourier.html">5장</a>의 스펙트럼 언어로 다룹니다. 양자화 잡음 Δ²/12는 <a href="sampling.html">6장</a>에서 유도합니다.</p>
+  </section>
+
+  <section class="keypoints" id="summary">
+    <h2>핵심 정리</h2>
+    <ol>
+      <li>독립적으로 드문드문 일어나는 사건의 개수는 포아송 분포 \(\lambda^k e^{-\lambda}/k!\)를 따른다. 분산 = 평균 = λ.</li>
+      <li>그래서 광자 N개의 샷 노이즈는 √N, SNR = √N. SNR 2배에는 빛 4배가 필요하다.</li>
+      <li>독립 잡음은 분산이 더해진다: \(\sigma^2 = N + \sigma_r^2\). K장 합성은 SNR을 √K배로 올리지만, 같은 총 노출을 나누면 읽기 잡음만 늘어난다.</li>
+      <li>많은 독립 요인의 합은 정규분포로 수렴한다(중심극한정리). 표준편차는 RSS로 합쳐지므로 가장 큰 요인부터 줄여야 한다.</li>
+      <li>Cp는 규격 폭/6σ, Cpk는 가까운 한계까지/3σ. 6σ의 3.4 ppm은 1.5σ 평균 이동을 가정한 4.5σ 한쪽 꼬리다.</li>
+      <li>수십억 개 중 하나라도 틀리면 안 되는 설계에서는 꼬리 끝이 수율을 정하며, 정규 근사는 그곳에서 가장 믿기 어렵다.</li>
+      <li>드문 불량을 찾는 검사에서는 기저율 때문에 '불량' 판정의 대부분이 오경보일 수 있다(베이즈 정리).</li>
+      <li>결함이 포아송으로 떨어지면 수율은 \(e^{-AD_0}\). 결함이 뭉치면 음이항 모델이 더 잘 맞는다.</li>
+    </ol>
+  </section>
+
+  <section class="quiz-sec" id="quiz">
+    <h2>확인 퀴즈</h2>
+    <div class="quiz">
+      <div class="quiz-q"><p>픽셀이 평균 100개의 광전자를 받는다(샷 노이즈만 있음). 노출을 4배로 늘리면 잡음의 표준편차와 SNR은 각각?</p><div class="opts">
+        <button class="opt">잡음은 그대로, SNR은 4배</button><button class="opt" data-correct>잡음은 2배, SNR도 2배</button><button class="opt">잡음은 1/2배, SNR은 2배</button><button class="opt">잡음은 4배, SNR은 그대로</button>
+      </div><div class="quiz-exp">신호 400, 잡음 √400 = 20(전에는 10). 잡음의 절대 크기는 커지지만 신호가 더 빨리 커져 SNR은 10 → 20으로 2배(+6 dB)가 된다.</div></div>
+      <div class="quiz-q"><p>읽기 잡음 3 e⁻인 센서에서 총 노출 시간을 그대로 두고 1장 대신 짧은 9장으로 나눠 찍어 더했다. 중간 회색 픽셀의 총 광전자는 18개다. SNR은?</p><div class="opts">
+        <button class="opt">√9배 좋아진다</button><button class="opt">똑같다</button><button class="opt" data-correct>약 3.5에서 약 1.8로 나빠진다</button><button class="opt">약 4.2로 좋아진다</button>
+      </div><div class="quiz-exp">1장: 18/√(18 + 3²) = 18/√27 ≈ 3.46. 9장: 18/√(18 + 9×3²) = 18/√99 ≈ 1.81. 광자 총량은 같은데 읽기 잡음 분산이 9번 더해졌다. 얻는 것은 손떨림·움직임에 강해진다는 것뿐이다.</div></div>
+      <div class="quiz-q"><p>선폭 산포 요인 네 개(독립)의 1σ가 0.3, 0.4, 0.0, 1.2 nm다. 전체 σ를 가장 크게 줄이는 조치는?</p><div class="opts">
+        <button class="opt">0.3과 0.4 요인을 모두 0으로</button><button class="opt" data-correct>1.2 요인을 0.9로</button><button class="opt">0.4 요인을 0으로</button><button class="opt">모두 같은 효과</button>
+      </div><div class="quiz-exp">현재 √(0.09+0.16+1.44) = 1.30. ① 0.3·0.4 제거 → 1.20. ② 1.2 → 0.9: √(0.09+0.16+0.81) = 1.03. ③ 0.4 제거 → √1.53 = 1.24. 분산은 제곱으로 더해지므로 가장 큰 요인을 조금 줄이는 것이 작은 요인을 없애는 것보다 낫다.</div></div>
+      <div class="quiz-q"><p>규격 18.5–21.5 nm, 평균 20.3 nm, σ = 0.3 nm인 공정의 Cp와 Cpk는?</p><div class="opts">
+        <button class="opt">Cp 1.33, Cpk 1.67</button><button class="opt" data-correct>Cp 1.67, Cpk 1.33</button><button class="opt">Cp 1.00, Cpk 0.80</button><button class="opt">Cp 1.67, Cpk 1.67</button>
+      </div><div class="quiz-exp">Cp = 3.0/(6×0.3) = 1.67. 가까운 한계는 USL: (21.5−20.3)/(3×0.3) = 1.2/0.9 = 1.33. Cpk는 Cp보다 클 수 없다.</div></div>
+      <div class="quiz-q"><p>'6시그마 = 3.4 ppm'에 대한 설명으로 옳은 것은?</p><div class="opts">
+        <button class="opt">정규분포의 ±6σ 바깥 면적이 3.4 ppm이다</button><button class="opt">6σ 한쪽 꼬리가 3.4 ppm이다</button><button class="opt" data-correct>평균이 1.5σ 이동했다고 가정한 4.5σ 한쪽 꼬리다</button><button class="opt">측정 오차를 포함하면 6σ가 3.4 ppm이 된다</button>
+      </div><div class="quiz-exp">정규분포의 6σ 한쪽 꼬리는 약 0.001 ppm이다. 3.4 ppm은 Q(4.5) ≈ 3.4×10⁻⁶로, 장기적으로 평균이 1.5σ 이동한다는 관례적 가정에서 나온 값이다.</div></div>
+      <div class="quiz-q"><p>불량률 1%, 민감도 99%, 위양성률 1%인 검사에서 '불량' 판정을 받은 칩이 실제로 불량일 확률은?</p><div class="opts">
+        <button class="opt">99%</button><button class="opt" data-correct>50%</button><button class="opt">9%</button><button class="opt">1%</button>
+      </div><div class="quiz-exp">1만 개 중 불량 100개 → 99개 검출. 양품 9,900개 → 99개 오판. 판정 198개 중 99개가 진짜 → 50%. 사전 오즈 1:99 × 우도비 99 = 1:1.</div></div>
+      <div class="quiz-q"><p>결함이 포아송으로 떨어지는 공정에서 1 cm² 다이의 수율이 80%다. 같은 공정에서 2 cm² 다이의 수율은?</p><div class="opts">
+        <button class="opt">40%</button><button class="opt" data-correct>64%</button><button class="opt">70%</button><button class="opt">80%</button>
+      </div><div class="quiz-exp">\(e^{-2AD_0} = (e^{-AD_0})^2 = 0.8^2 = 0.64\). 다이 면적이 2배면 '두 영역 모두 결함이 없을 확률'이므로 수율이 제곱된다. 웨이퍼당 양품 다이는 다이 수 절반 × 0.8배 → 약 40%로 줄어든다.</div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ===================================================== 공통: 정규 꼬리 (상대 정밀도 높은 erfc) */
+const PR = {};
+PR.erfc = function (x) {
+  const z = Math.abs(x), t = 1 / (1 + 0.5 * z);
+  const r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+  return x >= 0 ? r : 2 - r;
+};
+PR.Q = (z) => 0.5 * PR.erfc(z / Math.SQRT2);               // 표준정규 위쪽 꼬리
+PR.ppm = function (p) {                                      // 확률 → 읽기 좋은 문자열
+  const v = p * 1e6;
+  if (v >= 1e4) return (p * 100).toFixed(2) + "%";
+  if (v >= 1) return MB.fmt(v, 3) + " ppm";
+  if (v >= 1e-3) return MB.fmt(v * 1000, 3) + " ppb";
+  return p.toExponential(1).replace("e-", "×10⁻").replace(/⁻(\d+)/, (m, d) => "⁻" + d.split("").map((c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join(""));
+};
+PR.sup = (e) => String(e).split("").map((c) => (c === "-" ? "⁻" : "⁰¹²³⁴⁵⁶⁷⁸⁹"[c])).join("");
+PR.pow10 = (v) => { const e = Math.round(Math.log10(v)); return Math.abs(v - Math.pow(10, e)) / v < 1e-9 ? "10" + PR.sup(e) : MB.fmt(v, 3); };
+PR.alpha = function (c, a) {                                // CSS 색 → rgba 문자열 (캔버스용)
+  const cv = PR._c || (PR._c = document.createElement("canvas").getContext("2d"));
+  cv.fillStyle = "#000"; cv.fillStyle = c; const v = cv.fillStyle;
+  if (v[0] === "#") { const n = parseInt(v.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
+  return v.replace(/rgba?\(([^)]+)\)/, (m, inner) => { const q = inner.split(",").slice(0, 3); return `rgba(${q.join(",")},${a})`; });
+};
+/* 막대 그리기: chart 좌표계 c에 [x0,x1] 폭, 높이 y */
+PR.bar = function (ctx, c, x0, x1, y, color) {
+  const X0 = c.X(x0), X1 = c.X(x1), Y0 = c.Y(0), Y1 = c.Y(y);
+  ctx.fillStyle = color; ctx.fillRect(X0, Math.min(Y0, Y1), Math.max(1, X1 - X0), Math.abs(Y0 - Y1));
+};
+
+/* ===================================================== 그림 7-1: 포아송 도착 */
+(function () {
+  const g = document.getElementById("pr-fig-arrivals");
+  const R = MB.rng(11), L = 40, Rr = 760, n = 10, lam = 4.2;
+  let s = `<line x1="${L}" x2="${Rr}" y1="90" y2="90" class="s-axis"/>`;
+  const times = []; let t = 0;
+  while (true) { t += -Math.log(1 - R()) / lam; if (t >= n) break; times.push(t); }
+  const counts = new Array(n).fill(0);
+  times.forEach((x) => counts[Math.floor(x)]++);
+  const X = (v) => L + (v / n) * (Rr - L);
+  for (let i = 0; i <= n; i++) s += `<line x1="${X(i)}" x2="${X(i)}" y1="60" y2="120" class="s-line" stroke-dasharray="3 4" opacity=".6"/>`;
+  times.forEach((x, i) => { s += `<circle cx="${X(x).toFixed(1)}" cy="${90 + ((i * 37) % 3 - 1) * 9}" r="5" class="f-acc"/>`; });
+  for (let i = 0; i < n; i++) {
+    s += `<text x="${X(i + 0.5)}" y="146" text-anchor="middle" class="t-acc">${counts[i]}</text>`;
+  }
+  s += `<text x="${L}" y="40" class="t-dim">광자 도착 (평균 ${lam}개/구간)</text>`;
+  s += `<text x="${Rr}" y="40" text-anchor="end" class="t-dim">시간 →</text>`;
+  s += `<text x="${(L + Rr) / 2}" y="176" text-anchor="middle" class="t-mono">구간별 개수 (같은 밝기, 같은 노출)</text>`;
+  g.innerHTML = s;
+})();
+
+/* ===================================================== 그림 7-3: 갈톤 보드 */
+(function () {
+  const g = document.getElementById("pr-fig-galton");
+  const rows = 10, cx = 230, top = 24, dy = 18, dx = 18;
+  let s = "";
+  for (let r = 0; r < rows; r++) for (let k = 0; k <= r; k++) {
+    s += `<circle cx="${cx + (k - r / 2) * dx * 1.0}" cy="${top + r * dy}" r="3" class="f-acc"/>`;
+  }
+  // 칸과 막대
+  const base = 285, H = 90, maxP = MB.binomPmf(5, 10, 0.5);
+  for (let k = 0; k <= rows; k++) {
+    const x = cx + (k - rows / 2) * dx, p = MB.binomPmf(k, rows, 0.5), h = (p / maxP) * H;
+    s += `<rect x="${x - dx / 2 + 2}" y="${base - h}" width="${dx - 4}" height="${h}" rx="2" class="f-acc-soft"/>`;
+    s += `<line x1="${x - dx / 2}" x2="${x - dx / 2}" y1="${base - H - 10}" y2="${base}" class="s-axis" opacity=".5"/>`;
+  }
+  s += `<line x1="${cx - (rows / 2 + 0.5) * dx}" x2="${cx + (rows / 2 + 0.5) * dx}" y1="${base}" y2="${base}" class="s-axis"/>`;
+  // 정규 곡선 (평균 5, 분산 2.5) — 픽셀 단위로 막대와 같은 축척
+  let d = "";
+  for (let i = 0; i <= 120; i++) {
+    const k = -0.5 + (i / 120) * 11, x = cx + (k - rows / 2) * dx;
+    const y = base - (MB.normPdf(k, 5, Math.sqrt(2.5)) / maxP) * H;
+    d += (i ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1);
+  }
+  s += `<path d="${d}" class="s-acc"/>`;
+  // 오른쪽 설명
+  const tx = 470;
+  s += `<text x="${tx}" y="60" class="t">공 하나의 최종 위치</text>`;
+  s += `<text x="${tx}" y="86" class="t-mono">= (±1) + (±1) + … + (±1)   (10번)</text>`;
+  s += `<text x="${tx}" y="122" class="t">오른쪽으로 튄 횟수 k ~ 이항(10, ½)</text>`;
+  s += `<text x="${tx}" y="148" class="t-mono">평균 5, 분산 10·½·½ = 2.5</text>`;
+  s += `<text x="${tx}" y="184" class="t-acc">단수가 많아질수록 → 정규분포</text>`;
+  s += `<text x="${tx}" y="210" class="t-dim">요인 하나는 '동전'인데</text>`;
+  s += `<text x="${tx}" y="230" class="t-dim">합은 '종'이 된다</text>`;
+  g.innerHTML = s;
+})();
+
+/* ===================================================== 그림 7-4: 시그마 구간 */
+(function () {
+  const g = document.getElementById("pr-fig-sigma");
+  const L = 60, Rr = 740, base = 200, H = 160;
+  const X = (z) => L + ((z + 4) / 8) * (Rr - L), Y = (y) => base - (y / MB.normPdf(0)) * H;
+  let s = "";
+  const area = (a, b, cls, op) => {
+    let d = `M${X(a)},${base}`;
+    for (let i = 0; i <= 60; i++) { const z = a + ((b - a) * i) / 60; d += `L${X(z).toFixed(1)},${Y(MB.normPdf(z)).toFixed(1)}`; }
+    d += `L${X(b)},${base}Z`;
+    return `<path d="${d}" class="${cls}" stroke="none" opacity="${op}"/>`;
+  };
+  s += area(-3, 3, "f-acc", 0.15) + area(-2, 2, "f-acc", 0.2) + area(-1, 1, "f-acc", 0.3);
+  let d = "";
+  for (let i = 0; i <= 160; i++) { const z = -4 + i / 20; d += (i ? "L" : "M") + X(z).toFixed(1) + "," + Y(MB.normPdf(z)).toFixed(1); }
+  s += `<path d="${d}" class="s-acc"/>`;
+  s += `<line x1="${L}" x2="${Rr}" y1="${base}" y2="${base}" class="s-axis"/>`;
+  for (let z = -4; z <= 4; z++) s += `<text x="${X(z)}" y="${base + 18}" text-anchor="middle" class="t-mono">${z === 0 ? "μ" : (z > 0 ? "+" : "−") + Math.abs(z) + "σ"}</text>`;
+  const brace = (z, y, label) => {
+    s += `<line x1="${X(-z)}" x2="${X(z)}" y1="${y}" y2="${y}" class="s-line"/>`;
+    s += `<line x1="${X(-z)}" x2="${X(-z)}" y1="${y - 5}" y2="${y + 5}" class="s-line"/><line x1="${X(z)}" x2="${X(z)}" y1="${y - 5}" y2="${y + 5}" class="s-line"/>`;
+    s += `<text x="${X(0)}" y="${y - 6}" text-anchor="middle" class="t">${label}</text>`;
+  };
+  brace(1, 150, "68.27%"); brace(2, 182, "95.45%"); brace(3, 252, "99.73%  (밖: 2,700 ppm)");
+  s += `<text x="${X(3.5)}" y="${base - 30}" text-anchor="middle" class="t-dim">꼬리</text>`;
+  s += `<text x="${X(-3.5)}" y="${base - 30}" text-anchor="middle" class="t-dim">꼬리</text>`;
+  g.innerHTML = s;
+})();
+
+/* ===================================================== 1. 픽셀 격자 포아송 */
+(function () {
+  const sim = document.getElementById("sim-pr-photons");
+  const LAMS = [0.5, 1, 2, 3, 4, 5, 7, 10, 15, 20, 30, 50, 100];
+  let G = 16, counts = new Int32Array(G * G), dots = [], pending = 0, rate = 0, added = 0;
+  const lam = MB.steps("pr-lam", LAMS, (v) => String(v), 4, () => fillNow());
+  function reset() { counts = new Int32Array(G * G); dots = []; added = 0; }
+  function addOne() {
+    const x = Math.random() * G, y = Math.random() * G;
+    counts[(y | 0) * G + (x | 0)]++; added++;
+    if (dots.length < 3000) dots.push([x, y]);
+  }
+  function fillNow() { pending = 0; reset(); const T = MB.poisson(lam() * G * G); for (let i = 0; i < T; i++) addOne(); draw(); }
+  function startDrop() { reset(); pending = MB.poisson(lam() * G * G); rate = pending / 1.6; draw(); }
+  function draw() { cvG.redraw(); cvH.redraw(); readout(); }
+
+  const cvG = MB.canvas("#cv-pr-grid", (ctx, w, h) => {
+    const P = MB.palette();
+    const s = Math.min(w - 24, h - 40), ox = (w - s) / 2, oy = 30 + (h - 30 - s) / 2;
+    const L = lam(), top = L + 3 * Math.sqrt(L) + 1;
+    const img = new Float64Array(G * G);
+    for (let i = 0; i < G * G; i++) img[i] = Math.min(1, counts[i] / top);
+    MB.drawGray(ctx, img, G, G, ox, oy, s, s);
+    ctx.strokeStyle = P.border; ctx.lineWidth = 1; ctx.strokeRect(ox, oy, s, s);
+    if (G <= 16) {
+      ctx.globalAlpha = 0.35; ctx.strokeStyle = P.faint; ctx.beginPath();
+      for (let i = 1; i < G; i++) { const t = ox + (i * s) / G; ctx.moveTo(t, oy); ctx.lineTo(t, oy + s); ctx.moveTo(ox, oy + (i * s) / G); ctx.lineTo(ox + s, oy + (i * s) / G); }
+      ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    const showDots = G * G * L <= 3000;
+    if (showDots) {
+      ctx.fillStyle = P.warn;
+      const r = Math.max(1.3, Math.min(3, (s / G) * 0.09));
+      dots.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(ox + (x / G) * s, oy + (y / G) * s, r, 0, 7); ctx.fill(); });
+    }
+  }, { aspect: 1, maxHeight: 380 });
+
+  const cvH = MB.canvas("#cv-pr-hist", (ctx, w, h) => {
+    const P = MB.palette(), L = lam();
+    const kmax = Math.max(6, Math.ceil(L + 4.2 * Math.sqrt(L) + 2)), kmin = Math.max(0, Math.floor(L - 4.2 * Math.sqrt(L)));
+    const freq = new Array(kmax + 1).fill(0), Npix = G * G;
+    for (let i = 0; i < Npix; i++) if (counts[i] <= kmax) freq[counts[i]]++;
+    let ymax = 0;
+    for (let k = kmin; k <= kmax; k++) ymax = Math.max(ymax, freq[k] / Npix, MB.poissonPmf(k, L));
+    const c = MB.chart(ctx, { x: 46, y: 34, w: w - 60, h: h - 34 - 44 }, {
+      x: [kmin - 0.5, kmax + 0.5], y: [0, ymax * 1.15 || 1], xLabel: "광자 수 k", yFmt: (v) => (v * 100).toFixed(0) + "%",
+      series: [{ data: (() => { const d = []; for (let x = kmin - 0.5; x <= kmax + 0.5; x += (kmax - kmin + 1) / 200) d.push([x, MB.normPdf(x, L, Math.sqrt(L))]); return d; })(), color: P.dim, width: 1.4, dash: [5, 4] }],
+    });
+    const bw = Math.min(0.42, 0.42);
+    if (added) for (let k = kmin; k <= kmax; k++) PR.bar(ctx, c, k - bw, k + bw, freq[k] / Npix, P.accent);
+    ctx.strokeStyle = P.bad; ctx.fillStyle = P.bad; ctx.lineWidth = 1.6; ctx.beginPath();
+    for (let k = kmin; k <= kmax; k++) { const x = c.X(k), y = c.Y(MB.poissonPmf(k, L)); k === kmin ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+    ctx.stroke();
+    if (kmax - kmin <= 40) for (let k = kmin; k <= kmax; k++) { ctx.beginPath(); ctx.arc(c.X(k), c.Y(MB.poissonPmf(k, L)), 3, 0, 7); ctx.fill(); }
+    ctx.font = "12px " + getComputedStyle(document.body).getPropertyValue("--font"); ctx.textAlign = "right"; ctx.textBaseline = "top";
+    ctx.fillStyle = P.bad; ctx.fillText("● 포아송 PMF", w - 12, 30);
+    ctx.fillStyle = P.accent; ctx.fillText("■ 시뮬레이션", w - 12, 46);
+    ctx.fillStyle = P.dim; ctx.fillText("- - 정규 근사", w - 12, 62);
+  }, { aspect: 1, maxHeight: 380 });
+
+  function readout() {
+    const n = G * G;
+    if (!added) { ["mean", "var", "ratio", "snr"].forEach((k) => MB.stat("pr-ph-" + k, "—")); MB.stat("pr-ph-sqrt", MB.fmt(Math.sqrt(lam()), 3)); return; }
+    let m = 0; for (let i = 0; i < n; i++) m += counts[i]; m /= n;
+    let v = 0; for (let i = 0; i < n; i++) v += (counts[i] - m) ** 2; v /= n - 1;
+    MB.stat("pr-ph-mean", MB.fmt(m, 3));
+    MB.stat("pr-ph-var", MB.fmt(v, 3));
+    MB.stat("pr-ph-ratio", m > 0 ? MB.fmt(v / m, 3) : "—");
+    MB.stat("pr-ph-snr", v > 0 ? MB.fmt(m / Math.sqrt(v), 3) : "—");
+    MB.stat("pr-ph-sqrt", MB.fmt(Math.sqrt(lam()), 3) + (pending > 0 ? " (낙하 중)" : ""));
+  }
+  MB.seg("pr-grid-n", (v) => { G = +v; fillNow(); });
+  document.getElementById("pr-drop").addEventListener("click", startDrop);
+  document.getElementById("pr-fill").addEventListener("click", fillNow);
+  MB.loop(sim, (dt) => {
+    if (pending <= 0) return;
+    const k = Math.min(pending, Math.max(1, Math.ceil(rate * dt)));
+    for (let i = 0; i < k; i++) addOne();
+    pending -= k;
+    draw();
+  });
+  fillNow();
+})();
+
+/* ===================================================== 2. 샷 노이즈 이미지 */
+(function () {
+  const n = 96, img = MB.testImage(n, "scene");
+  const A = new Float64Array(n * n), B = new Float64Array(n * n);
+  const Nget = MB.steps("pr-shot-n", [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 5000], (v) => v + " e⁻", 10, shoot);
+  const Kget = MB.steps("pr-shot-k", [1, 2, 4, 8, 16, 32, 64], (v) => v + "장", 8, shoot);
+  const Rget = MB.range("pr-shot-r", (v) => v.toFixed(1) + " e⁻", shoot);
+  const split = MB.check("pr-shot-split", shoot);
+  document.getElementById("pr-shot-again").addEventListener("click", shoot);
+  const opt = { aspect: 1, maxHeight: 360 };
+  const paint = (data) => (ctx, w, h) => { const s = Math.min(w, h); MB.drawGray(ctx, data, n, n, (w - s) / 2, (h - s) / 2, s, s); };
+  const ca = MB.canvas("#cv-pr-shot-a", paint(A), opt), cb = MB.canvas("#cv-pr-shot-b", paint(B), opt);
+  function shoot() {
+    const N = Nget(), K = Kget(), sr = Rget(), sp = split();
+    const lamB = sp ? N / K : N;           // 오른쪽: 프레임 하나의 광전자 (밝은 곳)
+    for (let i = 0; i < n * n; i++) {
+      A[i] = (MB.poisson(N * img[i]) + sr * MB.randn()) / N;
+      B[i] = (MB.poisson(K * lamB * img[i]) + Math.sqrt(K) * sr * MB.randn()) / (K * lamB);
+    }
+    ca.redraw(); cb.redraw();
+    document.getElementById("pr-shot-cap-a").textContent = sp ? "긴 노출 1장" : "1 프레임";
+    document.getElementById("pr-shot-cap-b").textContent = sp ? `짧은 노출 ${K}장 합` : `${K} 프레임 평균`;
+    const g = 0.5 * N;                       // 회색 50% 픽셀의 광전자(왼쪽 기준)
+    const s1 = g / Math.sqrt(g + sr * sr);
+    const s2 = sp ? g / Math.sqrt(g + K * sr * sr) : (Math.sqrt(K) * g) / Math.sqrt(g + sr * sr);
+    const db = (x) => (20 * Math.log10(x)).toFixed(1) + " dB";
+    MB.stat("pr-shot-s1", MB.fmt(s1, 3) + " · " + db(s1));
+    MB.stat("pr-shot-s2", MB.fmt(s2, 3) + " · " + db(s2));
+    const r = s2 / s1;
+    MB.stat("pr-shot-gain", "×" + MB.fmt(r, 3) + " (" + (r >= 1 ? "+" : "") + (20 * Math.log10(r)).toFixed(1) + " dB)");
+    const gB = sp ? g / K : g;
+    MB.stat("pr-shot-dom", gB > sr * sr ? `샷 (${MB.fmt(gB, 3)} > σᵣ² = ${MB.fmt(sr * sr, 3)})` : `읽기 (${MB.fmt(gB, 3)} ≤ σᵣ² = ${MB.fmt(sr * sr, 3)})`);
+  }
+  shoot();
+})();
+
+/* ===================================================== 3. 중심극한정리 */
+(function () {
+  const M = 20000;
+  const DIST = {
+    unif: { draw: () => Math.random(), mu: 0.5, sd: Math.sqrt(1 / 12), skew: 0, kurt: -1.2 },
+    exp: { draw: () => -Math.log(1 - Math.random()), mu: 1, sd: 1, skew: 2, kurt: 6 },
+    bimodal: { draw: () => (Math.random() < 0.5 ? -1 : 1) + 0.15 * MB.randn(), mu: 0, sd: Math.sqrt(1.0225), skew: 0, kurt: (1 + 6 * 0.0225 + 3 * 0.0225 ** 2) / 1.0225 ** 2 - 3 },
+    coin: { draw: () => (Math.random() < 0.5 ? -1 : 1), mu: 0, sd: 1, skew: 0, kurt: -2 },
+  };
+  let Z = new Float64Array(M), heads = null;
+  const dist = MB.seg("pr-clt-dist", sample);
+  const nGet = MB.range("pr-clt-n", (v) => v + "개", sample);
+  document.getElementById("pr-clt-again").addEventListener("click", sample);
+  const cv = MB.canvas("#cv-pr-clt", draw, { aspect: (w) => (w < 500 ? 0.8 : 0.58), maxHeight: 440 });
+  function sample() {
+    const D = DIST[dist()], n = nGet();
+    const m = n * D.mu, s = D.sd * Math.sqrt(n);
+    heads = dist() === "coin" ? new Int32Array(n + 1) : null;
+    for (let j = 0; j < M; j++) {
+      let S = 0;
+      for (let i = 0; i < n; i++) S += D.draw();
+      Z[j] = (S - m) / s;
+      if (heads) heads[Math.round((S + n) / 2)]++;
+    }
+    cv.redraw(); readout();
+  }
+  function draw(ctx, w, h) {
+    const P = MB.palette(), n = nGet(), key = dist(), D = DIST[key];
+    const box = { x: 46, y: 14, w: w - 60, h: h - 14 - 44 };
+    let ymax = 0.5;
+    const bars = [];
+    if (key === "coin") {
+      const dz = 2 / Math.sqrt(n);
+      for (let k = 0; k <= n; k++) { const z = (2 * k - n) / Math.sqrt(n); const dens = heads[k] / M / dz; if (Math.abs(z) <= 4.2) bars.push([z - dz * 0.45, z + dz * 0.45, dens]); }
+    } else {
+      const H = MB.histogram(Z, 64, [-4, 4]);
+      H.counts.forEach((c, i) => bars.push([H.edges[i] + H.width * 0.06, H.edges[i + 1] - H.width * 0.06, c / M / H.width]));
+    }
+    bars.forEach((b) => (ymax = Math.max(ymax, b[2])));
+    ymax = Math.min(ymax, 1.6);
+    const c = MB.chart(ctx, box, { x: [-4, 4], y: [0, ymax * 1.08], xLabel: "표준화한 합 Z = (Sₙ − nμ)/(σ√n)", yFmt: (v) => v.toFixed(1) });
+    ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip();
+    ctx.globalAlpha = 0.75; bars.forEach((b) => PR.bar(ctx, c, b[0], b[1], b[2], P.accent)); ctx.globalAlpha = 1;
+    ctx.strokeStyle = P.bad; ctx.lineWidth = 2; ctx.beginPath();
+    for (let i = 0; i <= 200; i++) { const z = -4 + i / 25; const x = c.X(z), y = c.Y(MB.normPdf(z)); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke(); ctx.restore();
+    // 인셋: 요인 하나의 분포
+    const iw = Math.min(150, box.w * 0.32), ih = 64, ix = box.x + 8, iy = box.y + 6;
+    ctx.fillStyle = P.elev; ctx.strokeStyle = P.border; ctx.lineWidth = 1;
+    ctx.fillRect(ix, iy, iw, ih + 18); ctx.strokeRect(ix + 0.5, iy + 0.5, iw, ih + 18);
+    ctx.fillStyle = P.dim; ctx.font = "11px " + getComputedStyle(document.body).getPropertyValue("--font"); ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("요인 하나", ix + 6, iy + 4);
+    const bx = ix + 8, bw = iw - 16, by = iy + ih + 12, bh = ih - 22;
+    ctx.strokeStyle = P.axis; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + bw, by); ctx.stroke();
+    ctx.strokeStyle = P.accent2; ctx.fillStyle = P.accent2; ctx.lineWidth = 2; ctx.beginPath();
+    if (key === "unif") { ctx.moveTo(bx + bw * 0.2, by); ctx.lineTo(bx + bw * 0.2, by - bh * 0.7); ctx.lineTo(bx + bw * 0.8, by - bh * 0.7); ctx.lineTo(bx + bw * 0.8, by); }
+    else if (key === "exp") { for (let i = 0; i <= 50; i++) { const t = i / 50; const x = bx + bw * (0.08 + 0.9 * t), y = by - bh * Math.exp(-t * 5); i ? ctx.lineTo(x, y) : ctx.moveTo(x, by); if (!i) ctx.lineTo(x, y); } }
+    else if (key === "bimodal") { for (let i = 0; i <= 80; i++) { const u = -1.8 + (3.6 * i) / 80; const p = 0.5 * MB.normPdf(u, -1, 0.15) + 0.5 * MB.normPdf(u, 1, 0.15); const x = bx + bw * (i / 80), y = by - bh * p / 1.4; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } }
+    else { ctx.moveTo(bx + bw * 0.25, by); ctx.lineTo(bx + bw * 0.25, by - bh * 0.8); ctx.moveTo(bx + bw * 0.75, by); ctx.lineTo(bx + bw * 0.75, by - bh * 0.8); }
+    ctx.stroke();
+    if (key === "coin") { [0.25, 0.75].forEach((f) => { ctx.beginPath(); ctx.arc(bx + bw * f, by - bh * 0.8, 3, 0, 7); ctx.fill(); }); }
+    ctx.fillStyle = P.text; ctx.textAlign = "right"; ctx.font = "12px " + getComputedStyle(document.body).getPropertyValue("--font");
+    ctx.fillText("n = " + n, box.x + box.w - 6, box.y + 6);
+    ctx.fillStyle = P.bad; ctx.fillText("— 𝒩(0,1)", box.x + box.w - 6, box.y + 22);
+  }
+  function readout() {
+    const n = nGet(), D = DIST[dist()];
+    let m3 = 0, m4 = 0, t = 0;
+    let mean = 0; for (let j = 0; j < M; j++) mean += Z[j]; mean /= M;
+    let v = 0; for (let j = 0; j < M; j++) { const d = Z[j] - mean; v += d * d; m3 += d * d * d; m4 += d * d * d * d; if (Math.abs(Z[j]) > 3) t++; }
+    v /= M; m3 /= M; m4 /= M;
+    const sk = m3 / Math.pow(v, 1.5), ku = m4 / (v * v) - 3;
+    MB.stat("pr-clt-skew", sk.toFixed(2) + " / " + (D.skew / Math.sqrt(n)).toFixed(2));
+    MB.stat("pr-clt-kurt", ku.toFixed(2) + " / " + (D.kurt / n).toFixed(2));
+    MB.stat("pr-clt-tail", ((t / M) * 100).toFixed(2) + "%");
+  }
+  sample();
+})();
+
+/* ===================================================== 4. Cp / Cpk */
+(function () {
+  const mu = MB.range("pr-cpk-mu", (v) => v.toFixed(2) + " nm", upd);
+  const sg = MB.range("pr-cpk-s", (v) => v.toFixed(2) + " nm", upd);
+  const T = MB.range("pr-cpk-t", (v) => "±" + v.toFixed(1) + " nm", upd);
+  const shift = MB.check("pr-cpk-shift", upd);
+  const NOM = 20;
+  function state() {
+    const s = sg(), LSL = NOM - T(), USL = NOM + T();
+    let m = mu();
+    const m0 = m;
+    if (shift()) m += 1.5 * s * (m >= NOM ? 1 : -1);
+    const cp = (USL - LSL) / (6 * s);
+    const cpk0 = Math.min(USL - m0, m0 - LSL) / (3 * s);
+    const cpk = Math.min(USL - m, m - LSL) / (3 * s);
+    const pLow = PR.Q((m - LSL) / s), pHigh = PR.Q((USL - m) / s);
+    return { s, LSL, USL, m, m0, cp, cpk0, cpk, pLow, pHigh, p: pLow + pHigh };
+  }
+  const opt = { aspect: (w) => (w < 400 ? 0.85 : 0.72), maxHeight: 360 };
+  const ca = MB.canvas("#cv-pr-cpk-a", (ctx, w, h) => {
+    const P = MB.palette(), S = state();
+    const peak = MB.normPdf(0, 0, S.s);
+    const x0 = 16.5, x1 = 23.5, curve = (m, a, b) => { const d = []; for (let i = 0; i <= 240; i++) { const x = a + ((b - a) * i) / 240; d.push([x, MB.normPdf(x, m, S.s)]); } return d; };
+    const bad = P.bad, soft = PR.alpha(bad, 0.45);
+    const series = [];
+    if (S.LSL > x0) series.push({ data: curve(S.m, x0, S.LSL), color: bad, width: 0.01, fill: soft });
+    if (S.USL < x1) series.push({ data: curve(S.m, S.USL, x1), color: bad, width: 0.01, fill: soft });
+    if (shift()) series.push({ data: curve(S.m0, x0, x1), color: P.dim, width: 1.4, dash: [5, 4] });
+    series.push({ data: curve(S.m, x0, x1), color: P.accent, width: 2.2 });
+    MB.chart(ctx, { x: 40, y: 34, w: w - 54, h: h - 34 - 44 }, {
+      x: [x0, x1], y: [0, peak * 1.15], xLabel: "선폭 (nm)", yFmt: (v) => v.toFixed(1), series,
+      vlines: [{ x: S.LSL, color: bad, label: "LSL", dash: [] }, { x: S.USL, color: bad, label: "USL", dash: [] }, { x: NOM, color: P.faint, label: "목표" }],
+    });
+  }, opt);
+  const cb = MB.canvas("#cv-pr-cpk-b", (ctx, w, h) => {
+    const P = MB.palette(), S = state();
+    const d1 = [], d2 = [];
+    for (let i = 0; i <= 200; i++) { const c = 0.3 + (1.9 * i) / 200; d1.push([c, Math.max(1e-4, PR.Q(3 * c) * 1e6)]); d2.push([c, Math.max(1e-4, PR.Q(3 * c - 1.5) * 1e6)]); }
+    const yv = Math.min(1e6, Math.max(1.2e-3, S.p * 1e6));
+    MB.chart(ctx, { x: 58, y: 34, w: w - 70, h: h - 34 - 44 }, {
+      x: [0.3, 2.2], y: [1e-3, 1e6], logY: true, xLabel: "Cpk", yFmt: (v) => (v >= 1 ? (v >= 1e6 ? "1M" : v >= 1e3 ? v / 1e3 + "k" : String(v)) : v.toExponential(0).replace("e", "e")),
+      series: [{ data: d1, color: P.accent, width: 2 }, { data: d2, color: P.warn, width: 2, dash: [6, 4] }],
+      hlines: [{ y: 3.4, color: P.faint, label: "3.4 ppm" }],
+      vlines: [{ x: 1.33, color: P.faint }, { x: 2, color: P.faint }],
+      points: [{ x: Math.min(2.2, Math.max(0.3, S.cpk)), y: yv, color: P.bad, r: 5 }],
+    });
+  }, opt);
+  function upd() {
+    const S = state();
+    ca.redraw(); cb.redraw();
+    MB.stat("pr-cpk-cp", S.cp.toFixed(2));
+    MB.stat("pr-cpk-cpk", S.cpk.toFixed(2) + (shift() ? ` (단기 ${S.cpk0.toFixed(2)})` : ""));
+    MB.stat("pr-cpk-ppm", PR.ppm(S.p) + " · 수율 " + ((1 - S.p) * 100).toFixed(S.p < 1e-4 ? 4 : 2) + "%");
+    MB.stat("pr-cpk-z", (3 * S.cpk).toFixed(2) + "σ");
+  }
+  upd();
+})();
+
+/* ===================================================== 5. 꼬리와 칩 수율 */
+(function () {
+  const NS = [1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10];
+  const ES = [0, 1e-5, 1e-4, 1e-3, 1e-2];
+  const Nget = MB.steps("pr-tail-n", NS, PR.pow10, 1e9, upd);
+  const zGet = MB.range("pr-tail-z", (v) => v.toFixed(2) + "σ", upd);
+  const Eget = MB.steps("pr-tail-e", ES, (v) => (v === 0 ? "0 (순수 정규)" : (v * 100).toPrecision(1) + "%"), 1e-3, upd);
+  const pN = (z) => PR.Q(z), pC = (z, e) => (1 - e) * PR.Q(z) + e * PR.Q(z / 2);
+  const Y = (p, N) => Math.exp(N * Math.log1p(-Math.min(p, 0.999999)));
+  const need = (f) => { let lo = 0, hi = 40; for (let i = 0; i < 80; i++) { const m = (lo + hi) / 2; if (f(m) < 0.99) lo = m; else hi = m; } return hi; };
+  const cv = MB.canvas("#cv-pr-tail", (ctx, w, h) => {
+    const P = MB.palette(), N = Nget(), e = Eget(), z = zGet();
+    const d1 = [], d2 = [];
+    for (let i = 0; i <= 330; i++) { const x = 3 + (11 * i) / 330; d1.push([x, Y(pN(x), N)]); d2.push([x, Y(pC(x, e), N)]); }
+    MB.chart(ctx, { x: 50, y: 16, w: w - 64, h: h - 16 - 46 }, {
+      x: [3, 14], y: [0, 1.02], xLabel: "설계 마진 z (σ)", yFmt: (v) => (v * 100).toFixed(0) + "%",
+      series: [{ data: d1, color: P.accent, width: 2.2 }, { data: d2, color: P.bad, width: 2.2, dash: [6, 4] }],
+      vlines: [{ x: z, color: P.text, label: "z = " + z.toFixed(2), dash: [2, 3] }],
+      hlines: [{ y: 0.99, color: P.faint, label: "99%" }],
+      points: [{ x: z, y: Y(pN(z), N), color: P.accent, r: 5 }, { x: z, y: Y(pC(z, e), N), color: P.bad, r: 5 }],
+    });
+    ctx.font = "12px " + getComputedStyle(document.body).getPropertyValue("--font"); ctx.textAlign = "left"; ctx.textBaseline = "top";
+    const ly = 16 + (h - 62) * 0.4;
+    ctx.fillStyle = P.accent; ctx.fillText("— 정규 꼬리", 60, ly);
+    ctx.fillStyle = P.bad; ctx.fillText("- - 오염된 정규 (ε)", 60, ly + 16);
+  }, { aspect: (w) => (w < 500 ? 0.8 : 0.6), maxHeight: 420 });
+  function upd() {
+    const N = Nget(), e = Eget(), z = zGet();
+    cv.redraw();
+    const p1 = pN(z), p2 = pC(z, e);
+    MB.stat("pr-tail-p", p1.toExponential(1) + " / " + p2.toExponential(1));
+    MB.stat("pr-tail-y1", (Y(p1, N) * 100).toFixed(2) + "% (Np = " + MB.fmt(N * p1, 2) + ")");
+    MB.stat("pr-tail-y2", (Y(p2, N) * 100).toFixed(2) + "% (Np = " + MB.fmt(N * p2, 2) + ")");
+    MB.stat("pr-tail-req", need((zz) => Y(pN(zz), N)).toFixed(2) + "σ / " + need((zz) => Y(pC(zz, e), N)).toFixed(2) + "σ");
+  }
+  upd();
+})();
+
+/* ===================================================== 6. 베이즈 */
+(function () {
+  const PRIORS = [0.0001, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5];
+  const prior = MB.steps("pr-bay-prior", PRIORS, (v) => (v * 100).toPrecision(v < 0.001 ? 1 : 2).replace(/\.0+$/, "") + "%", 0.001, upd);
+  const sens = MB.range("pr-bay-sens", (v) => v.toFixed(1) + "%", upd);
+  const fpr = MB.range("pr-bay-fpr", (v) => v.toFixed(1) + "%", upd);
+  const tests = MB.seg("pr-bay-tests", upd);
+  function model() {
+    const k = +tests(), p = prior(), s = Math.pow(sens() / 100, k), f = Math.pow(fpr() / 100, k);
+    const tot = 10000, bad = tot * p, good = tot - bad;
+    return { p, s, f, k, tp: bad * s, fn: bad * (1 - s), fp: good * f, tn: good * (1 - f), post: (s * p) / (s * p + f * (1 - p)), miss: ((1 - s) * p) / ((1 - s) * p + (1 - f) * (1 - p)) };
+  }
+  const cv = MB.canvas("#cv-pr-bayes", (ctx, w, h) => {
+    const P = MB.palette(), M = model();
+    const s = Math.min(w - 20, h - 20), ox = (w - s) / 2, oy = (h - s) / 2, cell = s / 100;
+    let ntp = Math.round(M.tp), nfn = Math.round(M.fn), nfp = Math.round(M.fp);
+    if (ntp + nfn + nfp > 10000) nfp = 10000 - ntp - nfn;
+    const gap = cell > 3.2 ? 0.7 : 0.25;
+    const put = (i, color, alpha) => { const col = Math.floor(i / 100), row = i % 100; ctx.globalAlpha = alpha; ctx.fillStyle = color; ctx.fillRect(ox + col * cell, oy + row * cell, cell - gap, cell - gap); };
+    let i = 0;
+    for (let j = 0; j < ntp; j++) put(i++, P.bad, 1);
+    for (let j = 0; j < nfn; j++) put(i++, P.bad, 0.35);
+    for (let j = 0; j < nfp; j++) put(i++, P.accent, 1);
+    for (; i < 10000; i++) put(i, P.faint, 0.28);
+    ctx.globalAlpha = 1;
+  }, { aspect: 1, maxHeight: 460 });
+  function upd() {
+    const M = model();
+    cv.redraw();
+    const f = (x) => (x >= 100 ? Math.round(x).toLocaleString("en-US") : MB.fmt(x, 3));
+    document.getElementById("pr-bay-legend").innerHTML =
+      `<div><i class="tp"></i>불량, 불량 판정 <b>${f(M.tp)}</b></div>` +
+      `<div><i class="fn"></i>불량, 통과(놓침) <b>${f(M.fn)}</b></div>` +
+      `<div><i class="fp"></i>양품, 불량 판정(오경보) <b>${f(M.fp)}</b></div>` +
+      `<div><i class="tn"></i>양품, 통과 <b>${f(M.tn)}</b></div>`;
+    MB.stat("pr-bay-post", (M.post * 100).toFixed(1) + "% (" + f(M.tp) + " / " + f(M.tp + M.fp) + ")");
+    MB.stat("pr-bay-miss", PR.ppm(M.miss));
+    MB.stat("pr-bay-lr", M.f > 0 ? MB.fmt(M.s / M.f, 3) : "∞");
+  }
+  upd();
+})();
+
+/* ===================================================== 7. 웨이퍼 수율 */
+(function () {
+  const AS = [10, 25, 50, 100, 150, 200, 300, 400, 600, 800];
+  const DS = [0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 1, 2];
+  const Aget = MB.steps("pr-y-a", AS, (v) => v + " mm² (" + Math.sqrt(v).toFixed(1) + " mm 각)", 100, regen);
+  const Dget = MB.steps("pr-y-d", DS, (v) => v + " /cm²", 0.1, regen);
+  const mode = MB.seg("pr-y-mode", regen);
+  document.getElementById("pr-y-new").addEventListener("click", regen);
+  const R = 150, RE = 147, ALPHA = 2;
+  let dies = [], defects = [], a = 10, nx0 = 0;
+  function regen() {
+    const A = Aget(), D = Dget();
+    a = Math.sqrt(A);
+    // 다이 격자: 웨이퍼 중심에 다이 모서리를 맞춤
+    dies = [];
+    const n = Math.ceil(R / a) + 1;
+    for (let i = -n; i < n; i++) for (let j = -n; j < n; j++) {
+      const x = i * a, y = j * a;
+      const far = Math.max(Math.hypot(x, y), Math.hypot(x + a, y), Math.hypot(x, y + a), Math.hypot(x + a, y + a));
+      if (far <= RE) dies.push({ x, y, i, j, bad: false });
+    }
+    const map = new Map(); dies.forEach((d) => map.set(d.i + "," + d.j, d));
+    // 결함
+    defects = [];
+    const total = (D * Math.PI * R * R) / 100;          // 웨이퍼 전체 기대 결함 수 (mm² → cm²)
+    const inDisk = () => { const r = R * Math.sqrt(Math.random()), t = Math.random() * 2 * Math.PI; return [r * Math.cos(t), r * Math.sin(t)]; };
+    if (mode() === "random") {
+      const k = MB.poisson(total);
+      for (let i = 0; i < k; i++) defects.push(inDisk());
+    } else {
+      const per = 8, nc = MB.poisson(total / per);
+      for (let c = 0; c < nc; c++) {
+        const [cx, cy] = inDisk(), m = MB.poisson(per);
+        for (let i = 0; i < m; i++) { const x = cx + 6 * MB.randn(), y = cy + 6 * MB.randn(); if (x * x + y * y <= R * R) defects.push([x, y]); }
+      }
+    }
+    defects.forEach(([x, y]) => { const d = map.get(Math.floor(x / a) + "," + Math.floor(y / a)); if (d) d.bad = true; });
+    cw.redraw(); cy.redraw(); readout();
+  }
+  const opt = { aspect: (w) => (w < 400 ? 1 : 0.9), maxHeight: 400 };
+  const cw = MB.canvas("#cv-pr-wafer", (ctx, w, h) => {
+    const P = MB.palette();
+    const s = Math.min(w - 16, h - 36), cx = w / 2, cyy = 28 + (h - 28) / 2, k = s / 2 / R;
+    ctx.fillStyle = P.surface; ctx.strokeStyle = P.border; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(cx, cyy, R * k, 0, 7); ctx.fill(); ctx.stroke();
+    // 노치
+    ctx.fillStyle = P.bg; ctx.beginPath(); ctx.arc(cx, cyy + R * k, 4, 0, 7); ctx.fill();
+    const gap = a * k > 4 ? 0.8 : 0.3;
+    dies.forEach((d) => {
+      ctx.globalAlpha = d.bad ? 0.6 : 0.42;
+      ctx.fillStyle = d.bad ? P.bad : P.ok;
+      ctx.fillRect(cx + d.x * k + gap / 2, cyy + d.y * k + gap / 2, a * k - gap, a * k - gap);
+    });
+    ctx.globalAlpha = 1; ctx.fillStyle = P.text;
+    const r = defects.length > 800 ? 1 : 1.6;
+    defects.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(cx + x * k, cyy + y * k, r, 0, 7); ctx.fill(); });
+  }, opt);
+  const cy = MB.canvas("#cv-pr-ycurve", (ctx, w, h) => {
+    const P = MB.palette(), D = Dget(), A = Aget();
+    const d1 = [], d2 = [];
+    for (let i = 0; i <= 200; i++) { const x = (800 * i) / 200, l = (x * D) / 100; d1.push([x, Math.exp(-l)]); d2.push([x, Math.pow(1 + l / ALPHA, -ALPHA)]); }
+    const good = dies.filter((d) => !d.bad).length, ys = dies.length ? good / dies.length : 0;
+    MB.chart(ctx, { x: 48, y: 34, w: w - 60, h: h - 34 - 44 }, {
+      x: [0, 800], y: [0, 1.02], xLabel: "다이 면적 (mm²)", yFmt: (v) => (v * 100).toFixed(0) + "%",
+      series: [{ data: d1, color: P.accent, width: 2 }, { data: d2, color: P.warn, width: 2, dash: [6, 4] }],
+      vlines: [{ x: A, color: P.faint }],
+      points: [{ x: A, y: ys, color: P.bad, r: 5 }],
+    });
+  }, opt);
+  function readout() {
+    const A = Aget(), D = Dget(), l = (A * D) / 100;
+    const good = dies.filter((d) => !d.bad).length;
+    MB.stat("pr-y-gross", dies.length + "개");
+    MB.stat("pr-y-sim", good + "개 / " + (dies.length ? ((good / dies.length) * 100).toFixed(1) : "—") + "%");
+    MB.stat("pr-y-poi", (Math.exp(-l) * 100).toFixed(1) + "%");
+    MB.stat("pr-y-nb", (Math.pow(1 + l / ALPHA, -ALPHA) * 100).toFixed(1) + "%");
+  }
+  regen();
+})();
+</script>
+</body>
+</html>
