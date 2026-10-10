@@ -204,7 +204,7 @@
       </svg>
       <figcaption><b>그림 5-2.</b> 직교성. 서로 다른 주파수의 곱은 양수 부분과 음수 부분이 정확히 상쇄되고, 같은 주파수의 곱(제곱)은 항상 0 이상이라 평균이 남는다. 감기 기계에서 '맞는 f'만 질량중심을 끌어내는 이유다.</figcaption>
     </figure>
-    <p>이것은 <a href="linalg.html">3장</a>의 기저 벡터와 똑같은 구조입니다. 함수를 무한 차원 벡터로 보고 내적을 \(\langle f, g\rangle = \int f\,\bar g\,dt\)로 정의하면, \(\{e^{2\pi i n t/T}\}\)는 서로 수직인 단위 벡터들(정규직교 기저)이 됩니다. 그러면 계수 찾기는 <b>그 축 방향으로의 사영</b>일 뿐입니다.</p>
+    <p>이것은 <a href="linalg.html">3장</a>의 기저 벡터와 똑같은 구조입니다. 함수를 무한 차원 벡터로 보고 내적을 \(\langle f, g\rangle = \frac1T\int_0^T f\,\bar g\,dt\)로 정의하면, \(\{e^{2\pi i n t/T}\}\)는 서로 수직인 단위 벡터들(정규직교 기저)이 됩니다. 그러면 계수 찾기는 <b>그 축 방향으로의 사영</b>일 뿐입니다.</p>
     <div class="formula">$$g(t) = \sum_n c_n\, e^{2\pi i n t/T},\qquad c_n = \big\langle g,\ e^{2\pi i n t/T}\big\rangle = \frac1T\int_0^T g(t)\,e^{-2\pi i n t/T}\,dt$$
       <div class="where">3차원 벡터의 x 성분을 \(\vec v\cdot\hat x\)로 구하듯, n번째 주파수 성분은 신호와 그 주파수의 회전자의 내적이다. 기저가 직교하므로 다른 성분이 섞여 들어오지 않는다. 에너지도 성분별로 그대로 나뉜다: \(\frac1T\int|g|^2dt=\sum|c_n|^2\) (파스발 정리).</div>
     </div>
@@ -398,7 +398,7 @@
         <div class="sim-view"><div class="split">
           <div><canvas id="cv-ft-psf-p"></canvas><span class="cap">동공 P (색 = 위상)</span></div>
           <div><canvas id="cv-ft-psf-i"></canvas><span class="cap">PSF = |FFT(P)|²</span></div>
-          <div><canvas id="cv-ft-psf-m"></canvas><span class="cap">MTF (가로 방향)</span></div>
+          <div><canvas id="cv-ft-psf-m"></canvas><span class="cap">가로 방향 · 실선: MTF · 짧은 점선: 실수 OTF</span></div>
         </div></div>
         <div class="sim-controls">
           <div class="ctrl"><span>동공 모양</span><div class="seg" id="ft-psf-shape"><button data-value="circle" class="on">원</button><button data-value="square">정사각</button><button data-value="annulus">중앙 차폐</button></div></div>
@@ -414,7 +414,7 @@
         <div class="stat"><span class="k">MTF @ f<sub>c</sub>/2</span><span class="v" id="ft-psf-m50">—</span></div>
         <div class="stat"><span class="k">스트렐 비</span><span class="v" id="ft-psf-strehl">—</span></div>
       </div>
-      <div class="sim-note">MTF 그래프의 점선은 무수차 원형 동공의 이론 곡선 \(\frac{2}{\pi}(\arccos\nu-\nu\sqrt{1-\nu^2})\), \(\nu=f/f_c\). 해볼 것: ① 원 → 정사각: PSF가 십자 모양 sinc²가 되고 가로 MTF는 직선(1−ν). ② 중앙 차폐(반사 망원경·반사 렌즈)를 키우면 중심 봉우리는 좁아지지만 고리에 에너지가 몰리고 중간 주파수 MTF가 움푹 꺼진다. ③ 초점 어긋남 W₂₀을 0.25λ 이상으로 올리면 스트렐 비가 급락하고 MTF가 중간에서 0 아래로(위상 반전) 꺾여 '가짜 해상'이 생긴다. 모델: 128×128 격자, 동공 반경 12픽셀, 단색광, 비간섭성 결상, 스칼라 회절. F수는 물리 단위 환산에만 쓰인다.</div>
+      <div class="sim-note">실선은 MTF, 짧은 점선은 부호 있는 실수 OTF다. 옅은 긴 점선은 무수차 원형 동공의 이론 곡선 \(\frac{2}{\pi}(\arccos\nu-\nu\sqrt{1-\nu^2})\), \(\nu=f/f_c\). 해볼 것: ① 원 → 정사각: PSF가 십자 모양 sinc²가 되고 가로 MTF는 직선(1−ν). ② 중앙 차폐(반사 망원경·반사 렌즈)를 키우면 중심 봉우리는 좁아지지만 고리에 에너지가 몰리고 중간 주파수 MTF가 움푹 꺼진다. ③ 초점 어긋남 W₂₀을 0.25λ 이상으로 올리면 스트렐 비가 급락하고 부호 있는 실수 OTF가 0을 지나 음수가 되면 해당 주파수 성분의 위상이 π만큼 뒤집힌 것이다. MTF는 그 절댓값이므로 음수가 되지 않는다. 모델: 128×128 격자, 동공 반경 12픽셀, 단색광, 비간섭성 결상, 스칼라 회절. F수는 물리 단위 환산에만 쓰인다.</div>
     </div>
     <p>숫자로 보면 F/2.8, λ = 550 nm에서 \(f_c \approx 649\) lp/mm, 에어리 원반 지름은 약 3.8 µm입니다. 1.0 µm 픽셀 센서의 나이퀴스트 주파수는 500 lp/mm이므로, F/2.8 근처에서 이미 렌즈의 회절 한계와 픽셀 크기가 맞붙습니다. 픽셀을 더 줄여도 F수를 함께 낮추지 않으면 해상도가 거의 늘지 않는 이유입니다. 이 계산의 센서 쪽 절반은 <a href="https://sensorbook.euiyun.com/">SensorBook</a>, 렌즈 쪽 절반은 <a href="https://opticsbook.euiyun.com/">OpticsBook</a>에서 이어집니다.</p>
     <div class="callout deep"><strong>노광 장비도 같은 수식</strong> 반도체 노광기는 마스크 패턴을 축소 투영하는 거대한 결상계다. 마스크의 공간주파수 중 동공(NA/λ)을 통과한 것만 웨이퍼에 도달하므로, 해상 한계는 \(k_1\lambda/\mathrm{NA}\) 꼴이 된다. 사입사 조명, 위상 반전 마스크, 광근접 보정(OPC)은 모두 "어떤 회절 차수를 동공 안에 넣을 것인가"를 설계하는 푸리에 광학 기술이다. 자세한 것은 <a href="https://lithobook.euiyun.com/">LithoBook</a>.</div>
@@ -426,7 +426,7 @@
     <div class="problem"><strong>사진 한 장을 10분의 1로</strong>
       <p>1200만 화소 RGB 사진은 원래 36 MB다. 화질 차이를 거의 못 느끼게 하면서 몇 MB로 줄여야 한다. 무엇을 버려야 하는가?</p>
     </div>
-    <p>6절에서 보았듯이 자연 영상의 에너지는 저주파에 몰려 있고, 사람 눈은 아주 촘촘한 밝기 변화에 덜 민감합니다. 1992년 표준이 된 JPEG<span class="en">(ISO/IEC 10918-1, ITU-T T.81)</span>은 이 두 사실을 이용합니다. 영상을 8×8 블록으로 자르고, 각 블록을 <span class="term">이산 코사인 변환</span><span class="en">(DCT)</span>으로 64개 주파수 계수로 바꾼 다음, 고주파일수록 거칠게 <b>양자화</b>(큰 눈금으로 반올림)합니다. 대부분의 고주파 계수가 0이 되고, 연속된 0은 거의 공짜로 저장됩니다. 정보를 실제로 버리는 곳은 양자화 단계 하나뿐입니다.</p>
+    <p>6절에서 보았듯이 자연 영상의 에너지는 저주파에 몰려 있고, 사람 눈은 아주 촘촘한 밝기 변화에 덜 민감합니다. 1992년 표준이 된 JPEG<span class="en">(ISO/IEC 10918-1, ITU-T T.81)</span>은 이 두 사실을 이용합니다. 영상을 8×8 블록으로 자르고, 각 블록을 <span class="term">이산 코사인 변환</span><span class="en">(DCT)</span>으로 64개 주파수 계수로 바꾼 다음, 고주파일수록 거칠게 <b>양자화</b>(큰 눈금으로 반올림)합니다. 대부분의 고주파 계수가 0이 되고, 연속된 0은 거의 공짜로 저장됩니다. 이 회색조 시뮬레이터에서는 양자화가 주된 정보 손실 단계다. 일반적인 컬러 JPEG는 색차 서브샘플링으로도 정보가 줄 수 있다.</p>
     <figure class="diagram">
       <div class="ft-basis"><canvas id="cv-ft-dct"></canvas></div>
       <figcaption><b>그림 5-5.</b> 8×8 DCT의 기저 64장. 왼쪽 위가 직류(블록 평균 밝기), 오른쪽으로 갈수록 가로 주파수, 아래로 갈수록 세로 주파수가 높다. 모든 8×8 블록은 이 64장의 가중합으로 정확히 표현된다. DCT는 1974년 아메드·나타라잔·라오가 제안했으며, 사인과 코사인을 모두 쓰는 DFT와 달리 블록 경계에서 신호를 거울처럼 접어 이음매 점프(누설)를 줄인다.</figcaption>
@@ -973,7 +973,7 @@ const FTU = (function () {
   const N = 128, R = 12, LAM = 0.55e-3; // mm
   const FN = [1.4, 2, 2.8, 4, 5.6, 8, 11, 16];
   let shape = "circle", eps = 0.4, W20 = 0, fnum = 2.8, logv = false;
-  let pupA = new Float64Array(N * N), pupPh = new Float64Array(N * N), psf, mtf = [], strehl = 1;
+  let pupA = new Float64Array(N * N), pupPh = new Float64Array(N * N), psf, otf = [], mtf = [], strehl = 1;
   function compute() {
     const re = new Float64Array(N * N), im = new Float64Array(N * N); let sumA = 0;
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
@@ -990,8 +990,12 @@ const FTU = (function () {
     strehl = p[0];
     psf = MB.fftshift(p, N);
     const or = Float64Array.from(p), oi = new Float64Array(N * N); MB.fft2(or, oi, N);
-    mtf = [];
-    for (let k = 0; k <= 2 * R + 4; k++) mtf.push([k / (2 * R), or[k] / or[0]]);
+    otf = []; mtf = [];
+    for (let k = 0; k <= 2 * R + 4; k++) {
+      const signedOtf = or[k] / or[0];
+      otf.push([k / (2 * R), signedOtf]);
+      mtf.push([k / (2 * R), Math.hypot(or[k], oi[k]) / or[0]]);
+    }
     const fc = 1 / (LAM * fnum);
     MB.stat("ft-psf-fc", Math.round(fc) + " <small>lp/mm</small>");
     MB.stat("ft-psf-airy", (2.44 * LAM * 1000 * fnum).toFixed(2) + " <small>µm</small>");
@@ -1015,8 +1019,8 @@ const FTU = (function () {
   const cm = MB.canvas("#cv-ft-psf-m", (ctx, w, h) => {
     const P = MB.palette(), fc = 1 / (LAM * fnum);
     const th = []; for (let i = 0; i <= 100; i++) { const v = i / 100; th.push([v, (2 / Math.PI) * (Math.acos(v) - v * Math.sqrt(1 - v * v))]); }
-    MB.chart(ctx, { x: 46, y: 30, w: w - 58, h: h - 76 }, { x: [0, 1.08], y: [-0.2, 1.02], xTicks: [0, 0.25, 0.5, 0.75, 1], yTicks: [0, 0.5, 1], xFmt: (v) => Math.round(v * fc), xLabel: "공간주파수 (lp/mm)",
-      hlines: [{ y: 0, color: P.axis, dash: [] }], series: [{ data: th, color: P.faint, dash: [5, 4], width: 1.5 }, { data: mtf, color: P.accent, width: 2.4 }] });
+    MB.chart(ctx, { x: 46, y: 30, w: w - 58, h: h - 76 }, { x: [0, 1.08], y: [-1.02, 1.02], xTicks: [0, 0.25, 0.5, 0.75, 1], yTicks: [-1, -0.5, 0, 0.5, 1], xFmt: (v) => Math.round(v * fc), xLabel: "공간주파수 (lp/mm)",
+      hlines: [{ y: 0, color: P.axis, dash: [] }], series: [{ data: th, color: P.faint, dash: [5, 4], width: 1.5 }, { data: otf, color: P.accent2, dash: [3, 3], width: 1.5, label: "실수 OTF" }, { data: mtf, color: P.accent, width: 2.4, label: "MTF" }] });
   }, opt);
   const all = () => { compute(); cp.redraw(); ci.redraw(); cm.redraw(); };
   const thr = MB.throttle(all);
